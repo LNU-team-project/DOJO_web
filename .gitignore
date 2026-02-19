@@ -1,0 +1,74 @@
+# ========================
+# .NET / ASP.NET Core
+# ========================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+
+# ========================
+# macOS
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ========================
+# JetBrains Rider / ReSharper
+# ========================
+.idea/
+*.sln.iml
+riderModule.iml
+_ReSharper.Caches/
+*.DotSettings.user
+*.resharper
+*.resharper.user
+
+# ========================
+# Visual Studio Code
+# ========================
+.vscode/
+*.code-workspace
+.history/
+
+# ========================
+# Сторонні бібліотеки (wwwroot/lib)
+# ========================
+**/wwwroot/lib/
+
+# ========================
+# Логи та тимчасові файли
+# ========================
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+Thumbs.db
+ehthumbs.db
+Desktop.ini

@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DOJO2", "DOJO2\DOJO2.csproj", "{1D85FBA3-D1B8-4FCA-B7E6-6CA7228E26DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D85FBA3-D1B8-4FCA-B7E6-6CA7228E26DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D85FBA3-D1B8-4FCA-B7E6-6CA7228E26DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D85FBA3-D1B8-4FCA-B7E6-6CA7228E26DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D85FBA3-D1B8-4FCA-B7E6-6CA7228E26DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
