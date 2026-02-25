@@ -3,21 +3,80 @@
 # ========================
 bin/
 obj/
+artifacts/
+.vs/
+
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-.vs/
-packages/
+
+# NuGet
+packages/                  # для старих packages.config
 *.nupkg
 *.snupkg
+
+# lock files (старі/рідкісні, але не завадять)
 project.lock.json
 project.fragment.lock.json
-artifacts/
-**/Properties/launchSettings.json
 
 # ========================
-# macOS
+# Visual Studio (additional)
+# ========================
+*.VC.db
+*.VC.db-shm
+*.VC.db-wal
+*.vsidx
+*.ipch
+
+# ========================
+# JetBrains Rider / IntelliJ / ReSharper
+# ========================
+.idea/
+*.sln.iml
+*.iws
+*.iml
+riderModule.iml
+
+_ReSharper.Caches/
+**/_ReSharper.Caches/
+
+*.DotSettings.user
+*.resharper
+*.resharper.user
+
+# Rider / JetBrains local state
+**/.idea/**
+
+# ========================
+# Visual Studio Code
+# ========================
+.vscode/
+*.code-workspace
+.history/
+*.log
+
+# Optional: local debug/launch tasks (зазвичай тримають локально)
+.vscode/launch.json
+.vscode/tasks.json
+
+# ========================
+# OS / system files (Windows)
+# ========================
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ========================
+# OS / system files (macOS)
 # ========================
 .DS_Store
 .AppleDouble
@@ -38,37 +97,19 @@ Temporary Items
 .apdisk
 
 # ========================
-# JetBrains Rider / ReSharper
+# OS / system files (Linux)
 # ========================
-.idea/
-*.sln.iml
-riderModule.iml
-_ReSharper.Caches/
-*.DotSettings.user
-*.resharper
-*.resharper.user
+*~
 
 # ========================
-# Visual Studio Code
-# ========================
-.vscode/
-*.code-workspace
-.history/
-
-# ========================
-# Сторонні бібліотеки (wwwroot/lib)
+# Frontend / static libs
 # ========================
 **/wwwroot/lib/
 
 # ========================
-# Логи та тимчасові файли
+# Logs / temp
 # ========================
-*.log
 *.tmp
 *.temp
 *.bak
 *.swp
-*~
-Thumbs.db
-ehthumbs.db
-Desktop.ini
