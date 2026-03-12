@@ -1,47 +1,73 @@
 using Microsoft.EntityFrameworkCore;
 using DOJO2.Infrastructure.Data;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+// Bootstrap logger — щоб логи були навіть під час старту
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+Log.Information("Запуск застосунку...");
+
+try
 {
-    Args = args,
-    // Статичні файли з Presentation/wwwroot
-    WebRootPath = "Presentation/wwwroot"
-});
-
-// Add services to the container.
-builder.Services.AddControllersWithViews()
-    .AddRazorOptions(options =>
+    var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     {
-        // Шукаємо Views у папці Presentation/Views
-        options.ViewLocationFormats.Clear();
-        options.ViewLocationFormats.Add("/Presentation/Views/{1}/{0}.cshtml");
-        options.ViewLocationFormats.Add("/Presentation/Views/Shared/{0}.cshtml");
+        Args = args,
+        // Статичні файли з Presentation/wwwroot
+        WebRootPath = "Presentation/wwwroot"
     });
 
-// Підключення до PostgreSQL через EF Core
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    // Налаштування Serilog з appsettings.json
+    builder.Host.UseSerilog((context, config) =>
+        config.ReadFrom.Configuration(context.Configuration));
 
-var app = builder.Build();
+    // Add services to the container.
+    builder.Services.AddControllersWithViews()
+        .AddRazorOptions(options =>
+        {
+            // Шукаємо Views у папці Presentation/Views
+            options.ViewLocationFormats.Clear();
+            options.ViewLocationFormats.Add("/Presentation/Views/{1}/{0}.cshtml");
+            options.ViewLocationFormats.Add("/Presentation/Views/Shared/{0}.cshtml");
+        });
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    // Підключення до PostgreSQL через EF Core
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline.
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseExceptionHandler("/Home/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+        app.UseHttpsRedirection();
+    }
+
+    // Логування HTTP запитів через Serilog
+    app.UseSerilogRequestLogging();
+
+    app.UseRouting();
+
+    app.UseAuthorization();
+
+    app.UseStaticFiles();
+
+    app.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
+
+
+    app.Run();
 }
-
-app.UseHttpsRedirection();
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.UseStaticFiles();
-
-app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
-
-
-app.Run();
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Застосунок впав під час запуску");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

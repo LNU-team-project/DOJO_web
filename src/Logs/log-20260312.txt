@@ -1,0 +1,8 @@
+[2026-03-12 16:50:22 WRN] Failed to determine the https port for redirect.
+[2026-03-12 16:58:06 INF] HTTP GET / responded 200 in 666.2667 ms
+[2026-03-12 16:58:06 INF] HTTP GET /css/site.css responded 304 in 23.6408 ms
+[2026-03-12 16:58:06 INF] HTTP GET /src.styles.css responded 304 in 21.4248 ms
+[2026-03-12 16:58:06 INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 200 in 60.7445 ms
+[2026-03-12 16:58:06 INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 200 in 69.4603 ms
+[2026-03-12 16:58:06 INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 200 in 60.7496 ms
+[2026-03-12 16:58:06 INF] HTTP GET /js/site.js responded 304 in 0.5294 ms
