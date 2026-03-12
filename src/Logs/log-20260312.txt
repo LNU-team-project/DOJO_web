@@ -6,3 +6,11 @@
 [2026-03-12 16:58:06 INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 200 in 69.4603 ms
 [2026-03-12 16:58:06 INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 200 in 60.7496 ms
 [2026-03-12 16:58:06 INF] HTTP GET /js/site.js responded 304 in 0.5294 ms
+2026-03-12 23:03:00.937 +02:00 [INF] HTTP GET / responded 200 in 655.2727 ms
+2026-03-12 23:03:00.947 +02:00 [INF] HTTP GET /js/site.js responded 304 in 15.5117 ms
+2026-03-12 23:03:00.947 +02:00 [INF] HTTP GET /src.styles.css responded 304 in 6.5786 ms
+2026-03-12 23:03:01.065 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 304 in 0.4203 ms
+2026-03-12 23:03:01.065 +02:00 [INF] HTTP GET /css/site.css responded 304 in 0.4204 ms
+2026-03-12 23:03:01.075 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 304 in 9.2550 ms
+2026-03-12 23:03:01.375 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 304 in 0.3007 ms
+2026-03-12 23:03:01.534 +02:00 [INF] HTTP GET /favicon.ico responded 304 in 0.3306 ms
