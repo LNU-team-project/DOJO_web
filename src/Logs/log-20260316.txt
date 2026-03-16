@@ -1,0 +1,21 @@
+2026-03-16 16:46:05.586 +02:00 [INF] Now listening on: http://localhost:5182
+2026-03-16 16:46:05.609 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-16 16:46:05.610 +02:00 [INF] Hosting environment: Development
+2026-03-16 16:46:05.610 +02:00 [INF] Content root path: C:\Users\Vladyslav\Desktop\uni\3rd_Year\2 term\DOJO_web\src
+2026-03-16 16:46:09.353 +02:00 [INF] HTTP GET / responded 200 in 181.0337 ms
+2026-03-16 16:46:09.371 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 404 in 1.2006 ms
+2026-03-16 16:46:09.372 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 404 in 0.3090 ms
+2026-03-16 16:46:09.372 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 404 in 0.3109 ms
+2026-03-16 16:46:09.382 +02:00 [INF] HTTP GET /js/site.js responded 200 in 9.4605 ms
+2026-03-16 16:46:09.382 +02:00 [INF] HTTP GET /src.styles.css responded 200 in 9.5386 ms
+2026-03-16 16:46:09.382 +02:00 [INF] HTTP GET /css/site.css responded 200 in 11.5671 ms
+2026-03-16 16:46:09.522 +02:00 [INF] HTTP GET /favicon.ico responded 200 in 18.2565 ms
+2026-03-16 16:46:13.636 +02:00 [INF] HTTP GET / responded 200 in 3.0818 ms
+2026-03-16 16:46:13.661 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 404 in 0.1795 ms
+2026-03-16 16:46:13.665 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 404 in 0.1435 ms
+2026-03-16 16:46:13.665 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 404 in 0.2955 ms
+2026-03-16 16:46:14.565 +02:00 [INF] HTTP GET / responded 200 in 7.0252 ms
+2026-03-16 16:46:14.592 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 404 in 0.1277 ms
+2026-03-16 16:46:14.599 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 404 in 0.1775 ms
+2026-03-16 16:46:14.610 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 404 in 0.1810 ms
+2026-03-16 16:46:32.500 +02:00 [INF] Application is shutting down...
