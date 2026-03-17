@@ -1,13 +1,14 @@
 using DOJO2.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<User> Users => Set<User>();
     public DbSet<Goal> Goals => Set<Goal>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
@@ -17,23 +18,14 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ── User ──────────────────────────────────────────────
-        modelBuilder.Entity<User>(e =>
+        // ── AppUser (Identity) ────────────────────────────────
+        modelBuilder.Entity<AppUser>(e =>
         {
-            e.ToTable("users");
-            e.HasKey(u => u.Id);
-            e.Property(u => u.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(u => u.Email).HasColumnName("email").HasMaxLength(255).IsRequired();
-            e.Property(u => u.UserName).HasColumnName("user_name").HasMaxLength(100).IsRequired();
-            e.Property(u => u.PasswordHash).HasColumnName("password_hash").IsRequired();
             e.Property(u => u.ExpPoints).HasColumnName("exp_points").HasDefaultValue(0);
             e.Property(u => u.Level).HasColumnName("level").HasDefaultValue(1);
             e.Property(u => u.CurrentStreak).HasColumnName("current_streak").HasDefaultValue(0);
             e.Property(u => u.LastCompletionDate).HasColumnName("last_completion_date");
             e.Property(u => u.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
-
-            e.HasIndex(u => u.Email).IsUnique();
-            e.HasIndex(u => u.UserName).IsUnique();
         });
 
         // ── Goal ──────────────────────────────────────────────

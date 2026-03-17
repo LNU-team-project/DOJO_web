@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 // Bootstrap logger — щоб логи були навіть під час старту
@@ -36,6 +38,15 @@ try
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+    // Identity: користувачі, ролі, токени
+    builder.Services.AddIdentity<AppUser, IdentityRole<int>>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+            options.SignIn.RequireConfirmedEmail = true;
+        })
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddDefaultTokenProviders();
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -52,6 +63,7 @@ try
 
     app.UseRouting();
 
+    app.UseAuthentication();
     app.UseAuthorization();
 
     app.UseStaticFiles();

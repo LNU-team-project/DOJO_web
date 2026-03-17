@@ -1,0 +1,9 @@
+2026-03-17 23:23:00.239 +02:00 [INF] Now listening on: http://localhost:5182
+2026-03-17 23:23:00.261 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-17 23:23:00.261 +02:00 [INF] Hosting environment: Development
+2026-03-17 23:23:00.264 +02:00 [INF] Content root path: C:\Users\Vladyslav\Desktop\uni\3rd_Year\2 term\DOJO_web\src
+2026-03-17 23:23:03.317 +02:00 [INF] HTTP GET / responded 200 in 262.7877 ms
+2026-03-17 23:23:03.362 +02:00 [INF] HTTP GET /lib/bootstrap/dist/css/bootstrap.min.css responded 404 in 4.1025 ms
+2026-03-17 23:23:03.364 +02:00 [INF] HTTP GET /lib/jquery/dist/jquery.min.js responded 404 in 3.4848 ms
+2026-03-17 23:23:03.365 +02:00 [INF] HTTP GET /lib/bootstrap/dist/js/bootstrap.bundle.min.js responded 404 in 2.3001 ms
+2026-03-17 23:23:07.271 +02:00 [INF] Application is shutting down...

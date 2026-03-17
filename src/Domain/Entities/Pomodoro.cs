@@ -11,7 +11,7 @@ public class Pomodoro
     public short WorkCycles { get; set; } = 1;
 
     // Navigation properties
-    public User User { get; set; } = null!;
+    public AppUser User { get; set; } = null!;
     public TaskItem? Task { get; set; }
 }
 

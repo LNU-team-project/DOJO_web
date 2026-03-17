@@ -15,7 +15,7 @@ public class TaskItem
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public User User { get; set; } = null!;
+    public AppUser User { get; set; } = null!;
     public Goal? Goal { get; set; }
     public TaskItem? ParentTask { get; set; }
     public ICollection<TaskItem> SubTasks { get; set; } = new List<TaskItem>();
