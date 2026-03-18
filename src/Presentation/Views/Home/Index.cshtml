@@ -1,8 +1,38 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Вітаємо";
+    var isAuth = User?.Identity?.IsAuthenticated ?? false;
+    var userName = isAuth ? (User.Identity?.Name ?? "") : string.Empty;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="register-page">
+    <div class="register-card welcome-card">
+        <div class="register-brand">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <h1 class="brand-title">DOJO</h1>
+            <p class="brand-subtitle">
+                @(isAuth ? "Ви увійшли до свого акаунту" : "Ви ще не авторизовані")
+            </p>
+        </div>
+
+        @if (isAuth)
+        {
+            <div class="welcome-content">
+                <p class="welcome-text">Привіт, @userName!</p>
+                <form asp-action="Logout" asp-controller="Account" method="post" class="welcome-actions" novalidate>
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="register-btn">Вийти з акаунту</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="welcome-content">
+                <p class="welcome-text">Щоб продовжити, увійдіть або створіть акаунт.</p>
+                <div class="welcome-actions">
+                    <a class="register-btn" href="/Account/Login">Увійти</a>
+                    <a class="register-btn ghost" href="/Account/Register">Створити акаунт</a>
+                </div>
+            </div>
+        }
+    </div>
 </div>

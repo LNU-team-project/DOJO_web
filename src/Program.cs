@@ -3,6 +3,7 @@ using DOJO2.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -42,7 +43,7 @@ try
     builder.Services.AddIdentity<AppUser, IdentityRole<int>>(options =>
         {
             options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = true;
+            options.SignIn.RequireConfirmedEmail = false;
             options.Password.RequiredLength = 6;
             options.Password.RequireDigit = false;
             options.Password.RequireLowercase = false;
@@ -51,6 +52,16 @@ try
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
+
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(14); // лише коли RememberMe=true
+        options.SlidingExpiration = true;
+        options.Cookie.IsEssential = true;
+    });
 
     var app = builder.Build();
 

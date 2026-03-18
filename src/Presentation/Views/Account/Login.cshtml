@@ -1,0 +1,65 @@
+@model DOJO2.Presentation.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Увійти";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="register-page">
+    <div class="register-card">
+        <div class="register-brand">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <h1 class="brand-title">DOJO</h1>
+            <p class="brand-subtitle">Увійти до акаунту</p>
+        </div>
+
+        <form id="login-form" asp-action="Login" asp-controller="Account" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            @if (!string.IsNullOrWhiteSpace(returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="field-error" role="alert">
+                    @Html.ValidationSummary(excludePropertyErrors: true)
+                </div>
+            }
+
+            <div class="field">
+                <label for="Email">Пошта</label>
+                <input
+                    id="Email"
+                    name="Email"
+                    type="email"
+                    class="form-field"
+                    placeholder="example@mail.com"
+                    required
+                    data-validate="email" />
+                <div class="field-error" data-error-for="Email"></div>
+            </div>
+
+            <div class="field">
+                <label for="Password">Пароль</label>
+                <input
+                    id="Password"
+                    name="Password"
+                    type="password"
+                    class="form-field"
+                    placeholder="Ваш пароль"
+                    required
+                    data-validate="password" />
+                <div class="field-error" data-error-for="Password"></div>
+            </div>
+
+            <button id="login-submit" class="register-btn" type="submit">
+                Увійти
+            </button>
+        </form>
+
+        <p class="register-footer">
+            Немає акаунту? <a href="/Account/Register">Створити</a>
+        </p>
+    </div>
+</div>

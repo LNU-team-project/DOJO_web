@@ -197,6 +197,42 @@ body {
   text-decoration: underline;
 }
 
+.welcome-card {
+  text-align: center;
+}
+
+.welcome-content {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.welcome-text {
+  margin: 0;
+  font-weight: 600;
+  color: var(--dojo-ink);
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.register-btn.ghost {
+  background: transparent;
+  color: var(--dojo-accent-strong);
+  border: 1px solid var(--dojo-accent-strong);
+  box-shadow: none;
+}
+
+.register-btn.ghost:hover {
+  background: rgba(255, 122, 144, 0.1);
+  transform: none;
+}
+
 .footer {
   position: absolute;
   bottom: 0;

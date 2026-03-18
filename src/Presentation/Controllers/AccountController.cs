@@ -22,6 +22,60 @@ public class AccountController : Controller
     }
 
     [HttpGet]
+    public IActionResult Login(string? returnUrl = null)
+    {
+        if (User?.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        ViewData["ReturnUrl"] = returnUrl;
+        return View(new LoginViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+    {
+        ViewData["ReturnUrl"] = returnUrl;
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        if (user == null)
+        {
+            ModelState.AddModelError(string.Empty, "Невірна пошта або пароль.");
+            return View(model);
+        }
+
+        var signInResult = await _signInManager.PasswordSignInAsync(
+            user.UserName,
+            model.Password,
+            model.RememberMe,
+            lockoutOnFailure: true);
+
+        if (!signInResult.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, "Невірна пошта або пароль.");
+            return View(model);
+        }
+
+        _logger.LogInformation("User logged in: {UserName}", user.UserName);
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
     public IActionResult Register()
     {
         return View(new RegisterViewModel());
