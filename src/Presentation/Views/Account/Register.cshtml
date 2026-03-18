@@ -1,3 +1,5 @@
+@model DOJO2.Presentation.ViewModels.RegisterViewModel
+
 @{
     ViewData["Title"] = "Створити акаунт";
 }
@@ -10,7 +12,20 @@
             <p class="brand-subtitle">Створити новий акаунт</p>
         </div>
 
-        <form id="register-form" novalidate>
+        @if (TempData["RegisterSuccess"] is string successMessage)
+        {
+            <div class="field-error" role="status">@successMessage</div>
+        }
+
+        <form id="register-form" asp-action="Register" asp-controller="Account" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="field-error" role="alert">
+                    @Html.ValidationSummary(excludePropertyErrors: true)
+                </div>
+            }
             <div class="field">
                 <label for="UserName">Ім'я користувача</label>
                 <input

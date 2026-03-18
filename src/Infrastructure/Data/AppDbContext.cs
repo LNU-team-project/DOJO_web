@@ -21,11 +21,30 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         // ── AppUser (Identity) ────────────────────────────────
         modelBuilder.Entity<AppUser>(e =>
         {
+            e.ToTable("users");
+            e.Property(u => u.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(u => u.UserName).HasColumnName("user_name").HasMaxLength(100).IsRequired();
+            e.Property(u => u.NormalizedUserName).HasColumnName("normalized_user_name").HasMaxLength(100);
+            e.Property(u => u.Email).HasColumnName("email").HasMaxLength(255).IsRequired();
+            e.Property(u => u.NormalizedEmail).HasColumnName("normalized_email").HasMaxLength(255);
+            e.Property(u => u.EmailConfirmed).HasColumnName("email_confirmed");
+            e.Property(u => u.PasswordHash).HasColumnName("password_hash");
+            e.Property(u => u.SecurityStamp).HasColumnName("security_stamp");
+            e.Property(u => u.ConcurrencyStamp).HasColumnName("concurrency_stamp");
+            e.Property(u => u.PhoneNumber).HasColumnName("phone_number");
+            e.Property(u => u.PhoneNumberConfirmed).HasColumnName("phone_number_confirmed");
+            e.Property(u => u.TwoFactorEnabled).HasColumnName("two_factor_enabled");
+            e.Property(u => u.LockoutEnd).HasColumnName("lockout_end");
+            e.Property(u => u.LockoutEnabled).HasColumnName("lockout_enabled");
+            e.Property(u => u.AccessFailedCount).HasColumnName("access_failed_count");
             e.Property(u => u.ExpPoints).HasColumnName("exp_points").HasDefaultValue(0);
             e.Property(u => u.Level).HasColumnName("level").HasDefaultValue(1);
             e.Property(u => u.CurrentStreak).HasColumnName("current_streak").HasDefaultValue(0);
             e.Property(u => u.LastCompletionDate).HasColumnName("last_completion_date");
             e.Property(u => u.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+
+            e.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
+            e.HasIndex(u => u.NormalizedUserName).IsUnique().HasDatabaseName("UserNameIndex");
         });
 
         // ── Goal ──────────────────────────────────────────────
