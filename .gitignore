@@ -109,6 +109,8 @@ Temporary Items
 # ========================
 # Logs / temp
 # ========================
+Logs/
+**/Logs/
 *.tmp
 *.temp
 *.bak

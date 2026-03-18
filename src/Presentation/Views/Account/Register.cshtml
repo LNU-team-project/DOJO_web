@@ -1,0 +1,93 @@
+@model DOJO2.Presentation.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Створити акаунт";
+}
+
+<div class="register-page">
+    <div class="register-card">
+        <div class="register-brand">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <h1 class="brand-title">DOJO</h1>
+            <p class="brand-subtitle">Створити новий акаунт</p>
+        </div>
+
+        @if (TempData["RegisterSuccess"] is string successMessage)
+        {
+            <div class="field-error" role="status">@successMessage</div>
+        }
+
+        <form id="register-form" asp-action="Register" asp-controller="Account" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="field-error" role="alert">
+                    @Html.ValidationSummary(excludePropertyErrors: true)
+                </div>
+            }
+            <div class="field">
+                <label for="UserName">Ім'я користувача</label>
+                <input
+                    id="UserName"
+                    name="UserName"
+                    type="text"
+                    class="form-field"
+                    placeholder="Введіть ім'я"
+                    required
+                    minlength="3"
+                    data-validate="username" />
+                <div class="field-error" data-error-for="UserName"></div>
+            </div>
+
+            <div class="field">
+                <label for="Email">Пошта</label>
+                <input
+                    id="Email"
+                    name="Email"
+                    type="email"
+                    class="form-field"
+                    placeholder="example@mail.com"
+                    required
+                    data-validate="email" />
+                <div class="field-error" data-error-for="Email"></div>
+            </div>
+
+            <div class="field">
+                <label for="Password">Пароль</label>
+                <input
+                    id="Password"
+                    name="Password"
+                    type="password"
+                    class="form-field"
+                    placeholder="Мінімум 6 символів"
+                    required
+                    minlength="6"
+                    data-validate="password" />
+                <div class="field-error" data-error-for="Password"></div>
+            </div>
+
+            <div class="field">
+                <label for="ConfirmPassword">Підтвердіть пароль</label>
+                <input
+                    id="ConfirmPassword"
+                    name="ConfirmPassword"
+                    type="password"
+                    class="form-field"
+                    placeholder="Повторіть пароль"
+                    required
+                    data-validate="confirm"
+                    data-match="Password" />
+                <div class="field-error" data-error-for="ConfirmPassword"></div>
+            </div>
+
+            <button id="register-submit" class="register-btn" type="submit" disabled>
+                Створити акаунт
+            </button>
+        </form>
+
+        <p class="register-footer">
+            Вже маєте акаунт? <a href="/Account/Login">Увійти</a>
+        </p>
+    </div>
+</div>
