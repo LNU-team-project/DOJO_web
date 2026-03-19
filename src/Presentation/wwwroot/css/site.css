@@ -251,3 +251,12 @@ body {
 .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.forgot-password-link a {
+    color: #FF77BAFF; /* Рожевий колір */
+    text-decoration: none;
+}
+
+.forgot-password-link a:hover {
+    text-decoration: underline;
+}
