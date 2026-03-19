@@ -2,6 +2,7 @@ using DOJO2.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using DOJO2.Domain.Entities;
 
 namespace DOJO2.Infrastructure.Data;
 
@@ -13,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
+    public DbSet<Admin> Admins => Set<Admin>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +170,14 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
 
             e.HasIndex(a => a.TaskId);
         });
+
+        modelBuilder.Entity<Admin>(e =>
+        {
+            e.ToTable("admins");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(a => a.Login).HasColumnName("login").HasMaxLength(100).IsRequired();
+            e.Property(a => a.Password).HasColumnName("password").IsRequired();
+        });
     }
 }
-
