@@ -2,6 +2,9 @@ using DOJO2.Domain.Entities;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using src.Presentation.ViewModels;
+using System.Text.Encodings.Web;
 
 namespace DOJO2.Controllers;
 
@@ -10,15 +13,18 @@ public class AccountController : Controller
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly ILogger<AccountController> _logger;
+    private readonly IEmailSender _emailSender;
 
     public AccountController(
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IEmailSender emailSender)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _emailSender = emailSender;
     }
 
     [HttpGet]
@@ -110,5 +116,96 @@ public class AccountController : Controller
         _logger.LogInformation("User created: {UserName}", user.UserName);
 
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                return View("ForgotPasswordConfirmation");
+            }
+
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+
+            await _emailSender.SendEmailAsync(
+                model.Email,
+                "Reset Password",
+                $"Please reset your password by clicking here: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
+
+            return View("ForgotPasswordConfirmation");
+        }
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string code = null)
+    {
+        return code == null ? View("Error") : View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            // Don't reveal that the user does not exist
+            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+        }
+        var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+        if (result.Succeeded)
+        {
+            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+        }
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult ResetPasswordConfirmation()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> TestEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            return Content("Please provide an email address in the query string, e.g., /Account/TestEmail?email=your-email@example.com");
+        }
+
+        try
+        {
+            await _emailSender.SendEmailAsync(email, "SendGrid Test", "This is a test email from SendGrid.");
+            return Content($"Test email sent to {email}. Please check your inbox.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending test email.");
+            return Content($"Failed to send test email. Check the logs for details. Error: {ex.Message}");
+        }
     }
 }

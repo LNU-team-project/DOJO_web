@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using src.Infrastructure.Services;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -62,6 +64,9 @@ try
         options.SlidingExpiration = true;
         options.Cookie.IsEssential = true;
     });
+
+    builder.Services.AddTransient<IEmailSender, EmailSender>();
+    builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("SendGrid"));
 
     var app = builder.Build();
 

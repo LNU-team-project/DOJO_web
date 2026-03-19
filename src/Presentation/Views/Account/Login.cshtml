@@ -53,13 +53,19 @@
                 <div class="field-error" data-error-for="Password"></div>
             </div>
 
+            <div class="field">
+                <p>
+                    <a asp-action="ForgotPassword">Забули пароль?</a>
+                </p>
+            </div>
+
             <button id="login-submit" class="register-btn" type="submit">
                 Увійти
             </button>
         </form>
 
         <p class="register-footer">
-            Немає акаунту? <a href="/Account/Register">Створити</a>
+            Немає акаунту? <a asp-action="Register" asp-controller="Account">Зареєструватись</a>
         </p>
     </div>
 </div>
