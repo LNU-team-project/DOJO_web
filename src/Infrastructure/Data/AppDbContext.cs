@@ -78,6 +78,17 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.HasIndex(g => g.IsCompleted);
         });
 
+        // ── Admin ──────────────────────────────────────────────
+        modelBuilder.Entity<Admin>(e =>
+        {
+            e.ToTable("admins");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(a => a.Login).HasColumnName("login").HasMaxLength(100).IsRequired();
+            e.Property(a => a.Password).HasColumnName("password").IsRequired();
+            e.HasIndex(a => a.Login).IsUnique();
+        });
+
         // ── TaskItem ──────────────────────────────────────────
         modelBuilder.Entity<TaskItem>(e =>
         {
@@ -169,15 +180,6 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(a => a.TaskId);
-        });
-
-        modelBuilder.Entity<Admin>(e =>
-        {
-            e.ToTable("admins");
-            e.HasKey(a => a.Id);
-            e.Property(a => a.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(a => a.Login).HasColumnName("login").HasMaxLength(100).IsRequired();
-            e.Property(a => a.Password).HasColumnName("password").IsRequired();
         });
     }
 }

@@ -84,9 +84,9 @@ try
 
     app.UseStaticFiles();
 
-        app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Account}/{action=Register}/{id?}");
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Account}/{action=Register}/{id?}");
 
 
     app.Run();

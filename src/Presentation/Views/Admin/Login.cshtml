@@ -1,44 +1,38 @@
-﻿@model DOJO2.Presentation.ViewModels.AdminLoginViewModel
+﻿@model DOJO_web.Presentation.ViewModels.AdminLoginViewModel
 
-    @{
+@{
     ViewData["Title"] = "Вхід для адміністратора";
 }
 
 <div class="register-page">
     <div class="register-card">
-    <div class="register-brand">
-    <div class="brand-mark" aria-hidden="true"></div>
-    <h1 class="brand-title">DOJO | Admin</h1>
-    <p class="brand-subtitle">Вхід до панелі керування</p>
-    </div>
+        <div class="register-brand">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <h1 class="brand-title">DOJO | Admin</h1>
+            <p class="brand-subtitle">Вхід до панелі керування</p>
+        </div>
 
-    <form asp-action="Login" asp-controller="Admin" method="post" novalidate>
-    @Html.AntiForgeryToken()
+        <form asp-action="Login" asp-controller="Admin" method="post" novalidate>
+            @Html.AntiForgeryToken()
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="field-error" role="alert">
-                                  @Html.ValidationSummary(excludePropertyErrors: true)
-                                  </div>
-}
+            <div asp-validation-summary="ModelOnly" class="field-error" role="alert"></div>
 
-<div class="field">
-    <label asp-for="UserName">Ім'я користувача</label>
-    <input asp-for="UserName" class="form-field" placeholder="Введіть ім'я адміністратора" required />
-    <span asp-validation-for="UserName" class="field-error"></span>
-    </div>
+            <div class="field">
+                <label asp-for="Login">Логін</label>
+                <input asp-for="Login" class="form-field" placeholder="Введіть логін адміністратора" required />
+                <span asp-validation-for="Login" class="field-error"></span>
+            </div>
 
-    <div class="field">
-    <label asp-for="Password">Пароль</label>
-    <input asp-for="Password" class="form-field" placeholder="Введіть пароль" required />
-    <span asp-validation-for="Password" class="field-error"></span>
-    </div>
+            <div class="field">
+                <label asp-for="Password">Пароль</label>
+                <input asp-for="Password" class="form-field" placeholder="Введіть пароль" required />
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
 
-    <button class="register-btn" type="submit">Увійти</button>
-    </form>
+            <button class="register-btn" type="submit">Увійти</button>
+        </form>
 
-    <p class="register-footer">
-    <a href="/Account/Register">Я не адміністратор</a>
-    </p>
-    </div>
+        <p class="register-footer">
+            <a href="/Account/Register">Я не адміністратор</a>
+        </p>
     </div>
