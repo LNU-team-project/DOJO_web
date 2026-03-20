@@ -14,7 +14,6 @@ public class Goal
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public AppUser User { get; set; } = null!;
-    public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+    public virtual AppUser User { get; set; } = null!;
+    public virtual ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
 }
-

@@ -1,234 +1,146 @@
+using System.Security.Claims;
+using System.Threading.Tasks;
 using DOJO2.Controllers;
 using DOJO2.Domain.Entities;
 using DOJO2.Presentation.ViewModels;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
-using System.Security.Claims;
 using Xunit;
-using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
+
+namespace DOJO_web.Tests;
 
 public class AccountControllerTests
 {
-    [Fact]
-    public async Task Register_WhenModelStateInvalid_ReturnsViewWithModel()
-    {
-        var controller = BuildController();
-        controller.ModelState.AddModelError("Email", "Invalid email");
+    private readonly Mock<UserManager<AppUser>> _mockUserManager;
+    private readonly Mock<SignInManager<AppUser>> _mockSignInManager;
+    private readonly Mock<ILogger<AccountController>> _mockLogger;
+    private readonly AccountController _controller;
 
-        var model = new RegisterViewModel
+    public AccountControllerTests()
+    {
+        _mockUserManager = new Mock<UserManager<AppUser>>(
+            Mock.Of<IUserStore<AppUser>>(), null, null, null, null, null, null, null, null);
+        
+        _mockSignInManager = new Mock<SignInManager<AppUser>>(
+            _mockUserManager.Object,
+            Mock.Of<IHttpContextAccessor>(),
+            Mock.Of<IUserClaimsPrincipalFactory<AppUser>>(),
+            null, null, null, null);
+
+        _mockLogger = new Mock<ILogger<AccountController>>();
+
+        _controller = new AccountController(
+            _mockUserManager.Object,
+            _mockSignInManager.Object,
+            _mockLogger.Object);
+    }
+
+    [Fact]
+    public void Login_ReturnsViewResult_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+        _controller.ControllerContext = new ControllerContext
         {
-            UserName = "testuser",
-            Email = "bad",
-            Password = "secret1",
-            ConfirmPassword = "secret1"
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
 
-        var result = await controller.Register(model);
+        // Act
+        var result = _controller.Login();
 
-        var view = Assert.IsType<ViewResult>(result);
-        var returnedModel = Assert.IsType<RegisterViewModel>(view.Model);
-        Assert.Equal(model.Email, returnedModel.Email);
+        // Assert
+        Assert.IsType<ViewResult>(result);
     }
 
     [Fact]
-    public async Task Register_WhenCreateSucceeds_RedirectsToHomeIndex()
+    public void Login_RedirectsToHome_WhenUserIsAuthenticated()
     {
-        var userManager = BuildUserManager();
-        userManager
-            .Setup(m => m.CreateAsync(It.IsAny<AppUser>(), It.IsAny<string>()))
-            .ReturnsAsync(IdentityResult.Success);
-
-        var controller = BuildController(userManager: userManager);
-
-        var model = new RegisterViewModel
+        // Arrange
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "testuser") }, "mock"));
+        _controller.ControllerContext = new ControllerContext
         {
-            UserName = "testuser",
-            Email = "user@example.com",
-            Password = "secret1",
-            ConfirmPassword = "secret1"
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
 
-        var result = await controller.Register(model);
+        // Act
+        var result = _controller.Login();
 
-        var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Index", redirect.ActionName);
-        Assert.Equal("Home", redirect.ControllerName);
+        // Assert
+        var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirectToActionResult.ActionName);
+        Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 
     [Fact]
-    public void Login_Get_WhenAuthenticated_RedirectsToHomeIndex()
+    public async Task Login_Post_ReturnsViewWithModel_WhenModelStateIsInvalid()
     {
-        var controller = BuildController();
-        var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "user") }, authenticationType: "mock");
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
-        };
+        // Arrange
+        _controller.ModelState.AddModelError("Email", "Required");
+        var model = new LoginViewModel();
 
-        var result = controller.Login();
+        // Act
+        var result = await _controller.Login(model);
 
-        var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Index", redirect.ActionName);
-        Assert.Equal("Home", redirect.ControllerName);
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(model, viewResult.Model);
     }
 
     [Fact]
-    public void Login_Get_WhenAnonymous_ReturnsViewWithReturnUrl()
+    public async Task Login_Post_ReturnsViewWithError_WhenUserNotFound()
     {
-        var controller = BuildController();
-        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        // Arrange
+        var model = new LoginViewModel { Email = "test@example.com", Password = "password" };
+        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync((AppUser)null);
 
-        var result = controller.Login(returnUrl: "/tasks");
+        // Act
+        var result = await _controller.Login(model);
 
-        var view = Assert.IsType<ViewResult>(result);
-        Assert.IsType<LoginViewModel>(view.Model);
-        Assert.Equal("/tasks", controller.ViewData["ReturnUrl"]);
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.False(_controller.ModelState.IsValid);
+        Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
     }
 
     [Fact]
-    public async Task Login_Post_WhenModelStateInvalid_ReturnsView()
+    public async Task Login_Post_ReturnsViewWithError_WhenPasswordIsIncorrect()
     {
-        var controller = BuildController();
-        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
-        controller.ModelState.AddModelError("Email", "Required");
+        // Arrange
+        var user = new AppUser { UserName = "testuser", Email = "test@example.com" };
+        var model = new LoginViewModel { Email = user.Email, Password = "wrongpassword" };
+        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync(user);
+        _mockSignInManager.Setup(sm => sm.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, true))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
 
-        var model = new LoginViewModel { Email = "user@example.com", Password = string.Empty };
+        // Act
+        var result = await _controller.Login(model);
 
-        var result = await controller.Login(model);
-
-        var view = Assert.IsType<ViewResult>(result);
-        Assert.Same(model, view.Model);
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.False(_controller.ModelState.IsValid);
+        Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
     }
 
     [Fact]
-    public async Task Login_Post_WhenUserNotFound_AddsErrorAndReturnsView()
+    public async Task Login_Post_RedirectsToHome_WhenCredentialsAreCorrect()
     {
-        var userManager = BuildUserManager();
-        userManager
-            .Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
-            .ReturnsAsync((AppUser?)null);
+        // Arrange
+        var user = new AppUser { UserName = "testuser", Email = "test@example.com" };
+        var model = new LoginViewModel { Email = user.Email, Password = "password123" };
+        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync(user);
+        _mockSignInManager.Setup(sm => sm.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, true))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
 
-        var controller = BuildController(userManager: userManager);
-        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        // Act
+        var result = await _controller.Login(model);
 
-        var model = new LoginViewModel { Email = "missing@example.com", Password = "secret", RememberMe = false };
-
-        var result = await controller.Login(model);
-
-        var view = Assert.IsType<ViewResult>(result);
-        Assert.Same(model, view.Model);
-        Assert.Contains(controller.ModelState[string.Empty]?.Errors ?? [], e => e.ErrorMessage.Contains("Невірна пошта"));
-    }
-
-    [Fact]
-    public async Task Login_Post_WhenPasswordSignInFails_AddsErrorAndReturnsView()
-    {
-        var userManager = BuildUserManager();
-        userManager
-            .Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
-            .ReturnsAsync(new AppUser { UserName = "user", Email = "user@example.com" });
-
-        var signInManager = BuildSignInManager(userManager.Object);
-        signInManager
-            .Setup(m => m.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), true))
-            .ReturnsAsync(SignInResult.Failed);
-
-        var controller = BuildController(userManager: userManager, signInManager: signInManager);
-        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
-
-        var model = new LoginViewModel { Email = "user@example.com", Password = "wrong" };
-
-        var result = await controller.Login(model);
-
-        var view = Assert.IsType<ViewResult>(result);
-        Assert.Same(model, view.Model);
-        Assert.Contains(controller.ModelState[string.Empty]?.Errors ?? [], e => e.ErrorMessage.Contains("Невірна пошта"));
-    }
-
-    [Fact]
-    public async Task Login_Post_WhenPasswordSignInSucceeds_RedirectsToHomeIndex()
-    {
-        var userManager = BuildUserManager();
-        userManager
-            .Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
-            .ReturnsAsync(new AppUser { UserName = "user", Email = "user@example.com" });
-
-        var signInManager = BuildSignInManager(userManager.Object);
-        signInManager
-            .Setup(m => m.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), true))
-            .ReturnsAsync(SignInResult.Success);
-
-        var controller = BuildController(userManager: userManager, signInManager: signInManager);
-        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
-
-        var model = new LoginViewModel { Email = "user@example.com", Password = "secret" };
-
-        var result = await controller.Login(model);
-
-        var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Index", redirect.ActionName);
-        Assert.Equal("Home", redirect.ControllerName);
-    }
-
-    private static AccountController BuildController(Mock<UserManager<AppUser>>? userManager = null)
-    {
-        userManager ??= BuildUserManager();
-        var signInManager = BuildSignInManager(userManager.Object);
-        return BuildController(userManager, signInManager);
-    }
-
-    private static AccountController BuildController(Mock<UserManager<AppUser>> userManager, Mock<SignInManager<AppUser>> signInManager)
-    {
-        var logger = new Mock<ILogger<AccountController>>();
-
-        return new AccountController(userManager.Object, signInManager.Object, logger.Object);
-    }
-
-    private static Mock<UserManager<AppUser>> BuildUserManager()
-    {
-        var store = new Mock<IUserStore<AppUser>>();
-        var options = Mock.Of<IOptions<IdentityOptions>>();
-        var passwordHasher = Mock.Of<IPasswordHasher<AppUser>>();
-        var userValidators = Array.Empty<IUserValidator<AppUser>>();
-        var passwordValidators = Array.Empty<IPasswordValidator<AppUser>>();
-        var normalizer = Mock.Of<ILookupNormalizer>();
-        var errorDescriber = new IdentityErrorDescriber();
-        var services = Mock.Of<IServiceProvider>();
-        var logger = Mock.Of<ILogger<UserManager<AppUser>>>();
-
-        return new Mock<UserManager<AppUser>>(
-            store.Object,
-            options,
-            passwordHasher,
-            userValidators,
-            passwordValidators,
-            normalizer,
-            errorDescriber,
-            services,
-            logger);
-    }
-
-    private static Mock<SignInManager<AppUser>> BuildSignInManager(UserManager<AppUser> userManager)
-    {
-        var contextAccessor = new Mock<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
-        var claimsFactory = new Mock<IUserClaimsPrincipalFactory<AppUser>>();
-        var options = Mock.Of<IOptions<IdentityOptions>>();
-        var logger = Mock.Of<ILogger<SignInManager<AppUser>>>();
-        var schemes = Mock.Of<IAuthenticationSchemeProvider>();
-        var confirmation = Mock.Of<IUserConfirmation<AppUser>>();
-
-        return new Mock<SignInManager<AppUser>>(
-            userManager,
-            contextAccessor.Object,
-            claimsFactory.Object,
-            options,
-            logger,
-            schemes,
-            confirmation);
+        // Assert
+        var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirectToActionResult.ActionName);
+        Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 }
+

@@ -15,11 +15,10 @@ public class TaskItem
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public AppUser User { get; set; } = null!;
-    public Goal? Goal { get; set; }
-    public TaskItem? ParentTask { get; set; }
-    public ICollection<TaskItem> SubTasks { get; set; } = new List<TaskItem>();
-    public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
-    public ICollection<Pomodoro> Pomodoros { get; set; } = new List<Pomodoro>();
+    public virtual AppUser User { get; set; } = null!;
+    public virtual Goal? Goal { get; set; }
+    public virtual TaskItem? ParentTask { get; set; }
+    public virtual ICollection<TaskItem> SubTasks { get; set; } = new List<TaskItem>();
+    public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+    public virtual ICollection<Pomodoro> Pomodoros { get; set; } = new List<Pomodoro>();
 }
-
