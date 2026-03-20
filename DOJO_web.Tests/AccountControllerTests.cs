@@ -4,6 +4,7 @@ using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -175,19 +176,17 @@ public class AccountControllerTests
         Assert.Equal("Home", redirect.ControllerName);
     }
 
-    private static AccountController BuildController(Mock<UserManager<AppUser>>? userManager = null)
+    private static AccountController BuildController(Mock<UserManager<AppUser>>? userManager = null, Mock<SignInManager<AppUser>>? signInManager = null)
     {
         userManager ??= BuildUserManager();
-        var signInManager = BuildSignInManager(userManager.Object);
-        return BuildController(userManager, signInManager);
-    }
-
-    private static AccountController BuildController(Mock<UserManager<AppUser>> userManager, Mock<SignInManager<AppUser>> signInManager)
-    {
+        signInManager ??= BuildSignInManager(userManager.Object);
         var logger = new Mock<ILogger<AccountController>>();
+        var emailSender = new Mock<IEmailSender>();
 
-        return new AccountController(userManager.Object, signInManager.Object, logger.Object);
+        return new AccountController(userManager.Object, signInManager.Object, logger.Object, emailSender.Object);
     }
+
+
 
     private static Mock<UserManager<AppUser>> BuildUserManager()
     {
