@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace DOJO_web.Tests;
 
@@ -17,6 +18,7 @@ public class AccountControllerTests
     private readonly Mock<UserManager<AppUser>> _mockUserManager;
     private readonly Mock<SignInManager<AppUser>> _mockSignInManager;
     private readonly Mock<ILogger<AccountController>> _mockLogger;
+    private readonly Mock<IEmailSender> _mockEmailSender;
     private readonly AccountController _controller;
 
     public AccountControllerTests()
@@ -32,10 +34,13 @@ public class AccountControllerTests
 
         _mockLogger = new Mock<ILogger<AccountController>>();
 
+        _mockEmailSender = new Mock<IEmailSender>();
+
         _controller = new AccountController(
             _mockUserManager.Object,
             _mockSignInManager.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockEmailSender.Object);
     }
 
     [Fact]
@@ -103,9 +108,7 @@ public class AccountControllerTests
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
         Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
-    }
-
-    [Fact]
+    }[Fact]
     public async Task Login_Post_ReturnsViewWithError_WhenPasswordIsIncorrect()
     {
         // Arrange
@@ -143,4 +146,3 @@ public class AccountControllerTests
         Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 }
-
