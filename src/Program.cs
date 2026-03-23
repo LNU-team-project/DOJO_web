@@ -1,5 +1,7 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
+using DOJO2.Infrastructure.Middleware;
+using DOJO2.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -73,6 +75,9 @@ try
 
     builder.Services.AddTransient<IEmailSender, EmailSender>();
     builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("SendGrid"));
+    
+    // Реєстрація сервісів
+    builder.Services.AddScoped<IAdminService, AdminService>();
 
     var app = builder.Build();
 
@@ -87,6 +92,9 @@ try
 
     // Логування HTTP запитів через Serilog
     app.UseSerilogRequestLogging();
+
+    // Глобальний обробник винятків
+    app.UseGlobalExceptionHandler();
 
     app.UseRouting();
 

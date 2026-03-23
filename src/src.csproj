@@ -6,6 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>DOJO2</RootNamespace>
         <UserSecretsId>dojo-web-dev-secrets</UserSecretsId>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningLevel>4</WarningLevel>
     </PropertyGroup>
 
     <ItemGroup>

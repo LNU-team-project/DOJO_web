@@ -1,20 +1,18 @@
-﻿using DOJO2.Infrastructure.Data;
+﻿﻿﻿using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DOJO2.Controllers
 {
     public class AdminController : Controller
     {
-        private readonly AppDbContext _context;
-        private readonly PasswordHasher<string> _passwordHasher;
+        private readonly IAdminService _adminService;
+        private readonly ILogger<AdminController> _logger;
 
-        public AdminController(AppDbContext context)
+        public AdminController(IAdminService adminService, ILogger<AdminController> logger)
         {
-            _context = context;
-            _passwordHasher = new PasswordHasher<string>();
+            _adminService = adminService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -29,18 +27,15 @@ namespace DOJO2.Controllers
         {
             if (ModelState.IsValid)
             {
-                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Login == model.Login);
-                if (admin != null)
-                {
-                    var result = _passwordHasher.VerifyHashedPassword(null, admin.Password, model.Password);
-                    if (result == PasswordVerificationResult.Success)
-                    {
-                        // Успішний вхід
-                        return RedirectToAction("LoginSuccess");
-                    }
-                }
+                var result = await _adminService.AuthenticateAdminAsync(model.Login ?? string.Empty, model.Password ?? string.Empty);
                 
-                ModelState.AddModelError(string.Empty, "Неправильний логін або пароль");
+                if (result.Success)
+                {
+                    _logger.LogInformation("Адміністратор успішно увійшов: {Login}", model.Login);
+                    return RedirectToAction("LoginSuccess");
+                }
+
+                ModelState.AddModelError(string.Empty, result.Message ?? "Помилка при аутентифікації");
             }
             return View(model);
         }

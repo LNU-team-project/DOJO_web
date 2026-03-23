@@ -93,7 +93,7 @@ body {
 
 .brand-subtitle {
   margin: 0;
-  color: var(--dojo-muted);
+  color: var(--dojo-ink);
 }
 
 .field {
@@ -105,7 +105,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 8px;
-  color: var(--dojo-muted);
+  color: var(--dojo-ink);
 }
 
 .form-field {
@@ -174,7 +174,7 @@ body {
 
 .register-btn:disabled {
   background: #d8d2cc;
-  color: #8f8a84;
+  color: #1f1f1f;
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
@@ -183,7 +183,7 @@ body {
 .register-footer {
   margin-top: 18px;
   text-align: center;
-  color: var(--dojo-muted);
+  color: var(--dojo-ink);
   font-size: 14px;
 }
 
@@ -253,7 +253,7 @@ body {
 }
 
 .forgot-password-link a {
-  color: #FF77BAFF; /* Рожевий колір */
+  color: var(--dojo-accent-strong);
   text-decoration: none;
 }
 

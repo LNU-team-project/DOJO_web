@@ -1,7 +1,7 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "Вітаємо";
     var isAuth = User?.Identity?.IsAuthenticated ?? false;
-    var userName = isAuth ? (User.Identity?.Name ?? "") : string.Empty;
+    var userName = isAuth ? (User?.Identity?.Name ?? "") : string.Empty;
 }
 
 <div class="register-page">

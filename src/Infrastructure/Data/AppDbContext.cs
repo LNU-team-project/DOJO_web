@@ -2,7 +2,6 @@ using DOJO2.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using DOJO2.Domain.Entities;
 
 namespace DOJO2.Infrastructure.Data;
 

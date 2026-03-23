@@ -30,7 +30,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
-        if (User?.Identity?.IsAuthenticated == true)
+        if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction("Index", "Home");
         }
@@ -58,7 +58,7 @@ public class AccountController : Controller
         }
 
         var signInResult = await _signInManager.PasswordSignInAsync(
-            user.UserName,
+            user.UserName ?? string.Empty,
             model.Password,
             model.RememberMe,
             lockoutOnFailure: true);
@@ -130,7 +130,7 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.FindByEmailAsync(model.Email ?? string.Empty);
             if (user == null)
             {
                 // Don't reveal that the user does not exist
@@ -138,12 +138,12 @@ public class AccountController : Controller
             }
 
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
 
             await _emailSender.SendEmailAsync(
-                model.Email,
+                model.Email ?? string.Empty,
                 "Reset Password",
-                $"Please reset your password by clicking here: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
+                $"Please reset your password by clicking here: <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>link</a>");
 
             return View("ForgotPasswordConfirmation");
         }
@@ -152,9 +152,9 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult ResetPassword(string code = null)
+    public IActionResult ResetPassword(string? code = null)
     {
-        return code == null ? View("Error") : View();
+        return string.IsNullOrEmpty(code) ? View("Error") : View();
     }
 
     [HttpPost]
@@ -165,13 +165,13 @@ public class AccountController : Controller
         {
             return View(model);
         }
-        var user = await _userManager.FindByEmailAsync(model.Email);
+        var user = await _userManager.FindByEmailAsync(model.Email ?? string.Empty);
         if (user == null)
         {
             // Don't reveal that the user does not exist
             return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
         }
-        var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+        var result = await _userManager.ResetPasswordAsync(user, model.Code ?? string.Empty, model.Password ?? string.Empty);
         if (result.Succeeded)
         {
             return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
@@ -194,18 +194,10 @@ public class AccountController : Controller
     {
         if (string.IsNullOrEmpty(email))
         {
-            return Content("Please provide an email address in the query string, e.g., /Account/TestEmail?email=your-email@example.com");
+            return Content("Будь ласка, надайте email адресу в query string, наприклад: /Account/TestEmail?email=your-email@example.com");
         }
 
-        try
-        {
-            await _emailSender.SendEmailAsync(email, "SendGrid Test", "This is a test email from SendGrid.");
-            return Content($"Test email sent to {email}. Please check your inbox.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error sending test email.");
-            return Content($"Failed to send test email. Check the logs for details. Error: {ex.Message}");
-        }
+        await _emailSender.SendEmailAsync(email, "SendGrid Test", "Це тестовий email з SendGrid.");
+        return Content($"Тестовий email відправлено на {email}. Перевірте свою поштову скриньку.");
     }
 }

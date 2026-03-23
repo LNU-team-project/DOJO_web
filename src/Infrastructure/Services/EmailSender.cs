@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using System.Threading.Tasks;
+using DOJO2.Infrastructure.Results;
 
 namespace src.Infrastructure.Services
 {
@@ -23,9 +23,45 @@ namespace src.Infrastructure.Services
         {
             if (string.IsNullOrEmpty(Options.SendGridKey))
             {
-                throw new Exception("Null SendGridKey");
+                throw new ArgumentException("SendGridKey не налаштований");
             }
             await Execute(Options.SendGridKey, subject, message, toEmail);
+        }
+
+        public async Task<Result> SendEmailWithResultAsync(string toEmail, string subject, string message)
+        {
+            if (string.IsNullOrEmpty(toEmail))
+            {
+                return Result.FailureResult("Email не може бути порожним");
+            }
+
+            if (string.IsNullOrEmpty(Options.SendGridKey))
+            {
+                _logger.LogError("SendGridKey не налаштований");
+                return Result.FailureResult("Сервіс email недоступний");
+            }
+
+            var client = new SendGridClient(Options.SendGridKey);
+            var msg = new SendGridMessage()
+            {
+                From = new EmailAddress("kahnovets.ap@gmail.com", "Password Recovery"),
+                Subject = subject,
+                PlainTextContent = message,
+                HtmlContent = message
+            };
+            msg.AddTo(new EmailAddress(toEmail));
+
+            msg.SetClickTracking(false, false);
+            var response = await client.SendEmailAsync(msg);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Email успішно відправлено на {Email}", toEmail);
+                return Result.SuccessResult($"Email відправлено на {toEmail}");
+            }
+
+            _logger.LogError("Помилка при відправці email на {Email}", toEmail);
+            return Result.FailureResult("Не вдалося відправити email");
         }
 
         private async Task Execute(string apiKey, string subject, string message, string toEmail)
@@ -52,6 +88,6 @@ namespace src.Infrastructure.Services
 
     public class AuthMessageSenderOptions
     {
-        public string SendGridKey { get; set; }
+        public string? SendGridKey { get; set; }
     }
 }

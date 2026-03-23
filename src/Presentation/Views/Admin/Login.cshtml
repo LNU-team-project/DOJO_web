@@ -18,14 +18,14 @@
             <div asp-validation-summary="ModelOnly" class="field-error" role="alert"></div>
 
             <div class="field">
-                <label asp-for="Login">Логін</label>
-                <input asp-for="Login" class="form-field" placeholder="Введіть логін адміністратора" required />
+                <label for="Login">Логін</label>
+                <input id="Login" name="Login" class="form-field" placeholder="Введіть логін адміністратора" required />
                 <span asp-validation-for="Login" class="field-error"></span>
             </div>
 
             <div class="field">
-                <label asp-for="Password">Пароль</label>
-                <input asp-for="Password" class="form-field" placeholder="Введіть пароль" required />
+                <label for="Password">Пароль</label>
+                <input id="Password" name="Password" type="password" class="form-field" placeholder="Введіть пароль" required />
                 <span asp-validation-for="Password" class="field-error"></span>
             </div>
 
