@@ -23,6 +23,12 @@ try
         WebRootPath = "Presentation/wwwroot"
     });
 
+    // Завантажити User Secrets у development середовищі
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
+
     // Налаштування Serilog з appsettings.json
     builder.Host.UseSerilog((context, config) =>
         config.ReadFrom.Configuration(context.Configuration));
