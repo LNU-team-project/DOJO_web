@@ -17,8 +17,8 @@
   const locale = "uk-UA";
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
   const timeSlots = Array.from(
-    { length: 10 },
-    (_, index) => `${String(index + 8).padStart(2, "0")}:00`,
+    { length: 24 },
+    (_, index) => `${String(index).padStart(2, "0")}:00`,
   );
 
   let weekOffset = 0;

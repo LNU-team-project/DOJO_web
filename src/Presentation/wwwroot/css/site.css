@@ -387,6 +387,10 @@ body {
 
 .dashboard-time-grid {
   display: grid;
+  max-height: 560px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .dashboard-grid-row {
