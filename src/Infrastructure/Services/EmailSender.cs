@@ -4,7 +4,7 @@ using SendGrid;
 using SendGrid.Helpers.Mail;
 using DOJO2.Infrastructure.Results;
 
-namespace src.Infrastructure.Services
+namespace DOJO2.Infrastructure.Services
 {
     public class EmailSender : IEmailSender
     {
@@ -19,20 +19,20 @@ namespace src.Infrastructure.Services
 
         public AuthMessageSenderOptions Options { get; } //Set with Secret Manager.
 
-        public async Task SendEmailAsync(string toEmail, string subject, string message)
+        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
             if (string.IsNullOrEmpty(Options.SendGridKey))
             {
                 throw new ArgumentException("SendGridKey не налаштований");
             }
-            await Execute(Options.SendGridKey, subject, message, toEmail);
+            await Execute(Options.SendGridKey, subject, htmlMessage, email);
         }
 
         public async Task<Result> SendEmailWithResultAsync(string toEmail, string subject, string message)
         {
             if (string.IsNullOrEmpty(toEmail))
             {
-                return Result.FailureResult("Email не може бути порожним");
+                return Result.FailureResult("Email не може бути порожнім");
             }
 
             if (string.IsNullOrEmpty(Options.SendGridKey))
@@ -81,8 +81,8 @@ namespace src.Infrastructure.Services
             msg.SetClickTracking(false, false);
             var response = await client.SendEmailAsync(msg);
             _logger.LogInformation(response.IsSuccessStatusCode
-                ? $"Email to {toEmail} queued successfully!"
-                : $"Failure Email to {toEmail}");
+                ? "Email to {Email} queued successfully!"
+                : "Failure Email to {Email}", toEmail);
         }
     }
 

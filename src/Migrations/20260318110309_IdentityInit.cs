@@ -9,87 +9,92 @@ namespace DOJO2.Migrations
     /// <inheritdoc />
     public partial class IdentityInit : Migration
     {
+        private const string UsersTable = "users";
+        private const string IntegerType = "integer";
+        private const string BooleanType = "boolean";
+        private const string AspNetRolesTable = "AspNetRoles";
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
                 name: "access_failed_count",
-                table: "users",
-                type: "integer",
+                table: UsersTable,
+                type: IntegerType,
                 nullable: false,
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<string>(
                 name: "concurrency_stamp",
-                table: "users",
+                table: UsersTable,
                 type: "text",
                 nullable: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "email_confirmed",
-                table: "users",
-                type: "boolean",
+                table: UsersTable,
+                type: BooleanType,
                 nullable: false,
                 defaultValue: false);
 
             migrationBuilder.AddColumn<DateTimeOffset>(
                 name: "lockout_end",
-                table: "users",
+                table: UsersTable,
                 type: "timestamp with time zone",
                 nullable: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "lockout_enabled",
-                table: "users",
-                type: "boolean",
+                table: UsersTable,
+                type: BooleanType,
                 nullable: false,
                 defaultValue: false);
 
             migrationBuilder.AddColumn<string>(
                 name: "normalized_email",
-                table: "users",
+                table: UsersTable,
                 type: "character varying(255)",
                 maxLength: 255,
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "normalized_user_name",
-                table: "users",
+                table: UsersTable,
                 type: "character varying(100)",
                 maxLength: 100,
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "phone_number",
-                table: "users",
+                table: UsersTable,
                 type: "text",
                 nullable: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "phone_number_confirmed",
-                table: "users",
-                type: "boolean",
+                table: UsersTable,
+                type: BooleanType,
                 nullable: false,
                 defaultValue: false);
 
             migrationBuilder.AddColumn<string>(
                 name: "security_stamp",
-                table: "users",
+                table: UsersTable,
                 type: "text",
                 nullable: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "two_factor_enabled",
-                table: "users",
-                type: "boolean",
+                table: UsersTable,
+                type: BooleanType,
                 nullable: false,
                 defaultValue: false);
 
             migrationBuilder.CreateTable(
-                name: "AspNetRoles",
+                name: AspNetRolesTable,
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: IntegerType, nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -104,9 +109,9 @@ namespace DOJO2.Migrations
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: IntegerType, nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    RoleId = table.Column<int>(type: IntegerType, nullable: false),
                     ClaimType = table.Column<string>(type: "text", nullable: true),
                     ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
@@ -116,7 +121,7 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
                         column: x => x.RoleId,
-                        principalTable: "AspNetRoles",
+                        principalTable: AspNetRolesTable,
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -125,9 +130,9 @@ namespace DOJO2.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: IntegerType, nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: IntegerType, nullable: false),
                     ClaimType = table.Column<string>(type: "text", nullable: true),
                     ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
@@ -137,7 +142,7 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserClaims_users_UserId",
                         column: x => x.UserId,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -149,7 +154,7 @@ namespace DOJO2.Migrations
                     LoginProvider = table.Column<string>(type: "text", nullable: false),
                     ProviderKey = table.Column<string>(type: "text", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
+                    UserId = table.Column<int>(type: IntegerType, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -157,7 +162,7 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserLogins_users_UserId",
                         column: x => x.UserId,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -166,8 +171,8 @@ namespace DOJO2.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    RoleId = table.Column<int>(type: "integer", nullable: false)
+                    UserId = table.Column<int>(type: IntegerType, nullable: false),
+                    RoleId = table.Column<int>(type: IntegerType, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -175,13 +180,13 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
                         column: x => x.RoleId,
-                        principalTable: "AspNetRoles",
+                        principalTable: AspNetRolesTable,
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AspNetUserRoles_users_UserId",
                         column: x => x.UserId,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -190,7 +195,7 @@ namespace DOJO2.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: IntegerType, nullable: false),
                     LoginProvider = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<string>(type: "text", nullable: true)
@@ -201,7 +206,7 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserTokens_users_UserId",
                         column: x => x.UserId,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -213,7 +218,7 @@ namespace DOJO2.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
-                table: "AspNetRoles",
+                table: AspNetRolesTable,
                 column: "NormalizedName",
                 unique: true);
 
@@ -234,12 +239,12 @@ namespace DOJO2.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
-                table: "users",
+                table: UsersTable,
                 column: "normalized_email");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
-                table: "users",
+                table: UsersTable,
                 column: "normalized_user_name",
                 unique: true);
         }
@@ -263,58 +268,58 @@ namespace DOJO2.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: AspNetRolesTable);
             migrationBuilder.DropIndex(
                 name: "EmailIndex",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropIndex(
                 name: "UserNameIndex",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "access_failed_count",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "concurrency_stamp",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "email_confirmed",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "lockout_end",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "lockout_enabled",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "normalized_email",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "normalized_user_name",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "phone_number",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "phone_number_confirmed",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "security_stamp",
-                table: "users");
+                table: UsersTable);
 
             migrationBuilder.DropColumn(
                 name: "two_factor_enabled",
-                table: "users");
+                table: UsersTable);
         }
     }
 }

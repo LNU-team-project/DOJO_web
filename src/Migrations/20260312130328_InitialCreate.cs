@@ -9,23 +9,34 @@ namespace DOJO2.Migrations
     /// <inheritdoc />
     public partial class InitialCreate : Migration
     {
+        private const string UsersTable = "users";
+        private const string GoalsTable = "goals";
+        private const string TasksTable = "tasks";
+        private const string PomodorosTable = "pomodoros";
+        private const string IntegerType = "integer";
+        private const string SmallIntType = "smallint";
+        private const string TimestampWithTimeZoneType = "timestamp with time zone";
+        private const string CharacterVarying255Type = "character varying(255)";
+        private const string ValueGenerationStrategyAnnotation = "Npgsql:ValueGenerationStrategy";
+        private const string NowSqlExpression = "NOW()";
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "users",
+                name: UsersTable,
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
-                    email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    id = table.Column<int>(type: IntegerType, nullable: false)
+                        .Annotation(ValueGenerationStrategyAnnotation, NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    email = table.Column<string>(type: CharacterVarying255Type, maxLength: 255, nullable: false),
                     user_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     password_hash = table.Column<string>(type: "text", nullable: false),
-                    exp_points = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    level = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    current_streak = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    exp_points = table.Column<int>(type: IntegerType, nullable: false, defaultValue: 0),
+                    level = table.Column<int>(type: IntegerType, nullable: false, defaultValue: 1),
+                    current_streak = table.Column<int>(type: IntegerType, nullable: false, defaultValue: 0),
                     last_completion_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    created_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false, defaultValueSql: NowSqlExpression)
                 },
                 constraints: table =>
                 {
@@ -33,20 +44,20 @@ namespace DOJO2.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "goals",
+                name: GoalsTable,
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    id = table.Column<int>(type: IntegerType, nullable: false)
+                        .Annotation(ValueGenerationStrategyAnnotation, NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    user_id = table.Column<int>(type: IntegerType, nullable: false),
+                    title = table.Column<string>(type: CharacterVarying255Type, maxLength: 255, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     deadline = table.Column<DateOnly>(type: "date", nullable: true),
-                    priority = table.Column<short>(type: "smallint", nullable: false, defaultValue: (short)2),
-                    progress = table.Column<short>(type: "smallint", nullable: false, defaultValue: (short)0),
+                    priority = table.Column<short>(type: SmallIntType, nullable: false, defaultValue: (short)2),
+                    progress = table.Column<short>(type: SmallIntType, nullable: false, defaultValue: (short)0),
                     is_completed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    created_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false, defaultValueSql: NowSqlExpression),
+                    updated_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false, defaultValueSql: NowSqlExpression)
                 },
                 constraints: table =>
                 {
@@ -56,27 +67,27 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_goals_users_user_id",
                         column: x => x.user_id,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "tasks",
+                name: TasksTable,
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    goal_id = table.Column<int>(type: "integer", nullable: true),
-                    parent_task_id = table.Column<int>(type: "integer", nullable: true),
-                    title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    id = table.Column<int>(type: IntegerType, nullable: false)
+                        .Annotation(ValueGenerationStrategyAnnotation, NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    user_id = table.Column<int>(type: IntegerType, nullable: false),
+                    goal_id = table.Column<int>(type: IntegerType, nullable: true),
+                    parent_task_id = table.Column<int>(type: IntegerType, nullable: true),
+                    title = table.Column<string>(type: CharacterVarying255Type, maxLength: 255, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     is_completed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     due_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    priority = table.Column<short>(type: "smallint", nullable: false, defaultValue: (short)2),
-                    completed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    priority = table.Column<short>(type: SmallIntType, nullable: false, defaultValue: (short)2),
+                    completed_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: true),
+                    created_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false, defaultValueSql: NowSqlExpression)
                 },
                 constraints: table =>
                 {
@@ -86,19 +97,19 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_tasks_goals_goal_id",
                         column: x => x.goal_id,
-                        principalTable: "goals",
+                        principalTable: GoalsTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_tasks_tasks_parent_task_id",
                         column: x => x.parent_task_id,
-                        principalTable: "tasks",
+                        principalTable: TasksTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_tasks_users_user_id",
                         column: x => x.user_id,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -107,12 +118,12 @@ namespace DOJO2.Migrations
                 name: "attachments",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
-                    task_id = table.Column<int>(type: "integer", nullable: false),
-                    file_name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    id = table.Column<int>(type: IntegerType, nullable: false)
+                        .Annotation(ValueGenerationStrategyAnnotation, NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    task_id = table.Column<int>(type: IntegerType, nullable: false),
+                    file_name = table.Column<string>(type: CharacterVarying255Type, maxLength: 255, nullable: false),
                     file_path = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    created_at = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false, defaultValueSql: NowSqlExpression)
                 },
                 constraints: table =>
                 {
@@ -120,23 +131,23 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_attachments_tasks_task_id",
                         column: x => x.task_id,
-                        principalTable: "tasks",
+                        principalTable: TasksTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "pomodoros",
+                name: PomodorosTable,
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    task_id = table.Column<int>(type: "integer", nullable: true),
-                    start_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    end_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    duration_minutes = table.Column<short>(type: "smallint", nullable: true),
-                    work_cycles = table.Column<short>(type: "smallint", nullable: false, defaultValue: (short)1)
+                    id = table.Column<int>(type: IntegerType, nullable: false)
+                        .Annotation(ValueGenerationStrategyAnnotation, NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    user_id = table.Column<int>(type: IntegerType, nullable: false),
+                    task_id = table.Column<int>(type: IntegerType, nullable: true),
+                    start_time = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: false),
+                    end_time = table.Column<DateTime>(type: TimestampWithTimeZoneType, nullable: true),
+                    duration_minutes = table.Column<short>(type: SmallIntType, nullable: true),
+                    work_cycles = table.Column<short>(type: SmallIntType, nullable: false, defaultValue: (short)1)
                 },
                 constraints: table =>
                 {
@@ -147,13 +158,13 @@ namespace DOJO2.Migrations
                     table.ForeignKey(
                         name: "FK_pomodoros_tasks_task_id",
                         column: x => x.task_id,
-                        principalTable: "tasks",
+                        principalTable: TasksTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_pomodoros_users_user_id",
                         column: x => x.user_id,
-                        principalTable: "users",
+                        principalTable: UsersTable,
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -165,53 +176,53 @@ namespace DOJO2.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_goals_is_completed",
-                table: "goals",
+                table: GoalsTable,
                 column: "is_completed");
 
             migrationBuilder.CreateIndex(
                 name: "IX_goals_user_id",
-                table: "goals",
+                table: GoalsTable,
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_pomodoros_task_id",
-                table: "pomodoros",
+                table: PomodorosTable,
                 column: "task_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_pomodoros_user_id",
-                table: "pomodoros",
+                table: PomodorosTable,
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tasks_goal_id",
-                table: "tasks",
+                table: TasksTable,
                 column: "goal_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tasks_is_completed",
-                table: "tasks",
+                table: TasksTable,
                 column: "is_completed");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tasks_parent_task_id",
-                table: "tasks",
+                table: TasksTable,
                 column: "parent_task_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tasks_user_id",
-                table: "tasks",
+                table: TasksTable,
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_email",
-                table: "users",
+                table: UsersTable,
                 column: "email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_user_name",
-                table: "users",
+                table: UsersTable,
                 column: "user_name",
                 unique: true);
         }
@@ -223,16 +234,16 @@ namespace DOJO2.Migrations
                 name: "attachments");
 
             migrationBuilder.DropTable(
-                name: "pomodoros");
+                name: PomodorosTable);
 
             migrationBuilder.DropTable(
-                name: "tasks");
+                name: TasksTable);
 
             migrationBuilder.DropTable(
-                name: "goals");
+                name: GoalsTable);
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: UsersTable);
         }
     }
 }

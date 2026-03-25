@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using DOJO2.Presentation.ViewModels;
 using Xunit;
 
+namespace DOJO_web.Tests;
+
 public class LoginViewModelTests
 {
     private static IList<ValidationResult> ValidateModel(LoginViewModel model)

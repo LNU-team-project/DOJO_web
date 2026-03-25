@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard-page" data-dashboard-root>
+    <header class="dashboard-header" aria-label="Dashboard navigation">
+        <h1 class="dashboard-title">Dashboard</h1>
+
+        <fieldset class="dashboard-range-control">
+            <legend class="visually-hidden">Date range selector</legend>
+            <button type="button"
+                    class="dashboard-arrow"
+                    data-range-dir="prev"
+                    aria-label="Попередній тиждень">
+                &#9664;
+            </button>
+
+            <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
+
+            <button type="button"
+                    class="dashboard-arrow"
+                    data-range-dir="next"
+                    aria-label="Наступний тиждень">
+                &#9654;
+            </button>
+        </fieldset>
+    </header>
+
+    <section class="dashboard-board" aria-label="Тижневий календар">
+        <div class="dashboard-days" data-days-header></div>
+        <div class="dashboard-time-grid" data-time-grid></div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

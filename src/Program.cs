@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using src.Infrastructure.Services;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -108,7 +107,7 @@ try
         pattern: "{controller=Account}/{action=Register}/{id?}");
 
 
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception ex)when (ex.GetType().Name is not "StopTheHostException" && ex.GetType().Name is not "HostAbortedException")
 {
@@ -116,5 +115,5 @@ catch (Exception ex)when (ex.GetType().Name is not "StopTheHostException" && ex.
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }

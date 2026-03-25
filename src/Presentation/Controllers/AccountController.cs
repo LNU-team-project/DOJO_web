@@ -32,7 +32,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Dashboard", "Home");
         }
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -70,7 +70,7 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation("User logged in: {UserName}", user.UserName);
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Dashboard", "Home");
     }
 
     [HttpPost]
@@ -114,8 +114,8 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation("User created: {UserName}", user.UserName);
-
-        return RedirectToAction("Index", "Home");
+        await _signInManager.SignInAsync(user, isPersistent: false);
+        return RedirectToAction("Dashboard", "Home");
     }
     
     [HttpGet]

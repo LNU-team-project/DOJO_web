@@ -7,6 +7,9 @@ namespace DOJO2.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
 {
+    private const string CreatedAtColumnName = "created_at";
+    private const string NowSqlExpression = "NOW()";
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Goal> Goals => Set<Goal>();
@@ -15,12 +18,12 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(modelBuilder);
+        base.OnModelCreating(builder);
 
         // ── AppUser (Identity) ────────────────────────────────
-        modelBuilder.Entity<AppUser>(e =>
+        builder.Entity<AppUser>(e =>
         {
             e.ToTable("users");
             e.Property(u => u.Id).HasColumnName("id").UseIdentityAlwaysColumn();
@@ -42,14 +45,14 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.Property(u => u.Level).HasColumnName("level").HasDefaultValue(1);
             e.Property(u => u.CurrentStreak).HasColumnName("current_streak").HasDefaultValue(0);
             e.Property(u => u.LastCompletionDate).HasColumnName("last_completion_date");
-            e.Property(u => u.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            e.Property(u => u.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
 
             e.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
             e.HasIndex(u => u.NormalizedUserName).IsUnique().HasDatabaseName("UserNameIndex");
         });
 
         // ── Goal ──────────────────────────────────────────────
-        modelBuilder.Entity<Goal>(e =>
+        builder.Entity<Goal>(e =>
         {
             e.ToTable("goals", t =>
             {
@@ -65,8 +68,8 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.Property(g => g.Priority).HasColumnName("priority").HasDefaultValue((short)2);
             e.Property(g => g.Progress).HasColumnName("progress").HasDefaultValue((short)0);
             e.Property(g => g.IsCompleted).HasColumnName("is_completed").HasDefaultValue(false);
-            e.Property(g => g.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
-            e.Property(g => g.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            e.Property(g => g.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+            e.Property(g => g.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql(NowSqlExpression);
 
             e.HasOne(g => g.User)
                 .WithMany(u => u.Goals)
@@ -78,7 +81,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         });
 
         // ── Admin ──────────────────────────────────────────────
-        modelBuilder.Entity<Admin>(e =>
+        builder.Entity<Admin>(e =>
         {
             e.ToTable("admins");
             e.HasKey(a => a.Id);
@@ -89,7 +92,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         });
 
         // ── TaskItem ──────────────────────────────────────────
-        modelBuilder.Entity<TaskItem>(e =>
+        builder.Entity<TaskItem>(e =>
         {
             e.ToTable("tasks", tb =>
             {
@@ -107,7 +110,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.Property(task => task.DueDate).HasColumnName("due_date");
             e.Property(task => task.Priority).HasColumnName("priority").HasDefaultValue((short)2);
             e.Property(task => task.CompletedAt).HasColumnName("completed_at");
-            e.Property(task => task.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            e.Property(task => task.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
 
             e.HasOne(task => task.User)
                 .WithMany(u => u.Tasks)
@@ -131,7 +134,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         });
 
         // ── Pomodoro ──────────────────────────────────────────
-        modelBuilder.Entity<Pomodoro>(e =>
+        builder.Entity<Pomodoro>(e =>
         {
             e.ToTable("pomodoros", t =>
             {
@@ -163,7 +166,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         });
 
         // ── Attachment ────────────────────────────────────────
-        modelBuilder.Entity<Attachment>(e =>
+        builder.Entity<Attachment>(e =>
         {
             e.ToTable("attachments");
             e.HasKey(a => a.Id);
@@ -171,7 +174,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.Property(a => a.TaskId).HasColumnName("task_id");
             e.Property(a => a.FileName).HasColumnName("file_name").HasMaxLength(255).IsRequired();
             e.Property(a => a.FilePath).HasColumnName("file_path").IsRequired();
-            e.Property(a => a.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            e.Property(a => a.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
 
             e.HasOne(a => a.Task)
                 .WithMany(t => t.Attachments)
