@@ -107,7 +107,7 @@ try
         pattern: "{controller=Account}/{action=Register}/{id?}");
 
 
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception ex)when (ex.GetType().Name is not "StopTheHostException" && ex.GetType().Name is not "HostAbortedException")
 {
@@ -115,5 +115,5 @@ catch (Exception ex)when (ex.GetType().Name is not "StopTheHostException" && ex.
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }

@@ -61,7 +61,7 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public void Login_RedirectsToHome_WhenUserIsAuthenticated()
+    public void Login_RedirectsToDashboard_WhenUserIsAuthenticated()
     {
         // Arrange
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "testuser") }, "mock"));
@@ -75,7 +75,7 @@ public class AccountControllerTests
 
         // Assert
         var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Index", redirectToActionResult.ActionName);
+        Assert.Equal("Dashboard", redirectToActionResult.ActionName);
         Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 
@@ -105,10 +105,11 @@ public class AccountControllerTests
         var result = await _controller.Login(model);
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
         Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
-    }[Fact]
+
+    [Fact]
     public async Task Login_Post_ReturnsViewWithError_WhenPasswordIsIncorrect()
     {
         // Arrange
@@ -122,13 +123,13 @@ public class AccountControllerTests
         var result = await _controller.Login(model);
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
         Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
     }
 
     [Fact]
-    public async Task Login_Post_RedirectsToHome_WhenCredentialsAreCorrect()
+    public async Task Login_Post_RedirectsToDashboard_WhenCredentialsAreCorrect()
     {
         // Arrange
         var user = new AppUser { UserName = "testuser", Email = "test@example.com" };
@@ -142,7 +143,7 @@ public class AccountControllerTests
 
         // Assert
         var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Index", redirectToActionResult.ActionName);
+        Assert.Equal("Dashboard", redirectToActionResult.ActionName);
         Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 }

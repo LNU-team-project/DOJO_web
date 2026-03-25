@@ -8,12 +8,14 @@ namespace DOJO2.Migrations
     /// <inheritdoc />
     public partial class AddAdminAndSeedData : Migration
     {
+        private const string AdminsTable = "admins";
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateIndex(
                 name: "IX_admins_login",
-                table: "admins",
+                table: AdminsTable,
                 column: "login",
                 unique: true);
 
@@ -21,7 +23,7 @@ namespace DOJO2.Migrations
             var hashedPassword = passwordHasher.HashPassword(null, "24062006");
 
             migrationBuilder.InsertData(
-                table: "admins",
+                table: AdminsTable,
                 columns: new[] { "login", "password" },
                 values: new object[] { "sxolixs", hashedPassword });
         }
@@ -31,10 +33,10 @@ namespace DOJO2.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_admins_login",
-                table: "admins");
+                table: AdminsTable);
 
             migrationBuilder.DeleteData(
-                table: "admins",
+                table: AdminsTable,
                 keyColumn: "login",
                 keyValue: "sxolixs");
         }
