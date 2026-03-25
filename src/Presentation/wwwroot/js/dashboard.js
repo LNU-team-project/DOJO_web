@@ -17,8 +17,8 @@
   const locale = "uk-UA";
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
   const timeSlots = Array.from(
-    { length: 24 },
-    (_, index) => `${String(index).padStart(2, "0")}:00`,
+      { length: 24 },
+      (_, index) => `${String(index).padStart(2, "0")}:00`,
   );
 
   let weekOffset = 0;
@@ -41,11 +41,11 @@
   };
 
   const formatDate = (date) =>
-    date.toLocaleDateString(locale, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+      date.toLocaleDateString(locale, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
 
   const renderRange = (dates) => {
     const start = dates[0];

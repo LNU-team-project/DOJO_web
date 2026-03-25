@@ -77,6 +77,7 @@ try
     
     // Реєстрація сервісів
     builder.Services.AddScoped<IAdminService, AdminService>();
+    builder.Services.AddScoped<ITodoService, TodoService>();
 
     var app = builder.Build();
 

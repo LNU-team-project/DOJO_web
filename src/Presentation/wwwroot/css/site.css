@@ -34,8 +34,8 @@ html {
 .form-control:focus,
 .form-check-input:focus {
   box-shadow:
-    0 0 0 0.1rem white,
-    0 0 0 0.25rem #258cfb;
+          0 0 0 0.1rem white,
+          0 0 0 0.25rem #258cfb;
 }
 
 html,
@@ -53,10 +53,10 @@ body {
   place-items: center;
   padding: 48px 16px 80px;
   background: radial-gradient(
-    circle at top,
-    #fff7f5 0%,
-    #f9f5f2 55%,
-    #f4f0eb 100%
+          circle at top,
+          #fff7f5 0%,
+          #f9f5f2 55%,
+          #f4f0eb 100%
   );
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
   color: var(--dojo-ink);
@@ -115,9 +115,9 @@ body {
   border-radius: 14px;
   padding: 12px 14px;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          background 0.2s ease;
   background: #fffdfa;
 }
 
@@ -155,15 +155,15 @@ body {
   font-weight: 700;
   color: #ffffff;
   background: linear-gradient(
-    135deg,
-    var(--dojo-accent) 0%,
-    var(--dojo-accent-strong) 100%
+          135deg,
+          var(--dojo-accent) 0%,
+          var(--dojo-accent-strong) 100%
   );
   box-shadow: 0 14px 24px rgba(255, 90, 120, 0.3);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          filter 0.2s ease;
   cursor: pointer;
 }
 
@@ -243,7 +243,7 @@ body {
 
 .form-floating > .form-control-plaintext::placeholder,
 .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
+  color: var(--dojo-muted);
   text-align: end;
 }
 
@@ -265,12 +265,12 @@ body {
   min-height: 100vh;
   padding: 24px 18px 34px;
   background:
-    radial-gradient(
-      circle at 10% 0%,
-      rgba(255, 214, 225, 0.55) 0%,
-      transparent 38%
-    ),
-    linear-gradient(180deg, #fff8fb 0%, #fffdf8 100%);
+          radial-gradient(
+                  circle at 10% 0%,
+                  rgba(255, 214, 225, 0.55) 0%,
+                  transparent 38%
+          ),
+          linear-gradient(180deg, #fff8fb 0%, #fffdf8 100%);
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
   color: #3f2d36;
 }
@@ -314,9 +314,9 @@ body {
   line-height: 1;
   cursor: pointer;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
 }
 
 .dashboard-arrow:hover {
