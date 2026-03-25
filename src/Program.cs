@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using src.Infrastructure.Services;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
