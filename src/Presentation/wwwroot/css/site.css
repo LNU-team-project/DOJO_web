@@ -243,7 +243,7 @@ body {
 
 .form-floating > .form-control-plaintext::placeholder,
 .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
+  color: var(--dojo-muted);
   text-align: end;
 }
 
@@ -339,6 +339,9 @@ body {
 }
 
 .dashboard-board {
+  --dashboard-time-column: 78px;
+  --dashboard-row-height: 56px;
+
   max-width: 1200px;
   margin: 0 auto;
   border: 1px solid #efd8e3;
@@ -350,8 +353,9 @@ body {
 
 .dashboard-days {
   display: grid;
-  grid-template-columns: 78px repeat(7, minmax(80px, 1fr));
+  grid-template-columns: var(--dashboard-time-column) repeat(7, minmax(0, 1fr));
   border-bottom: 1px solid #f2e5eb;
+  padding-right: var(--dashboard-scrollbar-offset, 0px);
 }
 
 .dashboard-day-spacer {
@@ -395,8 +399,8 @@ body {
 
 .dashboard-grid-row {
   display: grid;
-  grid-template-columns: 78px 1fr;
-  min-height: 56px;
+  grid-template-columns: var(--dashboard-time-column) minmax(0, 1fr);
+  min-height: var(--dashboard-row-height);
   border-bottom: 1px solid #f4ebef;
 }
 
@@ -416,10 +420,11 @@ body {
 
 .dashboard-row-cells {
   display: grid;
-  grid-template-columns: repeat(7, minmax(80px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .dashboard-slot-cell {
+  box-sizing: border-box;
   border-right: 1px solid #f8eef2;
 }
 

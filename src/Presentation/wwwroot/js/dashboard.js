@@ -103,11 +103,20 @@
     });
   };
 
+  const syncHeaderWithGrid = () => {
+    const scrollbarWidth = timeGrid.offsetWidth - timeGrid.clientWidth;
+    root.style.setProperty(
+      "--dashboard-scrollbar-offset",
+      `${Math.max(scrollbarWidth, 0)}px`,
+    );
+  };
+
   const render = () => {
     const dates = getWeekDates();
     renderRange(dates);
     renderDays(dates);
     renderTimeGrid();
+    syncHeaderWithGrid();
   };
 
   prevButton.addEventListener("click", () => {
@@ -119,6 +128,8 @@
     weekOffset += 1;
     render();
   });
+
+  window.addEventListener("resize", syncHeaderWithGrid);
 
   render();
 })();

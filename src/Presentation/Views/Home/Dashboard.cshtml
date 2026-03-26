@@ -24,14 +24,97 @@
                 &#9654;
             </button>
         </fieldset>
+
+        <button type="button"
+                class="dashboard-todo-btn"
+                id="openTodoModal">
+            Додати нове TODO
+        </button>
     </header>
 
     <section class="dashboard-board" aria-label="Тижневий календар">
         <div class="dashboard-days" data-days-header></div>
         <div class="dashboard-time-grid" data-time-grid></div>
     </section>
+
+    <section class="todo-list-section" aria-label="Список TODO завдань">
+        <div class="todo-list-container">
+            <h2 class="todo-list-title">Завдання</h2>
+            <div class="todo-items" id="allTodoItems">
+                <p class="todo-empty-message">Немає завдань</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="todo-modal" id="todoModal" aria-hidden="true" aria-labelledby="todoModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="todoModalTitle">Додати нове TODO</h2>
+            <button type="button" class="todo-modal-close" id="closeTodoModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <form id="todoForm" class="todo-form">
+            <div class="form-group">
+                <label for="todoTitle">Назва завдання *</label>
+                <input type="text"
+                       id="todoTitle"
+                       name="title"
+                       class="form-control"
+                       placeholder="Введіть назву завдання"
+                       required
+                       maxlength="255" />
+            </div>
+
+            <div class="form-group">
+                <label for="todoDescription">Опис</label>
+                <textarea id="todoDescription"
+                          name="description"
+                          class="form-control"
+                          placeholder="Введіть опис завдання (необов'язково)"
+                          rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+                <fieldset class="form-group">
+                    <legend>Складність *</legend>
+                    <div class="priority-options">
+                        <label class="priority-radio">
+                            <input type="radio" name="priority" value="1" class="priority-input">
+                            <span class="priority-label priority-low">
+                                <span class="priority-dot"></span>
+                                Низька
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="priority" value="2" class="priority-input" checked>
+                            <span class="priority-label priority-medium">
+                                <span class="priority-dot"></span>
+                                Середня
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="priority" value="3" class="priority-input">
+                            <span class="priority-label priority-high">
+                                <span class="priority-dot"></span>
+                                Висока
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelTodoBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Додати TODO</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/todo.js" asp-append-version="true"></script>
 }

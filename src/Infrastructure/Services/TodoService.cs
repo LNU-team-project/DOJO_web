@@ -1,0 +1,233 @@
+﻿using DOJO2.Domain.Entities;
+using DOJO2.Infrastructure.Data;
+using DOJO2.Infrastructure.Results;
+using DOJO2.Presentation.ViewModels;
+using Microsoft.EntityFrameworkCore;
+
+namespace DOJO2.Infrastructure.Services;
+
+
+public interface ITodoService
+{
+    Task<Result<TodoItemViewModel>> CreateTodoAsync(int userId, TodoCreateViewModel model);
+    Task<Result<TodoListViewModel>> GetUserTodosAsync(int userId);
+    Task<Result<bool>> MarkTodoAsCompletedAsync(int todoId, int userId);
+    Task<Result<bool>> MarkTodoAsIncompleteAsync(int todoId, int userId);
+    Task<Result<bool>> DeleteTodoAsync(int todoId, int userId);
+}
+
+
+public class TodoService : ITodoService
+{
+    private static class PriorityLevels
+    {
+        public const int Low = 1;
+        public const int Medium = 2;
+        public const int High = 3;
+    }
+
+    private readonly AppDbContext _context;
+    private readonly ILogger<TodoService> _logger;
+
+    public TodoService(AppDbContext context, ILogger<TodoService> logger)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<TodoItemViewModel>> CreateTodoAsync(int userId, TodoCreateViewModel? model)
+    {
+        if (model == null)
+        {
+            _logger.LogWarning("Спроба створити TODO з null моделлю для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожною");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            _logger.LogWarning("Спроба створити TODO з порожною назвою для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Назва TODO не може бути порожною");
+        }
+
+        if (model.Title.Length > 255)
+        {
+            _logger.LogWarning("Назва TODO перевищує максимальну довжину для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Назва TODO не може перевищувати 255 символів");
+        }
+
+        var todo = new TaskItem
+        {
+            UserId = userId,
+            Title = model.Title.Trim(),
+            Description = model.Description?.Trim(),
+            Priority = model.Priority,
+            DueDate = model.DueDate,
+            IsCompleted = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Tasks.Add(todo);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("TODO завдання створено: {TodoId} для користувача {UserId}", todo.Id, userId);
+
+        return Result<TodoItemViewModel>.SuccessResult(
+            MapToViewModel(todo),
+            "TODO завдання успішно створено"
+        );
+    }
+
+    public async Task<Result<TodoListViewModel>> GetUserTodosAsync(int userId)
+    {
+        var todos = await _context.Tasks
+            .Where(t => t.UserId == userId && t.GoalId == null && t.ParentTaskId == null)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        var incompleteTodos = SortIncompleteTodos(todos);
+        var completedTodos = SortCompletedTodos(todos);
+
+        var result = new TodoListViewModel
+        {
+            IncompleteTodos = incompleteTodos,
+            CompletedTodos = completedTodos
+        };
+
+        return Result<TodoListViewModel>.SuccessResult(result, "TODO завдання отримано");
+    }
+
+    public async Task<Result<bool>> MarkTodoAsCompletedAsync(int todoId, int userId)
+    {
+        var todo = await GetUserTodoAsync(todoId, userId);
+
+        if (todo == null)
+        {
+            _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
+            return Result<bool>.FailureResult("TODO завдання не знайдено");
+        }
+
+        if (todo.IsCompleted)
+        {
+            _logger.LogWarning("TODO {TodoId} вже позначене як виконане", todoId);
+            return Result<bool>.FailureResult("TODO завдання вже позначене як виконане");
+        }
+
+        todo.IsCompleted = true;
+        todo.CompletedAt = DateTime.UtcNow;
+
+        _context.Tasks.Update(todo);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("TODO {TodoId} позначене як виконане для користувача {UserId}", todoId, userId);
+
+        return Result<bool>.SuccessResult(true, "TODO завдання позначено як виконане");
+    }
+
+    public async Task<Result<bool>> MarkTodoAsIncompleteAsync(int todoId, int userId)
+    {
+        var todo = await GetUserTodoAsync(todoId, userId);
+
+        if (todo == null)
+        {
+            _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
+            return Result<bool>.FailureResult("TODO завдання не знайдено");
+        }
+
+        if (!todo.IsCompleted)
+        {
+            _logger.LogWarning("TODO {TodoId} вже позначене як невиконане", todoId);
+            return Result<bool>.FailureResult("TODO завдання вже позначене як невиконане");
+        }
+
+        todo.IsCompleted = false;
+        todo.CompletedAt = null;
+
+        _context.Tasks.Update(todo);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("TODO {TodoId} позначене як невиконане для користувача {UserId}", todoId, userId);
+
+        return Result<bool>.SuccessResult(true, "TODO завдання позначено як невиконане");
+    }
+
+    public async Task<Result<bool>> DeleteTodoAsync(int todoId, int userId)
+    {
+        var todo = await GetUserTodoAsync(todoId, userId);
+
+        if (todo == null)
+        {
+            _logger.LogWarning("TODO {TodoId} не знайдено для видалення користувачем {UserId}", todoId, userId);
+            return Result<bool>.FailureResult("TODO завдання не знайдено");
+        }
+
+        _context.Tasks.Remove(todo);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("TODO {TodoId} видалено для користувача {UserId}", todoId, userId);
+
+        return Result<bool>.SuccessResult(true, "TODO завдання видалено");
+    }
+
+    private async Task<TaskItem?> GetUserTodoAsync(int todoId, int userId)
+    {
+        return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == todoId && t.UserId == userId);
+    }
+
+    private static List<TodoItemViewModel> SortIncompleteTodos(List<TaskItem> todos)
+    {
+        return todos
+            .Where(t => !t.IsCompleted)
+            .OrderBy(t => GetPriorityOrder(t.Priority))
+            .ThenBy(t => t.DueDate)
+            .Select(MapToViewModel)
+            .ToList();
+    }
+
+    private static List<TodoItemViewModel> SortCompletedTodos(List<TaskItem> todos)
+    {
+        return todos
+            .Where(t => t.IsCompleted)
+            .OrderByDescending(t => t.CompletedAt)
+            .Select(MapToViewModel)
+            .ToList();
+    }
+
+    private static int GetPriorityOrder(int priority)
+    {
+        return priority switch
+        {
+            PriorityLevels.High => 0,
+            PriorityLevels.Medium => 1,
+            PriorityLevels.Low => 2,
+            _ => 3
+        };
+    }
+
+    private static TodoItemViewModel MapToViewModel(TaskItem task)
+    {
+        var priorityLabel = GetPriorityLabel(task.Priority);
+
+        return new TodoItemViewModel
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            Priority = task.Priority,
+            DueDate = task.DueDate,
+            IsCompleted = task.IsCompleted,
+            CreatedAt = task.CreatedAt,
+            PriorityLabel = priorityLabel
+        };
+    }
+
+    private static string GetPriorityLabel(int priority)
+    {
+        return priority switch
+        {
+            PriorityLevels.Low => "Низька",
+            PriorityLevels.Medium => "Середня",
+            PriorityLevels.High => "Висока",
+            _ => "Невідома"
+        };
+    }
+}
