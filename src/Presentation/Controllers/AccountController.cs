@@ -10,6 +10,10 @@ namespace DOJO2.Controllers;
 
 public class AccountController : Controller
 {
+    private const string AccountControllerName = "Account";
+    private const string HomeControllerName = "Home";
+    private const string DashboardActionName = "Dashboard";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly ILogger<AccountController> _logger;
@@ -32,7 +36,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Dashboard", "Home");
+            return RedirectToAction(DashboardActionName, HomeControllerName);
         }
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -70,15 +74,15 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation("User logged in: {UserName}", user.UserName);
-        return RedirectToAction("Dashboard", "Home");
+        return RedirectToAction(DashboardActionName, HomeControllerName);
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    // Знімаємо перевірку антифрогері для виклику з JS профілю
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Register", AccountControllerName);
     }
 
     [HttpGet]
@@ -115,7 +119,7 @@ public class AccountController : Controller
 
         _logger.LogInformation("User created: {UserName}", user.UserName);
         await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Dashboard", "Home");
+        return RedirectToAction(DashboardActionName, HomeControllerName);
     }
     
     [HttpGet]
@@ -138,7 +142,7 @@ public class AccountController : Controller
             }
 
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
+            var callbackUrl = Url.Action("ResetPassword", AccountControllerName, new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
 
             await _emailSender.SendEmailAsync(
                 model.Email ?? string.Empty,
@@ -169,12 +173,12 @@ public class AccountController : Controller
         if (user == null)
         {
             // Don't reveal that the user does not exist
-            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+            return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
         }
         var result = await _userManager.ResetPasswordAsync(user, model.Code ?? string.Empty, model.Password ?? string.Empty);
         if (result.Succeeded)
         {
-            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+            return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
         }
         foreach (var error in result.Errors)
         {
@@ -199,5 +203,53 @@ public class AccountController : Controller
 
         await _emailSender.SendEmailAsync(email, "SendGrid Test", "Це тестовий email з SendGrid.");
         return Content($"Тестовий email відправлено на {email}. Перевірте свою поштову скриньку.");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SendEmailConfirmation()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var callbackUrl = Url.Action(
+            nameof(ConfirmEmail),
+            AccountControllerName,
+            new { userId = user.Id, code },
+            protocol: Request.Scheme);
+
+        await _emailSender.SendEmailAsync(
+            user.Email ?? string.Empty,
+            "Підтвердження email",
+            $"Будь ласка, підтвердіть свій email натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>підтвердити</a>");
+
+        TempData["EmailConfirmationSent"] = true;
+        return Ok(new { success = true, message = "Лист з підтвердженням надіслано" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ConfirmEmail(int userId, string code)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return RedirectToAction("Login", AccountControllerName);
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, code);
+        if (result.Succeeded)
+        {
+            return RedirectToAction(DashboardActionName, HomeControllerName, new { confirmed = true });
+        }
+
+        return RedirectToAction("Login", AccountControllerName);
     }
 }

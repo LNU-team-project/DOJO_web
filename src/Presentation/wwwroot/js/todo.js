@@ -36,7 +36,6 @@
     return;
   }
 
-  
   const openModal = () => {
     todoModal.style.display = "flex";
     todoModal.setAttribute("aria-hidden", "false");
@@ -74,7 +73,7 @@
     errorDiv.className = "alert alert-error";
     errorDiv.setAttribute("role", "alert");
     errorDiv.textContent = MESSAGES.ERROR_PREFIX + message;
-    
+
     const container = document.querySelector("body");
     if (container) {
       container.insertBefore(errorDiv, container.firstChild);
@@ -91,7 +90,7 @@
     successDiv.className = "alert alert-success";
     successDiv.setAttribute("role", "status");
     successDiv.textContent = MESSAGES.SUCCESS_PREFIX + message;
-    
+
     const container = document.querySelector("body");
     if (container) {
       container.insertBefore(successDiv, container.firstChild);
@@ -106,7 +105,6 @@
     return PRIORITY_LABELS[priority] || "Невідома";
   };
 
-  
   const createTodoElement = (todo) => {
     const div = document.createElement("div");
     div.className = `todo-item ${todo.isCompleted ? "completed" : ""}`;
@@ -116,7 +114,10 @@
     checkbox.type = "checkbox";
     checkbox.className = "todo-item-checkbox";
     checkbox.checked = todo.isCompleted;
-    checkbox.setAttribute("aria-label", `Позначити як ${todo.isCompleted ? "невиконане" : "виконане"}`);
+    checkbox.setAttribute(
+      "aria-label",
+      `Позначити як ${todo.isCompleted ? "невиконане" : "виконане"}`,
+    );
 
     const contentDiv = document.createElement("div");
     contentDiv.className = "todo-item-content";
@@ -154,13 +155,14 @@
     div.appendChild(deleteBtn);
 
     // Обробники подій
-    checkbox.addEventListener("change", () => handleTodoStatusChange(todo.id, checkbox.checked));
+    checkbox.addEventListener("change", () =>
+      handleTodoStatusChange(todo.id, checkbox.checked),
+    );
     deleteBtn.addEventListener("click", () => handleTodoDelete(todo.id));
 
     return div;
   };
 
-  
   const loadTodos = async () => {
     try {
       const response = await fetch("/api/todo/list", {
@@ -189,8 +191,6 @@
     }
   };
 
-  
-  
   const renderTodos = (todoList) => {
     if (!allTodoItems || !todoList) {
       return;
@@ -212,10 +212,11 @@
     }
   };
 
-  
   const handleTodoStatusChange = async (todoId, isCompleted) => {
     try {
-      const endpoint = isCompleted ? `complete/${todoId}` : `incomplete/${todoId}`;
+      const endpoint = isCompleted
+        ? `complete/${todoId}`
+        : `incomplete/${todoId}`;
       const response = await fetch(`/api/todo/${endpoint}`, {
         method: "PUT",
         headers: {
@@ -230,7 +231,9 @@
         return;
       }
 
-      const message = isCompleted ? MESSAGES.TASK_COMPLETED : MESSAGES.TASK_INCOMPLETE;
+      const message = isCompleted
+        ? MESSAGES.TASK_COMPLETED
+        : MESSAGES.TASK_INCOMPLETE;
       showSuccess(message);
       loadTodos();
     } catch (error) {
@@ -240,7 +243,6 @@
     }
   };
 
-  
   const handleTodoDelete = async (todoId) => {
     const confirmDelete = confirm(MESSAGES.CONFIRM_DELETE);
     if (!confirmDelete) {
@@ -269,13 +271,14 @@
     }
   };
 
-  
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
     const titleInput = document.getElementById("todoTitle");
     const descriptionInput = document.getElementById("todoDescription");
-    const priorityInput = document.querySelector('input[name="priority"]:checked');
+    const priorityInput = document.querySelector(
+      'input[name="priority"]:checked',
+    );
 
     if (!titleInput || !descriptionInput) {
       showError(MESSAGES.INVALID_FORMAT);
@@ -306,7 +309,7 @@
         body: JSON.stringify({
           title,
           description: description || null,
-          priority: parseInt(priority, 10),
+          priority: Number.parseInt(priority, 10),
         }),
       });
 

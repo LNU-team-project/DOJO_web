@@ -176,4 +176,20 @@ public class AccountControllerTests
         Assert.Equal("Dashboard", redirectToActionResult.ActionName);
         Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
+
+    [Fact]
+    public async Task Logout_SignsOutAndRedirectsToRegister()
+    {
+        // Arrange
+        _mockSignInManager.Setup(sm => sm.SignOutAsync()).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.Logout();
+
+        // Assert
+        _mockSignInManager.Verify(sm => sm.SignOutAsync(), Times.Once);
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Register", redirect.ActionName);
+        Assert.Equal("Account", redirect.ControllerName);
+    }
 }

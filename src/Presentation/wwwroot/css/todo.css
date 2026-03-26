@@ -426,18 +426,18 @@
 }
 
 .todo-priority.priority-1 {
-  background-color: rgba(43, 182, 115, 0.15);
-  color: #2bb673;
+  background-color: #e5f5ec;
+  color: #13653f;
 }
 
 .todo-priority.priority-2 {
-  background-color: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background-color: #fff3d9;
+  color: #9a6500;
 }
 
 .todo-priority.priority-3 {
-  background-color: rgba(226, 75, 75, 0.15);
-  color: #e24b4b;
+  background-color: #ffe5e5;
+  color: #b11f1f;
 }
 
 .todo-priority::before {
@@ -449,15 +449,15 @@
 }
 
 .todo-priority.priority-1::before {
-  background-color: #2bb673;
+  background-color: #13653f;
 }
 
 .todo-priority.priority-2::before {
-  background-color: #f59e0b;
+  background-color: #9a6500;
 }
 
 .todo-priority.priority-3::before {
-  background-color: #e24b4b;
+  background-color: #b11f1f;
 }
 
 .todo-item-delete {
@@ -648,19 +648,28 @@
   white-space: nowrap;
 }
 
-.plan-priority-1 {
-  background: linear-gradient(135deg, #7bcf9e 0%, #52b788 100%);
-}
-
-.plan-priority-2 {
-  background: linear-gradient(135deg, #ffd166 0%, #fca311 100%);
-}
-
-.plan-priority-3 {
-  background: linear-gradient(135deg, #ff7a90 0%, #ff5a78 100%);
-}
-
 .plan-completed {
   opacity: 0.6;
   text-decoration: line-through;
+}
+
+/* Improve contrast for text on gradient badges */
+.plan-slot,
+.plan-priority-1,
+.plan-priority-2,
+.plan-priority-3,
+.dashboard-todo-btn,
+.btn-primary,
+.profile-btn,
+.profile-btn-settings,
+.profile-btn-logout {
+  color: #111111; /* darker text for contrast */
+}
+
+.dashboard-todo-btn,
+.btn-primary,
+.profile-btn,
+.profile-btn-settings,
+.profile-btn-logout {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
 }
