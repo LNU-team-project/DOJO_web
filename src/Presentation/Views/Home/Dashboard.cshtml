@@ -241,23 +241,23 @@
 
                 <div class="profile-info">
                     <div class="profile-info-item">
-                        <label>Ім'я користувача:</label>
-                        <p id="profileDisplayUsername" class="profile-value">-</p>
+                        <label for="profileDisplayUsername">Ім'я користувача:</label>
+                        <p id="profileDisplayUsername" class="profile-value" aria-live="polite">-</p>
                     </div>
                     <div class="profile-info-item">
-                        <label>Пошта:</label>
-                        <p id="profileDisplayEmail" class="profile-value">-</p>
+                        <label for="profileDisplayEmail">Пошта:</label>
+                        <p id="profileDisplayEmail" class="profile-value" aria-live="polite">-</p>
                     </div>
                     <div class="profile-info-item">
-                        <label>Рівень:</label>
+                        <label for="profileDisplayLevel">Рівень:</label>
                         <p id="profileDisplayLevel" class="profile-value">-</p>
                     </div>
                     <div class="profile-info-item">
-                        <label>Очки досвіду:</label>
+                        <label for="profileDisplayExpPoints">Очки досвіду:</label>
                         <p id="profileDisplayExpPoints" class="profile-value">-</p>
                     </div>
                     <div class="profile-info-item">
-                        <label>Поточна серія:</label>
+                        <label for="profileDisplayStreak">Поточна серія:</label>
                         <p id="profileDisplayStreak" class="profile-value">-</p>
                     </div>
                 </div>
@@ -320,7 +320,7 @@
                 <div class="profile-info" style="width:100%;">
                     <div class="profile-info-item" style="width:100%; display:flex; flex-direction:row; gap:12px; align-items:flex-start;">
                         <div style="flex:1; text-align:left;">
-                            <label>Email статус</label>
+                            <label for="emailConfirmStatus">Email статус</label>
                             <p id="emailConfirmStatus" class="profile-value" style="margin:4px 0 0 0;">Непідтверджено</p>
                         </div>
                         <button type="button" class="profile-btn profile-btn-settings" id="sendEmailConfirmationBtn" style="white-space: nowrap;">
@@ -333,7 +333,7 @@
             <div class="profile-section" style="margin-top: 8px;">
                 <div class="profile-info" style="width:100%;">
                     <div class="profile-info-item" style="width:100%;">
-                        <label>Скинути пароль</label>
+                        <label for="settingsResetPasswordBtn">Скинути пароль</label>
                         <button type="button" class="profile-btn profile-btn-settings" id="settingsResetPasswordBtn" style="width:100%;">
                             🔑 Скинути пароль
                         </button>
