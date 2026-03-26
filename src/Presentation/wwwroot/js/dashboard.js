@@ -7,10 +7,11 @@
   const rangeLabel = root.querySelector("[data-range-label]");
   const daysHeader = root.querySelector("[data-days-header]");
   const timeGrid = root.querySelector("[data-time-grid]");
+  const board = root.querySelector(".dashboard-board");
   const prevButton = root.querySelector("[data-range-dir='prev']");
   const nextButton = root.querySelector("[data-range-dir='next']");
 
-  if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton) {
+  if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
     return;
   }
 
@@ -112,12 +113,20 @@
     );
   };
 
+  const syncGridViewport = () => {
+    const availableHeight = board.clientHeight - daysHeader.offsetHeight;
+    if (availableHeight > 0) {
+      timeGrid.style.maxHeight = `${availableHeight}px`;
+    }
+  };
+
   const render = () => {
     const dates = getWeekDates();
     currentWeekStart = new Date(dates[0]);
     renderRange(dates);
     renderDays(dates);
     renderTimeGrid();
+    syncGridViewport();
     syncHeaderWithGrid();
     const detail = {
       dates,
@@ -138,7 +147,10 @@
     render();
   });
 
-  window.addEventListener("resize", syncHeaderWithGrid);
+  window.addEventListener("resize", () => {
+    syncGridViewport();
+    syncHeaderWithGrid();
+  });
 
   render();
 })();
