@@ -13,6 +13,8 @@ public class TaskItem
     public short Priority { get; set; } = 2;
     public DateTime? CompletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsPlan { get; set; } = false;
+    public DateTime? ScheduledAt { get; set; }
 
     // Navigation properties
     public virtual AppUser User { get; set; } = null!;

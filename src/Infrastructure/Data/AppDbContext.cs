@@ -111,6 +111,8 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.Property(task => task.Priority).HasColumnName("priority").HasDefaultValue((short)2);
             e.Property(task => task.CompletedAt).HasColumnName("completed_at");
             e.Property(task => task.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+            e.Property(task => task.IsPlan).HasColumnName("is_plan").HasDefaultValue(false);
+            e.Property(task => task.ScheduledAt).HasColumnName("scheduled_at");
 
             e.HasOne(task => task.User)
                 .WithMany(u => u.Tasks)
@@ -131,6 +133,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             e.HasIndex(task => task.GoalId);
             e.HasIndex(task => task.ParentTaskId);
             e.HasIndex(task => task.IsCompleted);
+            e.HasIndex(task => task.IsPlan);
         });
 
         // ── Pomodoro ──────────────────────────────────────────

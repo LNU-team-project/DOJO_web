@@ -1,5 +1,4 @@
-﻿
-:root {
+﻿:root {
   --dojo-accent: #ff7a90;
   --dojo-accent-strong: #ff5a78;
   --dojo-surface: #ffffff;
@@ -281,26 +280,58 @@
 
 
 .todo-list-section {
-  padding: 48px 16px;
+  padding: 0;
   background: transparent;
-  border-radius: 0;
   margin-top: 0;
-  display: flex;
-  justify-content: center;
   width: 100%;
 }
 
 .todo-list-container {
-  width: 50%;
-  max-width: 600px;
+  width: 100%;
+  max-width: none;
 }
 
 .todo-list-title {
-  font-family: "Playfair Display", "Times New Roman", serif;
-  font-size: 1.5rem;
-  margin: 0 0 24px;
-  color: var(--dojo-ink);
-  padding: 0;
+  margin: 0 0 16px;
+}
+
+/* Layout for calendar + sidebar */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-board {
+  width: 100%;
+  max-height: 520px;
+  min-height: 420px;
+}
+
+.dashboard-lists-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dashboard-lists-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Plan badge colors with medium in yellow */
+.plan-priority-1 {
+  background: linear-gradient(135deg, #7bcf9e 0%, #52b788 100%);
+}
+
+.plan-priority-2 {
+  background: linear-gradient(135deg, #ffd166 0%, #fca311 100%);
+}
+
+.plan-priority-3 {
+  background: linear-gradient(135deg, #ff7a90 0%, #ff5a78 100%);
 }
 
 .todo-items {
@@ -596,4 +627,40 @@
   .priority-radio {
     min-width: unset;
   }
+}
+
+.dashboard-plan-btn {
+  margin-left: 12px;
+}
+
+.plan-slot {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  margin: 4px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-priority-1 {
+  background: linear-gradient(135deg, #7bcf9e 0%, #52b788 100%);
+}
+
+.plan-priority-2 {
+  background: linear-gradient(135deg, #ffd166 0%, #fca311 100%);
+}
+
+.plan-priority-3 {
+  background: linear-gradient(135deg, #ff7a90 0%, #ff5a78 100%);
+}
+
+.plan-completed {
+  opacity: 0.6;
+  text-decoration: line-through;
 }

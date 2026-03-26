@@ -80,7 +80,7 @@ public class TodoService : ITodoService
     public async Task<Result<TodoListViewModel>> GetUserTodosAsync(int userId)
     {
         var todos = await _context.Tasks
-            .Where(t => t.UserId == userId && t.GoalId == null && t.ParentTaskId == null)
+            .Where(t => t.UserId == userId && t.GoalId == null && t.ParentTaskId == null && !t.IsPlan)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 

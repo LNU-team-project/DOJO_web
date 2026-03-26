@@ -22,6 +22,7 @@
   );
 
   let weekOffset = 0;
+  let currentWeekStart = null;
 
   const getWeekStart = (date) => {
     const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -113,10 +114,18 @@
 
   const render = () => {
     const dates = getWeekDates();
+    currentWeekStart = new Date(dates[0]);
     renderRange(dates);
     renderDays(dates);
     renderTimeGrid();
     syncHeaderWithGrid();
+    const detail = {
+      dates,
+      weekStartIso: dates[0].toISOString(),
+      weekEndIso: dates[dates.length - 1].toISOString(),
+    };
+    window.dashboardWeekState = detail;
+    window.dispatchEvent(new CustomEvent("dashboard:week-changed", { detail }));
   };
 
   prevButton.addEventListener("click", () => {
