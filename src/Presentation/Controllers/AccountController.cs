@@ -200,4 +200,47 @@ public class AccountController : Controller
         await _emailSender.SendEmailAsync(email, "SendGrid Test", "Це тестовий email з SendGrid.");
         return Content($"Тестовий email відправлено на {email}. Перевірте свою поштову скриньку.");
     }
+
+    [HttpPost]
+    public async Task<IActionResult> SendEmailConfirmation()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var callbackUrl = Url.Action(
+            nameof(ConfirmEmail),
+            "Account",
+            new { userId = user.Id, code },
+            protocol: Request.Scheme);
+
+        await _emailSender.SendEmailAsync(
+            user.Email ?? string.Empty,
+            "Підтвердження email",
+            $"Будь ласка, підтвердіть свій email натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>підтвердити</a>");
+
+        TempData["EmailConfirmationSent"] = true;
+        return Ok(new { success = true, message = "Лист з підтвердженням надіслано" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ConfirmEmail(int userId, string code)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, code);
+        if (result.Succeeded)
+        {
+            return RedirectToAction("Dashboard", "Home", new { confirmed = true });
+        }
+
+        return RedirectToAction("Login", "Account");
+    }
 }

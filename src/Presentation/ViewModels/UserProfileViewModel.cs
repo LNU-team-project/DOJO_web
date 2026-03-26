@@ -13,6 +13,7 @@ public class UserProfileViewModel
     public int CurrentStreak { get; set; }
     public string? AvatarUrl { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool EmailConfirmed { get; set; }
 }
 
 public class UpdateUserProfileViewModel
@@ -29,4 +30,3 @@ public class UpdateUserAvatarViewModel
     [Required(ErrorMessage = "Виберіть аватар")]
     public IFormFile? Avatar { get; set; }
 }
-

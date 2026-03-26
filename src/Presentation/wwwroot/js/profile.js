@@ -34,6 +34,9 @@
     const settingsResetPasswordBtn = document.getElementById('settingsResetPasswordBtn');
     const settingsEditUserNameBtn = document.getElementById('editUserNameBtn');
     const closeSettingsModalFooterBtn = document.getElementById('closeProfileSettingsModalFooter');
+    const settingsAvatarImg = document.getElementById('profileSettingsAvatar');
+    const emailConfirmStatus = document.getElementById('emailConfirmStatus');
+    const sendEmailConfirmationBtn = document.getElementById('sendEmailConfirmationBtn');
 
     console.log('🔍 DOM Elements статус:', {
         profileModal: !!profileModal,
@@ -183,6 +186,17 @@
             profileDisplayStreak.textContent = `${profile.currentStreak || 0} 🔥`;
         }
 
+        // Email статус
+        if (emailConfirmStatus) {
+            if (profile.emailConfirmed) {
+                emailConfirmStatus.textContent = 'Пошту підтверджено';
+                emailConfirmStatus.style.color = 'green';
+            } else {
+                emailConfirmStatus.textContent = 'Непідтверджено';
+                emailConfirmStatus.style.color = '';
+            }
+        }
+
         // Оновлення аватара (якщо він збережено)
         if (profile.avatarUrl) {
             console.log('🖼️ Встановлюємо аватар:', profile.avatarUrl);
@@ -191,6 +205,9 @@
             }
             if (profileModalAvatar) {
                 profileModalAvatar.src = profile.avatarUrl;
+            }
+            if (settingsAvatarImg) {
+                settingsAvatarImg.src = profile.avatarUrl;
             }
         }
     };
@@ -427,6 +444,33 @@
         }
     };
 
+    /**
+     * Відправляє запит на підтвердження електронної пошти
+     */
+    const sendEmailConfirmation = async () => {
+        try {
+            const response = await fetch('/Account/SendEmailConfirmation', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `HTTP ${response.status}`);
+            }
+
+            showSuccess('Лист з підтвердженням надіслано. Перевірте пошту.');
+        } catch (error) {
+            showError(error.message);
+        }
+    };
+
+    const getAntiForgeryToken = () => {
+        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : '';
+    };
+
     // Оновлюємо профіль одразу при завантаженні сторінки
     loadUserProfile();
 
@@ -529,6 +573,11 @@
     if (closeSettingsModalFooterBtn) {
         closeSettingsModalFooterBtn.addEventListener('click', closeSettingsModal);
         console.log('✅ Event listener на closeSettingsModalFooterBtn додано');
+    }
+
+    if (sendEmailConfirmationBtn) {
+        sendEmailConfirmationBtn.addEventListener('click', sendEmailConfirmation);
+        console.log('✅ Event listener на sendEmailConfirmationBtn додано');
     }
 
     // Закриття модального вікна при натисканні Escape

@@ -212,8 +212,9 @@ public class UserService : IUserService
             ExpPoints = user.ExpPoints,
             Level = user.Level,
             CurrentStreak = user.CurrentStreak,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            EmailConfirmed = user.EmailConfirmed,
+            AvatarUrl = user.AvatarUrl
         };
     }
 }
-
