@@ -148,23 +148,7 @@ public class UserService : IUserService
             Directory.CreateDirectory(uploadDir);
         }
 
-        // Видалити старий аватар якщо він існує
-        if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
-        {
-            var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, user.AvatarUrl.TrimStart('/'));
-            if (File.Exists(oldFilePath))
-            {
-                try
-                {
-                    File.Delete(oldFilePath);
-                    _logger.LogInformation("Старий аватар користувача {UserId} видалено", userId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning("Не вдалося видалити старий аватар користувача {UserId}: {Error}", userId, ex.Message);
-                }
-            }
-        }
+        TryDeleteExistingAvatar(user, userId);
 
         var fileName = $"{userId}_{Guid.NewGuid()}{fileExtension}";
         var filePath = Path.Combine(uploadDir, fileName);
@@ -184,14 +168,7 @@ public class UserService : IUserService
             _logger.LogWarning("Помилка при оновленні AvatarUrl користувача {UserId}: {Errors}", userId, string.Join(", ", errors));
             
             // Видалити завантажений файл якщо не вдалось оновити БД
-            try
-            {
-                File.Delete(filePath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("Не вдалося видалити завантажений аватар: {Error}", ex.Message);
-            }
+            TryDeleteUploadedAvatar(filePath);
 
             return Result<bool>.FailureResult("Не вдалося зберегти аватар", errors);
         }
@@ -216,5 +193,41 @@ public class UserService : IUserService
             EmailConfirmed = user.EmailConfirmed,
             AvatarUrl = user.AvatarUrl
         };
+    }
+
+    private void TryDeleteExistingAvatar(AppUser user, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+        {
+            return;
+        }
+
+        var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, user.AvatarUrl.TrimStart('/'));
+        if (!File.Exists(oldFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(oldFilePath);
+            _logger.LogInformation("Старий аватар користувача {UserId} видалено", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не вдалося видалити старий аватар користувача {UserId}", userId);
+        }
+    }
+
+    private void TryDeleteUploadedAvatar(string filePath)
+    {
+        try
+        {
+            File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не вдалося видалити завантажений аватар");
+        }
     }
 }

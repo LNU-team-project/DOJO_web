@@ -10,6 +10,10 @@ namespace DOJO2.Controllers;
 
 public class AccountController : Controller
 {
+    private const string AccountControllerName = "Account";
+    private const string HomeControllerName = "Home";
+    private const string DashboardActionName = "Dashboard";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly ILogger<AccountController> _logger;
@@ -32,7 +36,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Dashboard", "Home");
+            return RedirectToAction(DashboardActionName, HomeControllerName);
         }
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -70,7 +74,7 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation("User logged in: {UserName}", user.UserName);
-        return RedirectToAction("Dashboard", "Home");
+        return RedirectToAction(DashboardActionName, HomeControllerName);
     }
 
     [HttpPost]
@@ -78,7 +82,7 @@ public class AccountController : Controller
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return RedirectToAction("Register", "Account");
+        return RedirectToAction("Register", AccountControllerName);
     }
 
     [HttpGet]
@@ -115,7 +119,7 @@ public class AccountController : Controller
 
         _logger.LogInformation("User created: {UserName}", user.UserName);
         await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Dashboard", "Home");
+        return RedirectToAction(DashboardActionName, HomeControllerName);
     }
     
     [HttpGet]
@@ -138,7 +142,7 @@ public class AccountController : Controller
             }
 
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
+            var callbackUrl = Url.Action("ResetPassword", AccountControllerName, new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
 
             await _emailSender.SendEmailAsync(
                 model.Email ?? string.Empty,
@@ -169,12 +173,12 @@ public class AccountController : Controller
         if (user == null)
         {
             // Don't reveal that the user does not exist
-            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+            return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
         }
         var result = await _userManager.ResetPasswordAsync(user, model.Code ?? string.Empty, model.Password ?? string.Empty);
         if (result.Succeeded)
         {
-            return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
+            return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
         }
         foreach (var error in result.Errors)
         {
@@ -213,7 +217,7 @@ public class AccountController : Controller
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var callbackUrl = Url.Action(
             nameof(ConfirmEmail),
-            "Account",
+            AccountControllerName,
             new { userId = user.Id, code },
             protocol: Request.Scheme);
 
@@ -229,18 +233,23 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(int userId, string code)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("Login", AccountControllerName);
         }
 
         var result = await _userManager.ConfirmEmailAsync(user, code);
         if (result.Succeeded)
         {
-            return RedirectToAction("Dashboard", "Home", new { confirmed = true });
+            return RedirectToAction(DashboardActionName, HomeControllerName, new { confirmed = true });
         }
 
-        return RedirectToAction("Login", "Account");
+        return RedirectToAction("Login", AccountControllerName);
     }
 }

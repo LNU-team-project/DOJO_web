@@ -178,26 +178,7 @@ public class ProfileController : ControllerBase
     [HttpPost("settings/avatar")]
     public async Task<IActionResult> UpdateAvatar([FromForm] IFormFile? avatar)
     {
-        var authError = ValidateUserAuthorization();
-        if (authError != null)
-        {
-            return authError;
-        }
-
-        if (avatar == null)
-        {
-            return BadRequest(new { success = false, message = "Виберіть файл аватара" });
-        }
-
-        var userId = GetCurrentUserId() ?? 0;
-        var result = await _userService.UpdateUserAvatarAsync(userId, avatar);
-
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return await UploadAvatar(avatar);
     }
 
     /// <summary>
