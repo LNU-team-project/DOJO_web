@@ -25,12 +25,10 @@ public class PlanService : IPlanService
     }
 
     private readonly AppDbContext _context;
-    private readonly ILogger<PlanService> _logger;
 
-    public PlanService(AppDbContext context, ILogger<PlanService> logger)
+    public PlanService(AppDbContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result<PlanItemViewModel>> CreatePlanAsync(int userId, PlanCreateViewModel? model)
