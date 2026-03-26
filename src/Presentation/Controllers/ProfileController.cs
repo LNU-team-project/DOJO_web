@@ -137,11 +137,7 @@ public class ProfileController : ControllerBase
             return authError;
         }
 
-        // Логіка виходу може бути оброблена на клієнті
-        // Тут ми просто повертаємо успішний результат
         _logger.LogInformation("Користувач {UserId} вийшов з системи", GetCurrentUserId());
-
         return Ok(new { success = true, message = "Вихід успішно виконано" });
     }
 }
-

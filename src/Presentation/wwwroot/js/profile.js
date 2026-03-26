@@ -221,6 +221,7 @@
 
             if (result.success) {
                 showSuccess('Аватар успішно змінено');
+                await loadUserProfile(); // підтягнути актуальний avatarUrl з бекенду і зберегти відображення між сесіями
             } else {
                 showError(result.message || 'Не вдалося завантажити аватар');
                 loadUserProfile();
@@ -246,7 +247,7 @@
         console.log('🚪 Виконуємо вихід...');
 
         try {
-            const response = await fetch(`${API_BASE}/logout`, {
+            const response = await fetch('/Account/Logout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -259,7 +260,7 @@
             }
 
             console.log('✅ Вихід успішно виконаний');
-            window.location.href = '/Account/Login';
+            window.location.href = '/Account/Register';
         } catch (error) {
             console.error('❌ Помилка при виході:', error);
             showError('Помилка при виході з системи: ' + error.message);
@@ -272,6 +273,9 @@
     const handleSettings = () => {
         alert('Налаштування будуть доступні незабаром');
     };
+
+    // Оновлюємо профіль одразу при завантаженні сторінки
+    loadUserProfile();
 
     // ==================== EVENT LISTENERS ====================
     console.log('🔗 Підключаємо Event Listeners...');
@@ -336,4 +340,3 @@
 
     console.log('✅ Profile.js ПОВНІСТЮ ІНІЦІАЛІЗОВАНО!');
 })();
-

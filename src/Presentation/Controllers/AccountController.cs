@@ -74,11 +74,11 @@ public class AccountController : Controller
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    // Знімаємо перевірку антифрогері для виклику з JS профілю
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Register", "Account");
     }
 
     [HttpGet]

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.DataProtection;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -49,6 +50,8 @@ try
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
     // Identity: користувачі, ролі, токени
+    builder.Services.AddDataProtection(); // Використовуємо персистентні ключі, щоб куки лишались валідними після рестарту без виходу
+
     builder.Services.AddIdentity<AppUser, IdentityRole<int>>(options =>
         {
             options.User.RequireUniqueEmail = true;
@@ -67,8 +70,8 @@ try
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/Login";
-        options.ExpireTimeSpan = TimeSpan.FromDays(14); // лише коли RememberMe=true
-        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true; // ��одовжуємо сесію під час активності
         options.Cookie.IsEssential = true;
     });
 
