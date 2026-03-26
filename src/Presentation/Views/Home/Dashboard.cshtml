@@ -30,21 +30,39 @@
                 id="openTodoModal">
             Додати нове TODO
         </button>
+        <button type="button"
+                class="dashboard-todo-btn dashboard-plan-btn"
+                id="openPlanModal">
+            Додати план
+        </button>
     </header>
 
-    <section class="dashboard-board" aria-label="Тижневий календар">
-        <div class="dashboard-days" data-days-header></div>
-        <div class="dashboard-time-grid" data-time-grid></div>
-    </section>
+    <div class="dashboard-content">
+        <section class="dashboard-board" aria-label="Тижневий календар">
+            <div class="dashboard-days" data-days-header></div>
+            <div class="dashboard-time-grid" data-time-grid></div>
+        </section>
 
-    <section class="todo-list-section" aria-label="Список TODO завдань">
-        <div class="todo-list-container">
-            <h2 class="todo-list-title">Завдання</h2>
-            <div class="todo-items" id="allTodoItems">
-                <p class="todo-empty-message">Немає завдань</p>
-            </div>
+        <div class="dashboard-lists-row" aria-label="Списки завдань і планів">
+            <section class="todo-list-section" aria-label="Список TODO завдань">
+                <div class="todo-list-container">
+                    <h2 class="todo-list-title">Завдання</h2>
+                    <div class="todo-items" id="allTodoItems">
+                        <p class="todo-empty-message">Немає завдань</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="todo-list-section" aria-label="Список планів">
+                <div class="todo-list-container">
+                    <h2 class="todo-list-title">Плани</h2>
+                    <div class="todo-items" id="allPlanItems">
+                        <p class="todo-empty-message">Немає планів</p>
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
+    </div>
 </div>
 
 <div class="todo-modal" id="todoModal" aria-hidden="true" aria-labelledby="todoModalTitle">
@@ -114,7 +132,86 @@
     </div>
 </div>
 
+<div class="todo-modal" id="planModal" aria-hidden="true" aria-labelledby="planModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="planModalTitle">Додати план</h2>
+            <button type="button" class="todo-modal-close" id="closePlanModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <form id="planForm" class="todo-form">
+            <div class="form-group">
+                <label for="planTitle">Назва плану *</label>
+                <input type="text"
+                       id="planTitle"
+                       name="title"
+                       class="form-control"
+                       placeholder="Введіть назву плану"
+                       required
+                       maxlength="255" />
+            </div>
+
+            <div class="form-group">
+                <label for="planDescription">Опис</label>
+                <textarea id="planDescription"
+                          name="description"
+                          class="form-control"
+                          placeholder="Введіть опис плану (необов'язково)"
+                          rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="planDate">Дата *</label>
+                    <input type="date" id="planDate" name="planDate" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label for="planTime">Час *</label>
+                    <input type="time" id="planTime" name="planTime" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <fieldset class="form-group">
+                    <legend>Складність *</legend>
+                    <div class="priority-options">
+                        <label class="priority-radio">
+                            <input type="radio" name="planPriority" value="1" class="priority-input">
+                            <span class="priority-label priority-low">
+                                <span class="priority-dot"></span>
+                                Низька
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="planPriority" value="2" class="priority-input" checked>
+                            <span class="priority-label priority-medium">
+                                <span class="priority-dot"></span>
+                                Середня
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="planPriority" value="3" class="priority-input">
+                            <span class="priority-label priority-high">
+                                <span class="priority-dot"></span>
+                                Висока
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelPlanBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Додати план</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
+    <script src="~/js/plan.js" asp-append-version="true"></script>
 }
