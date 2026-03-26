@@ -23,6 +23,18 @@
     const profileDisplayStreak = document.getElementById('profileDisplayStreak');
     const profileModalAvatar = document.getElementById('profileModalAvatar');
 
+    // Settings modal elements
+    const settingsModal = document.getElementById('profileSettingsModal');
+    const settingsModalOverlay = document.getElementById('profileSettingsModalOverlay');
+    const closeSettingsModalBtn = document.getElementById('closeProfileSettingsModal');
+    const settingsUserNameInput = document.getElementById('settingsUserName');
+    const settingsSaveUserNameBtn = document.getElementById('saveUserNameBtn');
+    const settingsAvatarInput = document.getElementById('settingsAvatarFileInput');
+    const settingsAvatarUploadBtn = document.getElementById('settingsAvatarUploadBtn');
+    const settingsResetPasswordBtn = document.getElementById('settingsResetPasswordBtn');
+    const settingsEditUserNameBtn = document.getElementById('editUserNameBtn');
+    const closeSettingsModalFooterBtn = document.getElementById('closeProfileSettingsModalFooter');
+
     console.log('🔍 DOM Elements статус:', {
         profileModal: !!profileModal,
         openProfileModalBtn: !!openProfileModalBtn,
@@ -34,6 +46,10 @@
         console.error('❌ ПОМИЛКА: Не знайдено потрібні DOM елементи!');
         console.log('Перевіри чи в Dashboard.cshtml є все потрібне!');
         return;
+    }
+
+    if (!settingsModal || !settingsModalOverlay) {
+        console.error('❌ ПОМИЛКА: Не знайдено DOM елементи модалки налаштувань!');
     }
 
     console.log('✅ Всі основні DOM елементи знайдені, ініціалізуємо...');
@@ -55,6 +71,33 @@
         console.log('🔒 Закриваємо модаль профіля');
         profileModal.classList.remove('show');
         profileModal.setAttribute('aria-hidden', 'true');
+    };
+
+    /**
+     * Відкриває модальне вікно налаштувань профіля
+     */
+    const openSettingsModal = () => {
+        console.log('🛠️ Відкриваємо модаль налаштувань');
+        settingsModal.classList.add('show');
+        settingsModal.setAttribute('aria-hidden', 'false');
+        if (settingsUserNameInput && profileDisplayUsername?.textContent) {
+            settingsUserNameInput.value = profileDisplayUsername.textContent;
+            settingsUserNameInput.readOnly = true;
+        }
+        if (settingsAvatarImg && profileModalAvatar?.src) {
+            settingsAvatarImg.src = profileModalAvatar.src;
+        }
+        if (settingsSaveUserNameBtn) {
+            settingsSaveUserNameBtn.style.display = 'none';
+        }
+    };
+
+    /**
+     * Закриває модальне вікно налаштувань профіля
+     */
+    const closeSettingsModal = () => {
+        settingsModal.classList.remove('show');
+        settingsModal.setAttribute('aria-hidden', 'true');
     };
 
     /**
@@ -268,10 +311,120 @@
     };
 
     /**
-     * Перенаправляє на сторінку налаштувань
+     * Оновлює ім\'я користувача
      */
-    const handleSettings = () => {
-        alert('Налаштування будуть доступні незабаром');
+    const updateUserName = async () => {
+        const newName = settingsUserNameInput?.value?.trim();
+        if (!newName) {
+            showError("Ім'я користувача не може бути порожнім");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/settings/username`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ userName: newName })
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `HTTP ${response.status}`);
+            }
+
+            showSuccess('Ім\'я користувача оновлено');
+            await loadUserProfile();
+            settingsUserNameInput.readOnly = true;
+            if (settingsSaveUserNameBtn) {
+                settingsSaveUserNameBtn.style.display = 'none';
+            }
+            closeSettingsModal();
+        } catch (error) {
+            showError(error.message);
+        }
+    };
+
+    /**
+     * Завантажує аватар з модалки налаштувань
+     */
+    const updateAvatarFromSettings = async () => {
+        const file = settingsAvatarInput?.files?.[0];
+        if (!file) {
+            showError('Оберіть файл аватара');
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showError('Дозволені тільки jpg, png та webp формати');
+            return;
+        }
+
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            showError('Розмір файлу не може перевищувати 5MB');
+            return;
+        }
+
+        // Попередній перегляд у модалці налаштувань та в шапці/профілі
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageUrl = e.target?.result;
+            if (!imageUrl) return;
+            if (settingsAvatarImg) settingsAvatarImg.src = imageUrl;
+            if (profileModalAvatar) profileModalAvatar.src = imageUrl;
+            if (profileAvatarImg) profileAvatarImg.src = imageUrl;
+        };
+        reader.readAsDataURL(file);
+
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            const response = await fetch(`${API_BASE}/settings/avatar`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `HTTP ${response.status}`);
+            }
+
+            showSuccess('Аватар оновлено');
+            await loadUserProfile();
+        } catch (error) {
+            showError(error.message);
+        }
+    };
+
+    /**
+     * Відправляє посилання для скидання паролю
+     */
+    const sendPasswordResetLink = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/settings/password-reset-link`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.resetUrl) {
+                window.location.href = data.resetUrl;
+                return;
+            }
+
+            showSuccess('Посилання для скидання паролю надіслано');
+        } catch (error) {
+            showError(error.message);
+        }
     };
 
     // Оновлюємо профіль одразу при завантаженні сторінки
@@ -306,7 +459,7 @@
     }
 
     if (profileSettingsBtn) {
-        profileSettingsBtn.addEventListener('click', handleSettings);
+        profileSettingsBtn.addEventListener('click', openSettingsModal);
         console.log('✅ Event listener на profileSettingsBtn додано');
     }
 
@@ -329,11 +482,64 @@
         console.log('✅ Event listener на avatarFileInput додано');
     }
 
+    if (closeSettingsModalBtn) {
+        closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
+        console.log('✅ Event listener на closeSettingsModalBtn додано');
+    }
+
+    if (settingsModalOverlay) {
+        settingsModalOverlay.addEventListener('click', closeSettingsModal);
+        console.log('✅ Event listener на settingsModalOverlay додано');
+    }
+
+    if (settingsSaveUserNameBtn) {
+        settingsSaveUserNameBtn.addEventListener('click', updateUserName);
+        console.log('✅ Event listener на settingsSaveUserNameBtn додано');
+    }
+
+    if (settingsAvatarUploadBtn) {
+        settingsAvatarUploadBtn.addEventListener('click', () => settingsAvatarInput?.click());
+        console.log('✅ Event listener на settingsAvatarUploadBtn додано');
+    }
+
+    if (settingsAvatarInput) {
+        settingsAvatarInput.addEventListener('change', updateAvatarFromSettings);
+        console.log('✅ Event listener на settingsAvatarInput додано');
+    }
+
+    if (settingsResetPasswordBtn) {
+        settingsResetPasswordBtn.addEventListener('click', sendPasswordResetLink);
+        console.log('✅ Event listener на settingsResetPasswordBtn додано');
+    }
+
+    if (settingsEditUserNameBtn) {
+        settingsEditUserNameBtn.addEventListener('click', () => {
+            if (settingsUserNameInput) {
+                settingsUserNameInput.readOnly = false;
+                settingsUserNameInput.focus();
+                settingsUserNameInput.select();
+            }
+            if (settingsSaveUserNameBtn) {
+                settingsSaveUserNameBtn.style.display = 'inline-block';
+            }
+        });
+        console.log('✅ Event listener на editUserNameBtn додано');
+    }
+
+    if (closeSettingsModalFooterBtn) {
+        closeSettingsModalFooterBtn.addEventListener('click', closeSettingsModal);
+        console.log('✅ Event listener на closeSettingsModalFooterBtn додано');
+    }
+
     // Закриття модального вікна при натисканні Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && profileModal.classList.contains('show')) {
             console.log('⌨️ Натиск Escape, закриваємо модаль');
             closeProfileModal();
+        }
+        if (e.key === 'Escape' && settingsModal.classList.contains('show')) {
+            console.log('⌨️ Натиск Escape, закриваємо модаль налаштувань');
+            closeSettingsModal();
         }
     });
     console.log('✅ Event listener на Escape додано');
