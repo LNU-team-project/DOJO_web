@@ -1,10 +1,13 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using DOJO2.Controllers;
 using DOJO2.Domain.Entities;
 using DOJO2.Presentation.ViewModels;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -23,14 +26,40 @@ public class AccountControllerTests
 
     public AccountControllerTests()
     {
+        var options = Mock.Of<IOptions<IdentityOptions>>();
+        var passwordHasher = Mock.Of<IPasswordHasher<AppUser>>();
+        var userValidators = new List<IUserValidator<AppUser>>();
+        var passwordValidators = new List<IPasswordValidator<AppUser>>();
+        var keyNormalizer = Mock.Of<ILookupNormalizer>();
+        var errors = new IdentityErrorDescriber();
+        var services = Mock.Of<IServiceProvider>();
+        var userManagerLogger = Mock.Of<ILogger<UserManager<AppUser>>>();
+
         _mockUserManager = new Mock<UserManager<AppUser>>(
-            Mock.Of<IUserStore<AppUser>>(), null, null, null, null, null, null, null, null);
+            Mock.Of<IUserStore<AppUser>>(),
+            options,
+            passwordHasher,
+            userValidators,
+            passwordValidators,
+            keyNormalizer,
+            errors,
+            services,
+            userManagerLogger);
+
+        var contextAccessor = Mock.Of<IHttpContextAccessor>();
+        var claimsFactory = Mock.Of<IUserClaimsPrincipalFactory<AppUser>>();
+        var schemeProvider = Mock.Of<IAuthenticationSchemeProvider>();
+        var signInManagerLogger = Mock.Of<ILogger<SignInManager<AppUser>>>();
+        var userConfirmation = Mock.Of<IUserConfirmation<AppUser>>();
         
         _mockSignInManager = new Mock<SignInManager<AppUser>>(
             _mockUserManager.Object,
-            Mock.Of<IHttpContextAccessor>(),
-            Mock.Of<IUserClaimsPrincipalFactory<AppUser>>(),
-            null, null, null, null);
+            contextAccessor,
+            claimsFactory,
+            options,
+            signInManagerLogger,
+            schemeProvider,
+            userConfirmation);
 
         _mockLogger = new Mock<ILogger<AccountController>>();
 
@@ -99,7 +128,7 @@ public class AccountControllerTests
     {
         // Arrange
         var model = new LoginViewModel { Email = "test@example.com", Password = "password" };
-        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync((AppUser)null);
+        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync((AppUser?)null);
 
         // Act
         var result = await _controller.Login(model);
@@ -108,6 +137,7 @@ public class AccountControllerTests
         Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
         Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
+    }
 
     [Fact]
     public async Task Login_Post_ReturnsViewWithError_WhenPasswordIsIncorrect()
