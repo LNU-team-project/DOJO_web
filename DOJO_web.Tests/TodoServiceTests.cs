@@ -1,4 +1,5 @@
 using DOJO2.Infrastructure.Data;
+using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.EntityFrameworkCore;
