@@ -32,9 +32,9 @@
   let currentWeekEndIso = null;
 
   const applyInitialWeekState = () => {
-    if (window.dashboardWeekState) {
-      currentWeekStartIso = window.dashboardWeekState.weekStartIso;
-      currentWeekEndIso = window.dashboardWeekState.weekEndIso;
+    if (globalThis.dashboardWeekState) {
+      currentWeekStartIso = globalThis.dashboardWeekState.weekStartIso;
+      currentWeekEndIso = globalThis.dashboardWeekState.weekEndIso;
     }
   };
 
@@ -103,7 +103,7 @@
 
     const title = titleInput.value.trim();
     const description = descriptionInput.value.trim();
-    const priority = parseInt(priorityInput.value, 10);
+    const priority = Number.parseInt(priorityInput.value, 10);
 
     if (!title) {
       showError(MESSAGES.INVALID_TITLE);
@@ -332,7 +332,7 @@
   });
   planForm.addEventListener("submit", handleFormSubmit);
 
-  window.addEventListener("dashboard:week-changed", handleWeekChanged);
+  globalThis.addEventListener("dashboard:week-changed", handleWeekChanged);
 
   applyInitialWeekState();
   loadPlans();
