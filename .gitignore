@@ -132,3 +132,6 @@ user-secrets-id
 # .NET User Secrets
 **/Properties/launchSettings.json
 src/Properties/launchSettings.json
+# User uploads (avatars, files, etc.)
+src/Presentation/wwwroot/uploads/
+uploads/

@@ -25,16 +25,28 @@
             </button>
         </fieldset>
 
-        <button type="button"
-                class="dashboard-todo-btn"
-                id="openTodoModal">
-            Додати нове TODO
-        </button>
-        <button type="button"
-                class="dashboard-todo-btn dashboard-plan-btn"
-                id="openPlanModal">
-            Додати план
-        </button>
+        <div class="dashboard-actions">
+            <button type="button"
+                    class="dashboard-todo-btn"
+                    id="openTodoModal">
+                Додати нове TODO
+            </button>
+            <button type="button"
+                    class="dashboard-todo-btn dashboard-plan-btn"
+                    id="openPlanModal">
+                Додати план
+            </button>
+
+            <button type="button"
+                    class="profile-avatar-btn"
+                    id="openProfileModal"
+                    aria-label="Відкрити профіль">
+                <div class="profile-avatar-circle">
+                    <img class="profile-avatar-img" id="profileAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Аватар профіля">
+                </div>
+                <div class="profile-username" id="profileUsername">Користувач</div>
+            </button>
+        </div>
     </header>
 
     <div class="dashboard-content">
@@ -210,8 +222,66 @@
     </div>
 </div>
 
+<!-- Profile Modal -->
+<div class="profile-modal" id="profileModal" aria-hidden="true" aria-labelledby="profileModalTitle">
+    <div class="profile-modal-overlay" id="profileModalOverlay"></div>
+    <div class="profile-modal-content">
+        <div class="profile-modal-header">
+            <h2 id="profileModalTitle">Мій профіль</h2>
+            <button type="button" class="profile-modal-close" id="closeProfileModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div class="profile-modal-body">
+            <div class="profile-section">
+                <div class="profile-avatar-section">
+                    <img class="profile-modal-avatar" id="profileModalAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Аватар профіля">
+                    <button type="button" class="profile-avatar-upload-btn" id="profileAvatarUploadBtn">
+                        Змінити аватар
+                    </button>
+                    <input type="file" id="avatarFileInput" class="hidden-file-input" accept=".jpg,.jpeg,.png,.webp">
+                </div>
+
+                <div class="profile-info">
+                    <div class="profile-info-item">
+                        <label>Ім'я користувача:</label>
+                        <p id="profileDisplayUsername" class="profile-value">-</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Пошта:</label>
+                        <p id="profileDisplayEmail" class="profile-value">-</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Рівень:</label>
+                        <p id="profileDisplayLevel" class="profile-value">-</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Очки досвіду:</label>
+                        <p id="profileDisplayExpPoints" class="profile-value">-</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Поточна серія:</label>
+                        <p id="profileDisplayStreak" class="profile-value">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-modal-footer">
+            <button type="button" class="profile-btn profile-btn-settings" id="profileSettingsBtn">
+                ⚙️ Налаштування
+            </button>
+            <button type="button" class="profile-btn profile-btn-logout" id="profileLogoutBtn">
+                Вихід
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
+    <script src="~/js/profile.js" asp-append-version="true"></script>
 }
