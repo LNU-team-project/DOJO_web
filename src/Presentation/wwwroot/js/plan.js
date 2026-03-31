@@ -8,7 +8,13 @@
   const rangeLabel = document.querySelector("[data-range-label]");
   const planListContainer = document.getElementById("allPlanItems");
 
-  if (!planModal || !openPlanModalBtn || !planForm || !timeGrid || !rangeLabel) {
+  if (
+    !planModal ||
+    !openPlanModalBtn ||
+    !planForm ||
+    !timeGrid ||
+    !rangeLabel
+  ) {
     return;
   }
 
@@ -67,21 +73,13 @@
 
   const showSuccess = (message) => {
     console.log(MESSAGES.SUCCESS_PREFIX + message);
-    const successDiv = document.createElement("div");
-    successDiv.className = "alert alert-success";
-    successDiv.setAttribute("role", "status");
-    successDiv.textContent = MESSAGES.SUCCESS_PREFIX + message;
-    const container = document.querySelector("body");
-    if (container) {
-      container.insertBefore(successDiv, container.firstChild);
-      setTimeout(() => successDiv.remove(), 3000);
-    }
   };
 
   const buildDateFromInputs = () => {
     const dateInput = document.getElementById("planDate");
     const timeInput = document.getElementById("planTime");
-    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) return null;
+    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value)
+      return null;
     const [hours, minutes] = timeInput.value.split(":").map(Number);
     const dateParts = dateInput.value.split("-").map(Number);
     if (dateParts.length !== 3) return null;
@@ -93,7 +91,9 @@
     event.preventDefault();
     const titleInput = document.getElementById("planTitle");
     const descriptionInput = document.getElementById("planDescription");
-    const priorityInput = document.querySelector('input[name="planPriority"]:checked');
+    const priorityInput = document.querySelector(
+      'input[name="planPriority"]:checked',
+    );
     const scheduledDate = buildDateFromInputs();
 
     if (!titleInput || !descriptionInput || !priorityInput) {
@@ -173,7 +173,10 @@
   const renderPlans = (planList) => {
     const plans = planList || {};
     clearPlanMarkers();
-    const allPlans = [...(plans.incompletePlans || []), ...(plans.completedPlans || [])];
+    const allPlans = [
+      ...(plans.incompletePlans || []),
+      ...(plans.completedPlans || []),
+    ];
     renderPlanList(plans);
     allPlans.forEach(renderPlanOnGrid);
   };
@@ -181,7 +184,10 @@
   const renderPlanList = (planList) => {
     if (!planListContainer) return;
     planListContainer.innerHTML = "";
-    const all = [...(planList.incompletePlans || []), ...(planList.completedPlans || [])];
+    const all = [
+      ...(planList.incompletePlans || []),
+      ...(planList.completedPlans || []),
+    ];
     if (all.length === 0) {
       planListContainer.innerHTML = `<p class="todo-empty-message">Немає планів</p>`;
       return;
@@ -196,7 +202,12 @@
       checkbox.type = "checkbox";
       checkbox.className = "todo-item-checkbox";
       checkbox.checked = plan.isCompleted;
-      checkbox.setAttribute("aria-label", plan.isCompleted ? "Позначити як невиконаний" : "Позначити як виконаний");
+      checkbox.setAttribute(
+        "aria-label",
+        plan.isCompleted
+          ? "Позначити як невиконаний"
+          : "Позначити як виконаний",
+      );
 
       const contentDiv = document.createElement("div");
       contentDiv.className = "todo-item-content";
@@ -218,14 +229,20 @@
 
       const prioritySpan = document.createElement("span");
       prioritySpan.className = `todo-priority priority-${plan.priority}`;
-      prioritySpan.textContent = PRIORITY_LABELS[plan.priority] || plan.priorityLabel || "";
+      prioritySpan.textContent =
+        PRIORITY_LABELS[plan.priority] || plan.priorityLabel || "";
       metaDiv.appendChild(prioritySpan);
 
       if (plan.scheduledAt) {
         const date = new Date(plan.scheduledAt);
         const timeLabel = document.createElement("span");
         timeLabel.className = "todo-priority";
-        timeLabel.textContent = date.toLocaleString("uk-UA", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+        timeLabel.textContent = date.toLocaleString("uk-UA", {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         metaDiv.appendChild(timeLabel);
       }
 
@@ -241,7 +258,9 @@
       item.appendChild(contentDiv);
       item.appendChild(deleteBtn);
 
-      checkbox.addEventListener("change", () => handlePlanStatusChange(plan.id, checkbox.checked));
+      checkbox.addEventListener("change", () =>
+        handlePlanStatusChange(plan.id, checkbox.checked),
+      );
       deleteBtn.addEventListener("click", () => handlePlanDelete(plan.id));
 
       planListContainer.appendChild(item);
@@ -249,7 +268,9 @@
   };
 
   const handlePlanStatusChange = async (planId, isCompleted) => {
-    const endpoint = isCompleted ? `/api/plan/complete/${planId}` : `/api/plan/incomplete/${planId}`;
+    const endpoint = isCompleted
+      ? `/api/plan/complete/${planId}`
+      : `/api/plan/incomplete/${planId}`;
     try {
       const response = await fetch(endpoint, { method: "PUT" });
       if (!response.ok) {
@@ -257,7 +278,9 @@
         showError(errorData.message || "Помилка оновлення плану");
         return;
       }
-      showSuccess(isCompleted ? "План позначено виконаним" : "План повернуто до активних");
+      showSuccess(
+        isCompleted ? "План позначено виконаним" : "План повернуто до активних",
+      );
       await loadPlans();
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
@@ -269,7 +292,9 @@
     const confirmDelete = confirm("Ви впевнені, що хочете видалити цей план?");
     if (!confirmDelete) return;
     try {
-      const response = await fetch(`/api/plan/delete/${planId}`, { method: "DELETE" });
+      const response = await fetch(`/api/plan/delete/${planId}`, {
+        method: "DELETE",
+      });
       if (!response.ok) {
         const errorData = await response.json();
         showError(errorData.message || "Не вдалося видалити план");
@@ -296,7 +321,9 @@
     weekEnd.setHours(23, 59, 59, 999);
     if (scheduledDate < weekStart || scheduledDate > weekEnd) return;
 
-    const diffDays = Math.floor((scheduledDate - weekStart) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (scheduledDate - weekStart) / (1000 * 60 * 60 * 24),
+    );
     if (diffDays < 0 || diffDays > 6) return;
 
     const hour = scheduledDate.getHours();
