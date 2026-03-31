@@ -302,12 +302,14 @@
   grid-template-columns: minmax(0, 2.6fr) minmax(240px, 1fr);
   gap: 16px;
   align-items: start;
+  position: static;
 }
 
 .dashboard-main {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: static;
 }
 
 .dashboard-sidebar {
@@ -318,6 +320,8 @@
   max-width: 300px;
   min-width: 240px;
   flex: 0 1 auto;
+  position: static;
+  z-index: auto;
 }
 
 .sidebar-card {
@@ -330,7 +334,11 @@
 
 .sidebar-card[data-mini-calendar] {
   overflow: hidden;
+  overflow-x: auto;
   padding-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .sidebar-card-header {
@@ -456,16 +464,31 @@
   .dashboard-content {
     grid-template-columns: 1fr;
   }
+  .dashboard-main {
+    order: 1;
+  }
   .dashboard-sidebar {
-    order: -1;
+    order: 3;
     max-width: none;
     min-width: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    position: static;
+  }
+  .dashboard-sidebar .sidebar-card {
+    width: 100%;
   }
 }
 
 @media (max-width: 640px) {
   .dashboard-content {
     gap: 8px;
+  }
+  .dashboard-sidebar {
+    display: flex;
+    flex-direction: column;
   }
   .mini-cal-day {
     padding: 4px 0;

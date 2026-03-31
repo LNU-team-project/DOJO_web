@@ -29,11 +29,14 @@
   const marks = new Set();
   let currentRange = { from: null, to: null };
 
-  const formatTitle = (date) =>
-    date.toLocaleDateString(locale, {
+  const formatTitle = (date) => {
+    const raw = date.toLocaleDateString(locale, {
       month: 'long',
       year: 'numeric',
     });
+    const cleaned = raw.replace(/\s*р\.?$/i, '').trim();
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  };
 
   const getMonthMatrix = (date) => {
     const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -42,30 +45,26 @@
     const totalDays = end.getDate();
 
     const cells = [];
-    const prevDays = startDay;
-    const nextDays = 42 - (prevDays + totalDays);
 
-    // prev month tail
-    for (let i = prevDays; i > 0; i -= 1) {
-      const d = new Date(start);
-      d.setDate(d.getDate() - i);
-      cells.push({ date: d, inMonth: false });
+    // placeholders before month start
+    for (let i = 0; i < startDay; i += 1) {
+      cells.push({ date: null, inMonth: false });
     }
 
-    // current month
+    // current month days
     for (let i = 1; i <= totalDays; i += 1) {
       const d = new Date(date.getFullYear(), date.getMonth(), i);
       cells.push({ date: d, inMonth: true });
     }
 
-    // next month head
-    for (let i = 1; i <= nextDays; i += 1) {
-      const d = new Date(end);
-      d.setDate(end.getDate() + i);
-      cells.push({ date: d, inMonth: false });
+    // pad to complete weeks (up to 6 rows max)
+    const remainder = cells.length % 7;
+    const trailing = remainder === 0 ? 0 : 7 - remainder;
+    for (let i = 0; i < trailing; i += 1) {
+      cells.push({ date: null, inMonth: false });
     }
 
-    return cells.slice(0, 42);
+    return cells;
   };
 
   const emitSelection = (date) => {
@@ -99,8 +98,11 @@
       dayBtn.className = 'mini-cal-day';
       dayBtn.setAttribute('role', 'gridcell');
 
-      if (!inMonth) {
-        dayBtn.classList.add('is-out-month');
+      if (!inMonth || !date) {
+        dayBtn.classList.add('is-empty');
+        dayBtn.disabled = true;
+        gridEl.appendChild(dayBtn);
+        return;
       }
 
       const iso = toIsoDate(date);
