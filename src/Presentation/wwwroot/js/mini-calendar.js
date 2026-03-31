@@ -1,12 +1,12 @@
 (() => {
-  const calendarRoot = document.querySelector('[data-mini-calendar]');
+  const calendarRoot = document.querySelector("[data-mini-calendar]");
   if (!calendarRoot) {
     return;
   }
 
-  const titleEl = calendarRoot.querySelector('[data-cal-title]');
-  const gridEl = calendarRoot.querySelector('[data-cal-grid]');
-  const weekdaysEl = calendarRoot.querySelector('.mini-calendar-weekdays');
+  const titleEl = calendarRoot.querySelector("[data-cal-title]");
+  const gridEl = calendarRoot.querySelector("[data-cal-grid]");
+  const weekdaysEl = calendarRoot.querySelector(".mini-calendar-weekdays");
   const prevBtn = calendarRoot.querySelector('[data-cal-nav="prev"]');
   const nextBtn = calendarRoot.querySelector('[data-cal-nav="next"]');
 
@@ -14,27 +14,34 @@
     return;
   }
 
-  const locale = 'uk-UA';
-  const weekdayLabels = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'НД'];
+  const locale = "uk-UA";
+  const weekdayLabels = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "НД"];
   const toIsoDate = (date) => {
     const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   };
 
   const today = new Date();
   let current = new Date(today.getFullYear(), today.getMonth(), 1);
-  let selectedIso = toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  let selectedIso = toIsoDate(
+    new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+  );
   const marks = new Set();
   let currentRange = { from: null, to: null };
 
   const formatTitle = (date) => {
     const raw = date.toLocaleDateString(locale, {
-      month: 'long',
-      year: 'numeric',
+      month: "long",
+      year: "numeric",
     });
-    const cleaned = raw.replace(/\s*р\.?$/i, '').trim();
+    const titleTokens = raw.trim().split(" ");
+    const lastToken = titleTokens.at(-1)?.toLowerCase();
+    if (lastToken === "р." || lastToken === "р") {
+      titleTokens.pop();
+    }
+    const cleaned = titleTokens.join(" ").trim();
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   };
 
@@ -72,34 +79,34 @@
     selectedIso = iso;
     globalThis.dashboardSelectedDate = iso;
     globalThis.dispatchEvent(
-      new CustomEvent('dashboard:day-selected', {
+      new CustomEvent("dashboard:day-selected", {
         detail: { selectedIso: iso, date },
       }),
     );
   };
 
   const renderWeekdays = () => {
-    weekdaysEl.innerHTML = '';
+    weekdaysEl.innerHTML = "";
     weekdayLabels.forEach((label) => {
-      const cell = document.createElement('div');
+      const cell = document.createElement("div");
       cell.textContent = label;
       weekdaysEl.appendChild(cell);
     });
   };
 
   const renderGrid = () => {
-    gridEl.innerHTML = '';
+    gridEl.innerHTML = "";
     titleEl.textContent = formatTitle(current);
 
     const cells = getMonthMatrix(current);
     cells.forEach(({ date, inMonth }) => {
-      const dayBtn = document.createElement('button');
-      dayBtn.type = 'button';
-      dayBtn.className = 'mini-cal-day';
-      dayBtn.setAttribute('role', 'gridcell');
+      const dayBtn = document.createElement("button");
+      dayBtn.type = "button";
+      dayBtn.className = "mini-cal-day";
+      dayBtn.setAttribute("role", "gridcell");
 
       if (!inMonth || !date) {
-        dayBtn.classList.add('is-empty');
+        dayBtn.classList.add("is-empty");
         dayBtn.disabled = true;
         gridEl.appendChild(dayBtn);
         return;
@@ -108,25 +115,25 @@
       const iso = toIsoDate(date);
       const isToday = iso === toIsoDate(today);
       if (isToday) {
-        dayBtn.classList.add('is-today');
+        dayBtn.classList.add("is-today");
       }
       if (iso === selectedIso) {
-        dayBtn.classList.add('is-selected');
+        dayBtn.classList.add("is-selected");
       }
 
-      const number = document.createElement('span');
-      number.className = 'day-number';
+      const number = document.createElement("span");
+      number.className = "day-number";
       number.textContent = String(date.getDate());
       dayBtn.appendChild(number);
 
       if (marks.has(iso) && iso !== selectedIso) {
-        const marker = document.createElement('span');
-        marker.className = 'day-marker';
-        marker.setAttribute('aria-hidden', 'true');
+        const marker = document.createElement("span");
+        marker.className = "day-marker";
+        marker.setAttribute("aria-hidden", "true");
         dayBtn.appendChild(marker);
       }
 
-      dayBtn.addEventListener('click', () => {
+      dayBtn.addEventListener("click", () => {
         emitSelection(date);
         renderGrid();
       });
@@ -148,25 +155,29 @@
       const endIso = toIsoDate(end);
       currentRange = { from: startIso, to: endIso };
 
-      const response = await fetch(`/api/calendar/marks?from=${startIso}&to=${endIso}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await fetch(
+        `/api/calendar/marks?from=${startIso}&to=${endIso}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
       if (!response.ok) {
         return;
       }
 
       const payload = await response.json();
-      if (!payload || !payload.data) {
+      const markDates = payload?.data;
+      if (!Array.isArray(markDates)) {
         return;
       }
 
       marks.clear();
-      (payload.data || []).forEach((iso) => marks.add(iso));
+      markDates.forEach((iso) => marks.add(iso));
       renderGrid();
     } catch (err) {
-      console.error('Помилка завантаження позначок календаря', err);
+      console.error("Помилка завантаження позначок календаря", err);
     }
   };
 
@@ -178,18 +189,18 @@
     }
   };
 
-  globalThis.addEventListener('dashboard:plan-created', (event) => {
+  globalThis.addEventListener("dashboard:plan-created", (event) => {
     const iso = event?.detail?.scheduledIso;
     if (!iso) return;
     addMarkIfInRange(iso);
   });
 
-  prevBtn.addEventListener('click', () => {
+  prevBtn.addEventListener("click", () => {
     navigate(-1);
     fetchMarks();
   });
 
-  nextBtn.addEventListener('click', () => {
+  nextBtn.addEventListener("click", () => {
     navigate(1);
     fetchMarks();
   });

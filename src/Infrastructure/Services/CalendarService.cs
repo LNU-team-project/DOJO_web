@@ -24,6 +24,8 @@ public class CalendarService : ICalendarService
 
     public async Task<Result<List<string>>> GetMarkedDatesAsync(int userId, DateOnly from, DateOnly to)
     {
+        _logger.LogDebug("Loading calendar marks for user {UserId} from {From} to {To}", userId, from, to);
+
         if (userId <= 0)
         {
             return Result<List<string>>.FailureResult("Користувача не знайдено");
