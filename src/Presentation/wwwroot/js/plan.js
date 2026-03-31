@@ -140,6 +140,11 @@
       }
 
       showSuccess("План створено");
+      globalThis.dispatchEvent(
+        new CustomEvent("dashboard:plan-created", {
+          detail: { scheduledIso: scheduledDate.toISOString().split("T")[0] },
+        })
+      );
       closeModal();
       await loadPlans();
     } catch (error) {

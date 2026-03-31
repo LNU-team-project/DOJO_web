@@ -16,10 +16,18 @@
 
   const locale = 'uk-UA';
   const weekdayLabels = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'НД'];
+  const toIsoDate = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
   const today = new Date();
   let current = new Date(today.getFullYear(), today.getMonth(), 1);
-  let selectedIso = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  let selectedIso = toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
   const marks = new Set();
+  let currentRange = { from: null, to: null };
 
   const formatTitle = (date) =>
     date.toLocaleDateString(locale, {
@@ -61,7 +69,7 @@
   };
 
   const emitSelection = (date) => {
-    const iso = date.toISOString().split('T')[0];
+    const iso = toIsoDate(date);
     selectedIso = iso;
     globalThis.dashboardSelectedDate = iso;
     globalThis.dispatchEvent(
@@ -95,8 +103,8 @@
         dayBtn.classList.add('is-out-month');
       }
 
-      const iso = date.toISOString().split('T')[0];
-      const isToday = iso === today.toISOString().split('T')[0];
+      const iso = toIsoDate(date);
+      const isToday = iso === toIsoDate(today);
       if (isToday) {
         dayBtn.classList.add('is-today');
       }
@@ -132,12 +140,11 @@
 
   const fetchMarks = async () => {
     try {
-      const startIso = new Date(current.getFullYear(), current.getMonth(), 1)
-        .toISOString()
-        .split('T')[0];
-      const endIso = new Date(current.getFullYear(), current.getMonth() + 1, 0)
-        .toISOString()
-        .split('T')[0];
+      const start = new Date(current.getFullYear(), current.getMonth(), 1);
+      const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+      const startIso = toIsoDate(start);
+      const endIso = toIsoDate(end);
+      currentRange = { from: startIso, to: endIso };
 
       const response = await fetch(`/api/calendar/marks?from=${startIso}&to=${endIso}`, {
         method: 'GET',
@@ -160,6 +167,20 @@
       console.error('Помилка завантаження позначок календаря', err);
     }
   };
+
+  const addMarkIfInRange = (isoDate) => {
+    if (!currentRange.from || !currentRange.to) return;
+    if (isoDate >= currentRange.from && isoDate <= currentRange.to) {
+      marks.add(isoDate);
+      renderGrid();
+    }
+  };
+
+  globalThis.addEventListener('dashboard:plan-created', (event) => {
+    const iso = event?.detail?.scheduledIso;
+    if (!iso) return;
+    addMarkIfInRange(iso);
+  });
 
   prevBtn.addEventListener('click', () => {
     navigate(-1);
