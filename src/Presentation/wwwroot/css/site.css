@@ -20,6 +20,7 @@ html {
   --dojo-success: #2bb673;
   --dojo-danger: #e24b4b;
   --dojo-shadow: 0 18px 40px rgba(24, 22, 22, 0.12);
+  --dashboard-scrollbar-offset: 0px;
 }
 
 @media (min-width: 768px) {
@@ -341,6 +342,7 @@ body {
 .dashboard-board {
   --dashboard-time-column: 78px;
   --dashboard-row-height: 56px;
+  --dashboard-day-min: 120px;
 
   max-width: 1200px;
   margin: 0 auto;
@@ -353,7 +355,7 @@ body {
 
 .dashboard-days {
   display: grid;
-  grid-template-columns: var(--dashboard-time-column) repeat(7, minmax(0, 1fr));
+  grid-template-columns: var(--dashboard-time-column) repeat(7, minmax(var(--dashboard-day-min), 1fr));
   border-bottom: 1px solid #f2e5eb;
   padding-right: var(--dashboard-scrollbar-offset, 0px);
 }
@@ -420,7 +422,9 @@ body {
 
 .dashboard-row-cells {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(var(--dashboard-day-min), 1fr));
+  border-top: 1px solid #f6e9ef;
+  background: #fff;
 }
 
 .dashboard-slot-cell {
