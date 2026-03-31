@@ -24,12 +24,18 @@
 
   let weekOffset = 0;
 
-  const getWeekStart = (date) => {
+  const getWeekStartForDate = (date) => {
     const base = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const day = base.getDay();
     const offsetToMonday = day === 0 ? -6 : 1 - day;
-    base.setDate(base.getDate() + offsetToMonday + weekOffset * 7);
+    base.setDate(base.getDate() + offsetToMonday);
     return base;
+  };
+
+  const getWeekStart = (date) => {
+    const start = getWeekStartForDate(date);
+    start.setDate(start.getDate() + weekOffset * 7);
+    return start;
   };
 
   const getWeekDates = () => {
@@ -135,6 +141,15 @@
     globalThis.dispatchEvent(new CustomEvent("dashboard:week-changed", { detail }));
   };
 
+  const setWeekByDate = (date) => {
+    const nowWeekStart = getWeekStartForDate(new Date());
+    const targetWeekStart = getWeekStartForDate(date);
+    const diffMs = targetWeekStart.getTime() - nowWeekStart.getTime();
+    const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+    weekOffset = diffWeeks;
+    render();
+  };
+
   prevButton.addEventListener("click", () => {
     weekOffset -= 1;
     render();
@@ -148,6 +163,19 @@
   globalThis.addEventListener("resize", () => {
     syncGridViewport();
     syncHeaderWithGrid();
+  });
+
+  globalThis.addEventListener("dashboard:day-selected", (event) => {
+    const iso = event?.detail?.selectedIso;
+    if (!iso) {
+      return;
+    }
+    const parts = iso.split("-").map((x) => Number.parseInt(x, 10));
+    if (parts.length !== 3 || Number.isNaN(parts[0]) || Number.isNaN(parts[1]) || Number.isNaN(parts[2])) {
+      return;
+    }
+    const target = new Date(parts[0], parts[1] - 1, parts[2]);
+    setWeekByDate(target);
   });
 
   render();

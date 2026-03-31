@@ -86,16 +86,6 @@
    */
   const showSuccess = (message) => {
     console.log(MESSAGES.SUCCESS_PREFIX + message);
-    const successDiv = document.createElement("div");
-    successDiv.className = "alert alert-success";
-    successDiv.setAttribute("role", "status");
-    successDiv.textContent = MESSAGES.SUCCESS_PREFIX + message;
-
-    const container = document.querySelector("body");
-    if (container) {
-      container.insertBefore(successDiv, container.firstChild);
-      setTimeout(() => successDiv.remove(), 3000);
-    }
   };
 
   /**

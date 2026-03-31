@@ -136,7 +136,6 @@
    */
   const showSuccess = (message) => {
     console.log("✅ Успіх: " + message);
-    alert("✅ " + message);
   };
 
   const navigateTo = (url) => {

@@ -50,30 +50,102 @@
     </header>
 
     <div class="dashboard-content">
-        <section class="dashboard-board" aria-label="Тижневий календар">
-            <div class="dashboard-days" data-days-header></div>
-            <div class="dashboard-time-grid" data-time-grid></div>
-        </section>
-
-        <div class="dashboard-lists-row" aria-label="Списки завдань і планів">
-            <section class="todo-list-section" aria-label="Список TODO завдань">
-                <div class="todo-list-container">
-                    <h2 class="todo-list-title">Завдання</h2>
-                    <div class="todo-items" id="allTodoItems">
-                        <p class="todo-empty-message">Немає завдань</p>
-                    </div>
-                </div>
+        <div class="dashboard-main">
+            <section class="dashboard-board" aria-label="Тижневий календар">
+                <div class="dashboard-days" data-days-header></div>
+                <div class="dashboard-time-grid" data-time-grid></div>
             </section>
 
-            <section class="todo-list-section" aria-label="Список планів">
-                <div class="todo-list-container">
-                    <h2 class="todo-list-title">Плани</h2>
-                    <div class="todo-items" id="allPlanItems">
-                        <p class="todo-empty-message">Немає планів</p>
+            <div class="dashboard-lists-row" aria-label="Списки завдань і планів">
+                <section class="todo-list-section" aria-label="Список TODO завдань">
+                    <div class="todo-list-container">
+                        <h2 class="todo-list-title">Завдання</h2>
+                        <div class="todo-items" id="allTodoItems">
+                            <p class="todo-empty-message">Немає завдань</p>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <section class="todo-list-section" aria-label="Список планів">
+                    <div class="todo-list-container">
+                        <h2 class="todo-list-title">Плани</h2>
+                        <div class="todo-items" id="allPlanItems">
+                            <p class="todo-empty-message">Немає планів</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
+
+        <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
+            <div class="sidebar-card" data-mini-calendar>
+                <div class="sidebar-card-header">
+                    <span class="sidebar-card-icon" aria-hidden="true">📅</span>
+                    <span class="sidebar-card-title">Календарі</span>
+                </div>
+
+                <div class="mini-calendar-header">
+                    <button type="button" class="mini-cal-btn" data-cal-nav="prev" aria-label="Попередній місяць">&#9664;</button>
+                    <div class="mini-cal-title" data-cal-title>Місяць</div>
+                    <button type="button" class="mini-cal-btn" data-cal-nav="next" aria-label="Наступний місяць">&#9654;</button>
+                </div>
+
+                <div class="mini-calendar-weekdays" aria-hidden="true"></div>
+                <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
+            </div>
+
+            <div class="sidebar-card pomodoro-widget" data-pomodoro-root aria-label="Pomodoro таймер">
+                <div class="pomodoro-card">
+                    <p class="pomodoro-eyebrow">Focus station</p>
+                    <h2 class="pomodoro-title">Pomodoro</h2>
+
+                    <div class="pomodoro-mode" data-pomodoro-mode>Фокус</div>
+                    <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
+
+                    <div class="pomodoro-controls">
+                        <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
+                            Старт
+                        </button>
+                        <button type="button" class="pomodoro-btn" data-pomodoro-pause>
+                            Пауза
+                        </button>
+                        <button type="button" class="pomodoro-btn" data-pomodoro-reset>
+                            Скинути
+                        </button>
+                        <button type="button" class="pomodoro-btn" data-pomodoro-skip>
+                            Пропустити
+                        </button>
+                    </div>
+
+                    <fieldset class="pomodoro-presets">
+                        <legend class="pomodoro-legend">Пресети таймера</legend>
+                        <button type="button" class="pomodoro-chip is-active" data-preset="25-5-15">25/5</button>
+                        <button type="button" class="pomodoro-chip" data-preset="50-10-20">50/10</button>
+                    </fieldset>
+
+                    <div class="pomodoro-meta">
+                        <p class="pomodoro-meta-row">
+                            <span>Сесій сьогодні</span>
+                            <strong data-pomodoro-count>0</strong>
+                        </p>
+                        <label class="pomodoro-auto">
+                            <input type="checkbox" data-pomodoro-auto checked>
+                            Автоматично запускати наступний раунд
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card sidebar-placeholder">
+                <div class="sidebar-card-title">В майбутньому</div>
+                <p class="sidebar-card-text">Тут зʼявиться новий віджет.</p>
+            </div>
+
+            <div class="sidebar-card sidebar-placeholder">
+                <div class="sidebar-card-title">В майбутньому</div>
+                <p class="sidebar-card-text">Ще один блок для розширень.</p>
+            </div>
+        </aside>
     </div>
 </div>
 
@@ -264,14 +336,14 @@
             </div>
         </div>
 
-        <div class="profile-modal-footer"> 
-             @* <button type="button" class="profile-btn profile-btn-settings" id="profileSettingsBtn">
-                 ⚙️ Налаштування 
-             </button>  *@
-             <button type="button" class="profile-btn profile-btn-logout" id="profileLogoutBtn">
-                Вихід 
-             </button> 
-        </div> 
+          <div class="profile-modal-footer"> 
+                 <button type="button" class="profile-btn profile-btn-settings" id="profileSettingsBtn">
+                      ⚙️ Налаштування 
+                 </button>
+                 <button type="button" class="profile-btn profile-btn-logout" id="profileLogoutBtn">
+                     Вихід 
+                 </button> 
+          </div> 
     </div>
 </div>
 
@@ -355,4 +427,6 @@
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
     <script src="~/js/profile.js" asp-append-version="true"></script>
+    <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
+    <script src="~/js/pomodoro.js" asp-append-version="true"></script>
 }
