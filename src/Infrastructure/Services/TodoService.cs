@@ -14,6 +14,7 @@ public interface ITodoService
     Task<Result<bool>> MarkTodoAsCompletedAsync(int todoId, int userId);
     Task<Result<bool>> MarkTodoAsIncompleteAsync(int todoId, int userId);
     Task<Result<bool>> DeleteTodoAsync(int todoId, int userId);
+    Task<Result<TodoItemViewModel>> UpdateTodoAsync(int todoId, int userId, UpdateTodoViewModel? model);
 }
 
 
@@ -166,6 +167,50 @@ public class TodoService : ITodoService
         _logger.LogInformation("TODO {TodoId} видалено для користувача {UserId}", todoId, userId);
 
         return Result<bool>.SuccessResult(true, "TODO завдання видалено");
+    }
+
+    public async Task<Result<TodoItemViewModel>> UpdateTodoAsync(int todoId, int userId, UpdateTodoViewModel? model)
+    {
+        if (model == null)
+        {
+            _logger.LogWarning("Спроба оновити TODO з null моделлю для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожною");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            _logger.LogWarning("Спроба оновити TODO з порожною назвою для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Назва TODO не може бути порожною");
+        }
+
+        if (model.Title.Length > 255)
+        {
+            _logger.LogWarning("Назва TODO перевищує максимальну довжину для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Назва TODO не може перевищувати 255 символів");
+        }
+
+        var todo = await GetUserTodoAsync(todoId, userId);
+
+        if (todo == null)
+        {
+            _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
+            return Result<TodoItemViewModel>.FailureResult("TODO завдання не знайдено");
+        }
+
+        todo.Title = model.Title.Trim();
+        todo.Description = model.Description?.Trim();
+        todo.Priority = model.Priority;
+        todo.DueDate = model.DueDate;
+
+        _context.Tasks.Update(todo);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("TODO завдання оновлено: {TodoId} для користувача {UserId}", todo.Id, userId);
+
+        return Result<TodoItemViewModel>.SuccessResult(
+            MapToViewModel(todo),
+            "TODO завдання успішно оновлено"
+        );
     }
 
     private async Task<TaskItem?> GetUserTodoAsync(int todoId, int userId)

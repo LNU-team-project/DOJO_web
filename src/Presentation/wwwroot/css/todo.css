@@ -846,6 +846,30 @@
   transform: scale(0.95);
 }
 
+.todo-item-edit {
+  padding: 8px 10px;
+  background: rgba(255, 122, 144, 0.1);
+  color: var(--dojo-accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todo-item-edit:hover {
+  background: rgba(255, 122, 144, 0.2);
+  transform: scale(1.05);
+}
+
+.todo-item-edit:active {
+  transform: scale(0.95);
+}
+
 .todo-item.completed {
   opacity: 0.75;
   background: #f9f5f2;
