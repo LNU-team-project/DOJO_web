@@ -824,9 +824,9 @@
 
 .todo-item-delete {
   padding: 8px 10px;
-  background: rgba(226, 75, 75, 0.1);
-  color: var(--dojo-danger);
-  border: none;
+  background: rgba(255, 122, 144, 0.1);
+  color: var(--dojo-accent);
+  border: 1px solid rgba(255, 122, 144, 0.2);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -838,8 +838,10 @@
 }
 
 .todo-item-delete:hover {
-  background: rgba(226, 75, 75, 0.2);
+  background: rgba(255, 122, 144, 0.15);
+  border-color: rgba(255, 122, 144, 0.4);
   transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.12);
 }
 
 .todo-item-delete:active {
@@ -850,7 +852,7 @@
   padding: 8px 10px;
   background: rgba(255, 122, 144, 0.1);
   color: var(--dojo-accent);
-  border: none;
+  border: 1px solid rgba(255, 122, 144, 0.2);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -862,16 +864,51 @@
 }
 
 .todo-item-edit:hover {
-  background: rgba(255, 122, 144, 0.2);
+  background: rgba(255, 122, 144, 0.15);
+  border-color: rgba(255, 122, 144, 0.4);
   transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.12);
 }
 
 .todo-item-edit:active {
   transform: scale(0.95);
 }
 
+.todo-item-description-btn {
+  padding: 8px 10px;
+  background: rgba(255, 122, 144, 0.1);
+  color: var(--dojo-accent);
+  border: 1px solid rgba(255, 122, 144, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todo-item-description-btn:hover {
+  background: rgba(255, 122, 144, 0.15);
+  border-color: rgba(255, 122, 144, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.12);
+}
+
+.todo-item-description-btn.active {
+  background: rgba(255, 122, 144, 0.2);
+  border-color: rgba(255, 122, 144, 0.5);
+  color: var(--dojo-accent-strong);
+  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.15);
+}
+
+.todo-item-description-btn:active {
+  transform: scale(0.95);
+}
+
 .todo-item.completed {
-  opacity: 0.75;
+  opacity: 0.6;
   background: #f9f5f2;
 }
 
@@ -882,6 +919,7 @@
 
 .todo-item.completed .todo-item-description {
   text-decoration: line-through;
+  color: var(--dojo-muted);
 }
 
 /* ──────────────────────────────────────────────────────────────────── */

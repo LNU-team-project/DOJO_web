@@ -41,6 +41,13 @@
     todoModal.setAttribute("aria-hidden", "false");
     if (!isEditMode) {
       todoForm.reset();
+      // Скидаємо режим редагування при відкритті для нового завдання
+      delete todoForm.dataset.editingTodoId;
+      const submitBtn = todoForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = "Додати TODO";
+      }
+      document.getElementById("todoModalTitle").textContent = "Додати ціль";
     }
     const titleInput = document.getElementById("todoTitle");
     if (titleInput) {
@@ -119,12 +126,10 @@
     titleSpan.textContent = todo.title;
     contentDiv.appendChild(titleSpan);
 
-    if (todo.description) {
-      const descriptionSpan = document.createElement("div");
-      descriptionSpan.className = "todo-item-description";
-      descriptionSpan.textContent = todo.description;
-      contentDiv.appendChild(descriptionSpan);
-    }
+    const descriptionSpan = document.createElement("div");
+    descriptionSpan.className = "todo-item-description";
+    descriptionSpan.textContent = todo.description || "";
+    contentDiv.appendChild(descriptionSpan);
 
     const metaDiv = document.createElement("div");
     metaDiv.className = "todo-item-meta";
@@ -142,6 +147,22 @@
     editBtn.setAttribute("aria-label", "Редагувати завдання");
     editBtn.innerHTML = "✏️";
 
+    const descriptionBtn = document.createElement("button");
+    descriptionBtn.type = "button";
+    descriptionBtn.className = "todo-item-description-btn";
+    descriptionBtn.setAttribute("aria-label", "Показати опис");
+    descriptionBtn.innerHTML = "👁️";
+    
+    // Якщо опису немає - робимо кнопку неактивною та приховуємо опис за замовчуванням
+    if (!todo.description || todo.description.trim() === "") {
+      descriptionBtn.disabled = true;
+      descriptionBtn.style.opacity = "0.5";
+      descriptionSpan.style.display = "none";
+    } else {
+      // Якщо опис є - приховуємо його за замовчуванням
+      descriptionSpan.style.display = "none";
+    }
+
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "todo-item-delete";
@@ -150,6 +171,7 @@
 
     div.appendChild(checkbox);
     div.appendChild(contentDiv);
+    div.appendChild(descriptionBtn);
     div.appendChild(editBtn);
     div.appendChild(deleteBtn);
 
@@ -157,6 +179,13 @@
     checkbox.addEventListener("change", () =>
       handleTodoStatusChange(todo.id, checkbox.checked),
     );
+    descriptionBtn.addEventListener("click", () => {
+      if (descriptionSpan && (todo.description && todo.description.trim() !== "")) {
+        const isHidden = descriptionSpan.style.display === "none";
+        descriptionSpan.style.display = isHidden ? "block" : "none";
+        descriptionBtn.classList.toggle("active", isHidden);
+      }
+    });
     editBtn.addEventListener("click", () => handleTodoEdit(todo));
     deleteBtn.addEventListener("click", () => handleTodoDelete(todo.id));
 
