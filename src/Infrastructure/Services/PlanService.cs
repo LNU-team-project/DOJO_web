@@ -13,6 +13,8 @@ public interface IPlanService
     Task<Result<bool>> MarkPlanAsCompletedAsync(int planId, int userId);
     Task<Result<bool>> MarkPlanAsIncompleteAsync(int planId, int userId);
     Task<Result<bool>> DeletePlanAsync(int planId, int userId);
+    Task<Result<PlanItemViewModel>> GetPlanByIdAsync(int planId, int userId);
+    Task<Result<PlanItemViewModel>> UpdatePlanAsync(int planId, int userId, PlanCreateViewModel? model);
 }
 
 public class PlanService : IPlanService
@@ -23,6 +25,8 @@ public class PlanService : IPlanService
         public const int Medium = 2;
         public const int High = 3;
     }
+
+    private const string PlanNotFoundMsg = "План не знайдено";
 
     private readonly AppDbContext _context;
 
@@ -92,7 +96,7 @@ public class PlanService : IPlanService
         var plan = await GetUserPlanAsync(planId, userId);
         if (plan == null)
         {
-            return Result<bool>.FailureResult("План не знайдено");
+            return Result<bool>.FailureResult(PlanNotFoundMsg);
         }
 
         if (plan.IsCompleted)
@@ -112,7 +116,7 @@ public class PlanService : IPlanService
         var plan = await GetUserPlanAsync(planId, userId);
         if (plan == null)
         {
-            return Result<bool>.FailureResult("План не знайдено");
+            return Result<bool>.FailureResult(PlanNotFoundMsg);
         }
 
         if (!plan.IsCompleted)
@@ -132,12 +136,51 @@ public class PlanService : IPlanService
         var plan = await GetUserPlanAsync(planId, userId);
         if (plan == null)
         {
-            return Result<bool>.FailureResult("План не знайдено");
+            return Result<bool>.FailureResult(PlanNotFoundMsg);
         }
 
         _context.Tasks.Remove(plan);
         await _context.SaveChangesAsync();
         return Result<bool>.SuccessResult(true, "План видалено");
+    }
+
+    public async Task<Result<PlanItemViewModel>> GetPlanByIdAsync(int planId, int userId)
+    {
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+            return Result<PlanItemViewModel>.FailureResult(PlanNotFoundMsg);
+
+        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan), "План отримано");
+    }
+
+    public async Task<Result<PlanItemViewModel>> UpdatePlanAsync(int planId, int userId, PlanCreateViewModel? model)
+    {
+        if (model == null)
+            return Result<PlanItemViewModel>.FailureResult("Модель плану не може бути порожною");
+
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+            return Result<PlanItemViewModel>.FailureResult(PlanNotFoundMsg);
+
+        if (string.IsNullOrWhiteSpace(model.Title))
+            return Result<PlanItemViewModel>.FailureResult("Назва плану не може бути порожньою");
+
+        if (model.Title.Length > 255)
+            return Result<PlanItemViewModel>.FailureResult("Назва плану не може перевищувати 255 символів");
+
+        if (model.ScheduledAt == null)
+            return Result<PlanItemViewModel>.FailureResult("Оберіть дату та час плану");
+
+        plan.Title = model.Title.Trim();
+        plan.Description = model.Description?.Trim();
+        plan.Priority = model.Priority;
+        plan.ScheduledAt = model.ScheduledAt;
+        // TaskItem doesn't have UpdatedAt column in the domain model; rely on DB triggers or UpdatedAt in other tables if needed
+
+        _context.Tasks.Update(plan);
+        await _context.SaveChangesAsync();
+
+        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan), "План оновлено");
     }
 
     private async Task<TaskItem?> GetUserPlanAsync(int planId, int userId)

@@ -149,4 +149,42 @@ public class PlanController : ControllerBase
 
         return Ok(new { success = true, message = result.Message });
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetPlan(int id)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.GetPlanByIdAsync(id, userId);
+        if (!result.Success)
+        {
+            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
+        }
+        return Ok(new { success = true, message = result.Message, data = result.Data });
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdatePlan(int id, [FromBody] PlanCreateViewModel? model)
+    {
+        if (model == null) return BadRequest(new { success = false, message = "Модель плану не може бути порожньою" });
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+        }
+
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.UpdatePlanAsync(id, userId, model);
+        if (!result.Success)
+        {
+            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
+        }
+
+        return Ok(new { success = true, message = result.Message, data = result.Data });
+    }
 }

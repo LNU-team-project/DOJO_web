@@ -317,6 +317,182 @@
     timeGrid.querySelectorAll(".plan-slot").forEach((el) => el.remove());
   };
 
+  const openPlanDetailsModal = () => {
+    const modal = document.getElementById("planDetailsModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+  };
+
+  const closePlanDetailsModal = () => {
+    const modal = document.getElementById("planDetailsModal");
+    if (!modal) return;
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    // reset view/edit states
+    document.getElementById("planDetailsView").style.display = "block";
+    document.getElementById("planEditForm").style.display = "none";
+  };
+
+  const loadPlanDetails = async (planId) => {
+    try {
+      const resp = await fetch(`/api/plan/${planId}`, { method: "GET" });
+      if (!resp.ok) {
+        const e = await resp.json();
+        showError(e.message || "Не вдалося завантажити план");
+        return null;
+      }
+      const p = await resp.json();
+      if (!p.success || !p.data) {
+        showError(p.message || "Невірний формат відповіді");
+        return null;
+      }
+      return p.data;
+    } catch (err) {
+      console.error(err);
+      showError("Не вдалося завантажити план");
+      return null;
+    }
+  };
+
+  const fillPlanDetailsView = (plan) => {
+    if (!plan) return;
+    document.getElementById("detailTitle").textContent = plan.title || "-";
+    document.getElementById("detailDescription").textContent = plan.description || "-";
+    const dt = plan.scheduledAt ? new Date(plan.scheduledAt) : null;
+    document.getElementById("detailDateTime").textContent = dt
+      ? dt.toLocaleString("uk-UA", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+      : "-";
+    const priorityEl = document.getElementById("detailPriority");
+    if (priorityEl) {
+      priorityEl.textContent = plan.priorityLabel || plan.priority || "-";
+    }
+    document.getElementById("detailStatus").textContent = plan.isCompleted ? "Виконано" : "Активний";
+
+    // Update priority badge with proper class and label
+    const badge = document.getElementById("detailPriorityBadge");
+    if (badge) {
+      const clsBase = "plan-priority-badge";
+      const pr = plan.priority ? String(plan.priority) : "2";
+      badge.className = `${clsBase} plan-priority-${pr}`;
+      badge.textContent = plan.priorityLabel || (pr === "1" ? "Низька" : pr === "3" ? "Висока" : "Середня");
+    }
+
+    // status color
+    const statusEl = document.getElementById("detailStatus");
+    if (statusEl) {
+      statusEl.style.color = plan.isCompleted ? "var(--dojo-success)" : "var(--dojo-muted)";
+    }
+  };
+
+  const fillPlanEditForm = (plan) => {
+    if (!plan) return;
+    document.getElementById("editPlanTitle").value = plan.title || "";
+    document.getElementById("editPlanDescription").value = plan.description || "";
+    if (plan.scheduledAt) {
+      const d = new Date(plan.scheduledAt);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      document.getElementById("editPlanDate").value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById("editPlanTime").value = `${hh}:${min}`;
+    }
+    const pr = String(plan.priority || 2);
+    const radio = document.querySelector(`input[name="editPlanPriority"][value="${pr}"]`);
+    if (radio) radio.checked = true;
+  };
+
+  const attachDetailHandlers = () => {
+    // List items click
+    planListContainer.addEventListener("click", async (ev) => {
+      const item = ev.target.closest(".todo-item");
+      if (!item) return;
+      const planId = item.dataset.planId;
+      if (!planId) return;
+      const plan = await loadPlanDetails(planId);
+      if (!plan) return;
+      fillPlanDetailsView(plan);
+      openPlanDetailsModal();
+
+      // store current id on modal for edits
+      document.getElementById("planDetailsModal").dataset.currentPlanId = planId;
+    });
+
+    // Badges on grid - delegate
+    timeGrid.addEventListener("click", async (ev) => {
+      const badge = ev.target.closest(".plan-slot");
+      if (!badge) return;
+      const planId = badge.dataset.planId;
+      if (!planId) return;
+      const plan = await loadPlanDetails(planId);
+      if (!plan) return;
+      fillPlanDetailsView(plan);
+      openPlanDetailsModal();
+      document.getElementById("planDetailsModal").dataset.currentPlanId = planId;
+    });
+
+    // modal controls
+    document.getElementById("closePlanDetailsModal").addEventListener("click", closePlanDetailsModal);
+    document.getElementById("closePlanDetailsBtn").addEventListener("click", closePlanDetailsModal);
+    document.getElementById("editPlanBtn").addEventListener("click", async () => {
+      const planId = document.getElementById("planDetailsModal").dataset.currentPlanId;
+      if (!planId) return;
+      const plan = await loadPlanDetails(planId);
+      if (!plan) return;
+      fillPlanEditForm(plan);
+      document.getElementById("planDetailsView").style.display = "none";
+      document.getElementById("planEditForm").style.display = "block";
+    });
+
+    document.getElementById("cancelEditPlanBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("planEditForm").style.display = "none";
+      document.getElementById("planDetailsView").style.display = "block";
+    });
+
+    document.getElementById("planEditForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const planId = document.getElementById("planDetailsModal").dataset.currentPlanId;
+      if (!planId) return;
+      const title = document.getElementById("editPlanTitle").value.trim();
+      const description = document.getElementById("editPlanDescription").value.trim();
+      const date = document.getElementById("editPlanDate").value;
+      const time = document.getElementById("editPlanTime").value;
+      const pr = document.querySelector('input[name="editPlanPriority"]:checked');
+      if (!title || !date || !time || !pr) {
+        showError("Заповніть усі обов'язкові поля");
+        return;
+      }
+      const scheduled = new Date(`${date}T${time}`);
+      try {
+        const resp = await fetch(`/api/plan/${planId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description: description || null, scheduledAt: scheduled.toISOString(), priority: Number(pr.value) }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json();
+          showError(err.message || "Не вдалося оновити план");
+          return;
+        }
+        const result = await resp.json();
+        if (!result.success) {
+          showError(result.message || "Не вдалося оновити план");
+          return;
+        }
+        showSuccess("План оновлено");
+        closePlanDetailsModal();
+        await loadPlans();
+      } catch (err) {
+        console.error(err);
+        showError("Не вдалося оновити план");
+      }
+    });
+  };
+
+  // update renderPlanOnGrid to set data-plan-id and make it focusable/clickable
   const renderPlanOnGrid = (plan) => {
     if (!plan.scheduledAt || !currentWeekStartIso || !currentWeekEndIso) return;
     const scheduledDate = new Date(plan.scheduledAt);
@@ -342,6 +518,8 @@
     badge.className = `plan-slot plan-priority-${priorityClass} ${plan.isCompleted ? "plan-completed" : ""}`;
     badge.textContent = plan.title;
     badge.title = plan.description || "";
+    badge.tabIndex = 0;
+    badge.dataset.planId = plan.id;
     if (plan.isCompleted) {
       badge.style.opacity = "0.6";
       badge.style.textDecoration = "line-through";
@@ -367,5 +545,6 @@
   globalThis.addEventListener("dashboard:week-changed", handleWeekChanged);
 
   applyInitialWeekState();
+  attachDetailHandlers();
   loadPlans();
 })();

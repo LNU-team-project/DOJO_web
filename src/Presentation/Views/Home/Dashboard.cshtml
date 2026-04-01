@@ -294,6 +294,81 @@
     </div>
 </div>
 
+<!-- Plan Details / Edit Modal -->
+<div class="todo-modal" id="planDetailsModal" aria-hidden="true" aria-labelledby="planDetailsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="planDetailsModalTitle">Перегляд плану</h2>
+            <button type="button" class="todo-modal-close" id="closePlanDetailsModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <!-- View mode -->
+        <div id="planDetailsView" class="plan-details">
+            <div class="plan-details-header">
+                <div>
+                    <h3 id="detailTitle" class="plan-details-title">-</h3>
+                    <div class="plan-details-meta">
+                        <span id="detailStatus" class="plan-status" style="color:var(--dojo-muted); font-weight:600;">-</span>
+                    </div>
+                </div>
+                <div class="plan-details-meta">
+                    <div id="detailPriorityBadge" class="plan-priority-badge plan-priority-2">Середня</div>
+                </div>
+            </div>
+
+            <div class="plan-details-card">
+                <p id="detailDescription" class="plan-details-desc">-</p>
+                <div class="plan-details-meta-row" style="margin-top:12px;">
+                    <span><strong>Дата та час:</strong>&nbsp;<span id="detailDateTime">-</span></span>
+                </div>
+            </div>
+
+            <div class="plan-details-actions">
+                <button type="button" class="btn-secondary" id="closePlanDetailsBtn">Закрити</button>
+                <button type="button" class="btn-primary" id="editPlanBtn">Редагувати</button>
+            </div>
+        </div>
+
+        <!-- Edit mode -->
+        <form id="planEditForm" class="todo-form" style="display:none;">
+            <div class="form-group">
+                <label for="editPlanTitle">Назва плану *</label>
+                <input type="text" id="editPlanTitle" name="title" class="form-control" required maxlength="255" />
+            </div>
+            <div class="form-group">
+                <label for="editPlanDescription">Опис</label>
+                <textarea id="editPlanDescription" name="description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editPlanDate">Дата *</label>
+                    <input type="date" id="editPlanDate" name="planDate" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label for="editPlanTime">Час *</label>
+                    <input type="time" id="editPlanTime" name="planTime" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <fieldset class="form-group">
+                    <legend>Складність *</legend>
+                    <div class="priority-options">
+                        <label class="priority-radio"><input type="radio" name="editPlanPriority" value="1" class="priority-input"> <span class="priority-label priority-low"><span class="priority-dot"></span> Низька</span></label>
+                        <label class="priority-radio"><input type="radio" name="editPlanPriority" value="2" class="priority-input"> <span class="priority-label priority-medium"><span class="priority-dot"></span> Середня</span></label>
+                        <label class="priority-radio"><input type="radio" name="editPlanPriority" value="3" class="priority-input"> <span class="priority-label priority-high"><span class="priority-dot"></span> Висока</span></label>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelEditPlanBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Зберегти зміни</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Profile Modal -->
 <div class="profile-modal" id="profileModal" aria-hidden="true" aria-labelledby="profileModalTitle">
     <div class="profile-modal-overlay" id="profileModalOverlay"></div>
