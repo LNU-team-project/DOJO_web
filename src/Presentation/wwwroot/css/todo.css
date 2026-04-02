@@ -730,6 +730,7 @@
   border: 1.5px solid var(--dojo-border);
   border-radius: 14px;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .todo-item:hover {
@@ -1115,31 +1116,107 @@
 }
 
 /* Plan details modal styles */
-.plan-details { padding: 20px 28px; display: flex; flex-direction: column; gap: 16px; }
-.plan-details-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.plan-details-title { font-size:1.35rem; font-weight:700; margin:0; color:var(--dojo-ink); }
-.plan-details-meta { display:flex; gap:12px; align-items:center; }
-.plan-priority-badge { padding:6px 10px; border-radius:999px; font-weight:700; color:#fff; font-size:0.85rem; }
-.plan-priority-1 { background: linear-gradient(135deg, #8fd3a6 0%, #6cc58a 100%); }
-.plan-priority-2 { background: linear-gradient(135deg, #ffd66b 0%, #ffbe3b 100%); color: #2b2b2b; }
-.plan-priority-3 { background: linear-gradient(135deg, #ff8a7a 0%, #ff5a78 100%); }
+.plan-details {
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.plan-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.plan-details-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--dojo-ink);
+}
+.plan-details-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.plan-priority-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.85rem;
+}
+.plan-priority-1 {
+  background: linear-gradient(135deg, #8fd3a6 0%, #6cc58a 100%);
+}
+.plan-priority-2 {
+  background: linear-gradient(135deg, #ffd66b 0%, #ffbe3b 100%);
+  color: #2b2b2b;
+}
+.plan-priority-3 {
+  background: linear-gradient(135deg, #ff8a7a 0%, #ff5a78 100%);
+}
 
-.plan-details-card { background: linear-gradient(180deg,#fffdfa 0%, #fff6f6 100%); border-radius:14px; padding:16px; border:1px solid rgba(255,122,144,0.08); box-shadow: 0 8px 24px rgba(24,22,22,0.06); }
-.plan-details-desc { color:var(--dojo-ink); font-size:1rem; line-height:1.45; margin:0; }
-.plan-details-meta-row { display:flex; gap:16px; flex-wrap:wrap; color:var(--dojo-muted); font-weight:600; }
-.plan-details-meta-row span { display:flex; gap:8px; align-items:center; }
+.plan-details-card {
+  background: linear-gradient(180deg, #fffdfa 0%, #fff6f6 100%);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 122, 144, 0.08);
+  box-shadow: 0 8px 24px rgba(24, 22, 22, 0.06);
+}
+.plan-details-desc {
+  color: var(--dojo-ink);
+  font-size: 1rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.plan-details-meta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--dojo-muted);
+  font-weight: 600;
+}
+.plan-details-meta-row span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-.plan-details-actions { display:flex; gap:12px; justify-content:flex-end; }
+.plan-details-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
 
 @media (max-width: 600px) {
-  .plan-details-header { flex-direction:column; align-items:flex-start; gap:8px; }
-  .plan-details-actions { width:100%; justify-content:space-between; }
+  .plan-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .plan-details-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* small tweak for plan-slot badges to show priority color ring */
-.plan-slot.plan-priority-1 { box-shadow: 0 4px 10px rgba(108,197,138,0.18); border-left: 4px solid #6cc58a; }
-.plan-slot.plan-priority-2 { box-shadow: 0 4px 10px rgba(255,190,59,0.18); border-left: 4px solid #ffbe3b; }
-.plan-slot.plan-priority-3 { box-shadow: 0 4px 10px rgba(255,90,120,0.18); border-left: 4px solid #ff5a78; }
+.plan-slot.plan-priority-1 {
+  box-shadow: 0 4px 10px rgba(108, 197, 138, 0.18);
+  border-left: 4px solid #6cc58a;
+}
+.plan-slot.plan-priority-2 {
+  box-shadow: 0 4px 10px rgba(255, 190, 59, 0.18);
+  border-left: 4px solid #ffbe3b;
+}
+.plan-slot.plan-priority-3 {
+  box-shadow: 0 4px 10px rgba(255, 90, 120, 0.18);
+  border-left: 4px solid #ff5a78;
+}
 
 /* ensure modal inner content doesn't scroll awkwardly */
-#planDetailsModal .todo-modal-content { max-width:720px; padding-bottom: 12px; }
+#planDetailsModal .todo-modal-content {
+  max-width: 720px;
+  padding-bottom: 12px;
+}
