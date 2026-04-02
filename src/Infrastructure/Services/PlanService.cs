@@ -28,9 +28,9 @@ public class PlanService : IPlanService
 
     private const string PlanNotFoundMsg = "План не знайдено";
 
-    private readonly AppDbContext _context;
+    private readonly IAppDbContext _context;
 
-    public PlanService(AppDbContext context)
+    public PlanService(IAppDbContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }

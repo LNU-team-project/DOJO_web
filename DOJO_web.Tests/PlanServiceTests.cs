@@ -1,9 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
+using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using Moq;
 using Xunit;
 
 namespace DOJO_web.Tests;
@@ -16,6 +23,94 @@ public class PlanServiceTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         return new AppDbContext(options);
+    }
+
+    private sealed class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+    {
+        private readonly IQueryProvider _inner;
+
+        public TestAsyncQueryProvider(IQueryProvider inner)
+        {
+            _inner = inner;
+        }
+
+        public IQueryable CreateQuery(Expression expression)
+            => new TestAsyncEnumerable<TEntity>(expression);
+
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+            => new TestAsyncEnumerable<TElement>(expression);
+
+        public object? Execute(Expression expression) => _inner.Execute(expression);
+
+        public TResult Execute<TResult>(Expression expression) => _inner.Execute<TResult>(expression);
+
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+        {
+            if (typeof(TResult).IsGenericType && typeof(TResult).GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                var resultType = typeof(TResult).GetGenericArguments()[0];
+                var executeResult = _inner.Execute(expression);
+                var fromResult = typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(resultType);
+                return (TResult)fromResult.Invoke(null, new[] { executeResult })!;
+            }
+
+            return Execute<TResult>(expression);
+        }
+    }
+
+    private sealed class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+    {
+        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
+        public TestAsyncEnumerable(Expression expression) : base(expression) { }
+
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+
+        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    }
+
+    private sealed class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> _inner;
+
+        public TestAsyncEnumerator(IEnumerator<T> inner)
+        {
+            _inner = inner;
+        }
+
+        public T Current => _inner.Current;
+
+        public ValueTask DisposeAsync()
+        {
+            _inner.Dispose();
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<bool> MoveNextAsync() => new(_inner.MoveNext());
+    }
+
+    private static Mock<DbSet<T>> BuildMockDbSet<T>(IList<T> source) where T : class
+    {
+        var queryable = source.AsQueryable();
+        var dbSet = new Mock<DbSet<T>>();
+        dbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
+        dbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        dbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        dbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+        dbSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+
+        dbSet.Setup(d => d.Add(It.IsAny<T>())).Callback<T>(source.Add);
+        return dbSet;
+    }
+
+    private static IPlanService BuildPlanServiceWithPlans(List<TaskItem> plans, out Mock<IAppDbContext> contextMock)
+    {
+        var dbSetMock = BuildMockDbSet(plans);
+        contextMock = new Mock<IAppDbContext>(MockBehavior.Strict);
+        contextMock.Setup(c => c.Tasks).Returns(dbSetMock.Object);
+        contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        return new PlanService(contextMock.Object);
     }
 
     [Fact]
@@ -153,5 +248,108 @@ public class PlanServiceTests
         var deleted = await context.Tasks.FindAsync(plan.Id);
         Assert.Null(deleted);
     }
-}
 
+    [Fact]
+    public async Task UpdatePlanAsync_ReturnsFailure_WhenModelIsNull()
+    {
+        var service = BuildPlanServiceWithPlans(new List<TaskItem>(), out _);
+
+        var result = await service.UpdatePlanAsync(1, 1, null);
+
+        Assert.False(result.Success);
+        Assert.Contains("не може бути порожною", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePlanAsync_ReturnsFailure_WhenPlanNotFound()
+    {
+        var service = BuildPlanServiceWithPlans(new List<TaskItem>(), out _);
+        var model = new PlanCreateViewModel { Title = "Plan", ScheduledAt = DateTime.UtcNow };
+
+        var result = await service.UpdatePlanAsync(5, 1, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("План не знайдено", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePlanAsync_ReturnsFailure_WhenTitleEmpty()
+    {
+        var plans = new List<TaskItem> { new() { Id = 10, UserId = 3, IsPlan = true, Title = "Old" } };
+        var service = BuildPlanServiceWithPlans(plans, out _);
+        var model = new PlanCreateViewModel { Title = "   ", ScheduledAt = DateTime.UtcNow };
+
+        var result = await service.UpdatePlanAsync(10, 3, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("Назва плану не може бути порожньою", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePlanAsync_ReturnsFailure_WhenTitleTooLong()
+    {
+        var plans = new List<TaskItem> { new() { Id = 11, UserId = 3, IsPlan = true, Title = "Old" } };
+        var service = BuildPlanServiceWithPlans(plans, out _);
+        var model = new PlanCreateViewModel { Title = new string('a', 256), ScheduledAt = DateTime.UtcNow };
+
+        var result = await service.UpdatePlanAsync(11, 3, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("не може перевищувати 255", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePlanAsync_ReturnsFailure_WhenScheduledAtMissing()
+    {
+        var plans = new List<TaskItem> { new() { Id = 12, UserId = 3, IsPlan = true, Title = "Old" } };
+        var service = BuildPlanServiceWithPlans(plans, out _);
+        var model = new PlanCreateViewModel { Title = "Plan", ScheduledAt = null };
+
+        var result = await service.UpdatePlanAsync(12, 3, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("Оберіть дату та час плану", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdatePlanAsync_UpdatesFields_AndSaves()
+    {
+        var when = new DateTime(2026, 3, 29, 12, 0, 0, DateTimeKind.Utc);
+        var plans = new List<TaskItem>
+        {
+            new()
+            {
+                Id = 13,
+                UserId = 4,
+                IsPlan = true,
+                Title = "Old",
+                Description = "Old desc",
+                Priority = 1,
+                ScheduledAt = when.AddHours(-1)
+            }
+        };
+        var service = BuildPlanServiceWithPlans(plans, out var contextMock);
+        var model = new PlanCreateViewModel
+        {
+            Title = " New title ",
+            Description = "  New desc ",
+            Priority = 3,
+            ScheduledAt = when
+        };
+
+        var result = await service.UpdatePlanAsync(13, 4, model);
+
+        Assert.True(result.Success);
+        Assert.Equal("New title", result.Data?.Title);
+        Assert.Equal("New desc", result.Data?.Description);
+        Assert.Equal((short)3, result.Data?.Priority);
+        Assert.Equal(when, result.Data?.ScheduledAt);
+
+        var updated = plans.Single();
+        Assert.Equal("New title", updated.Title);
+        Assert.Equal("New desc", updated.Description);
+        Assert.Equal((short)3, updated.Priority);
+        Assert.Equal(when, updated.ScheduledAt);
+        contextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+}
