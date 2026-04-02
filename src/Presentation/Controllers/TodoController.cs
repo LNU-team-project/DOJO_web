@@ -1,48 +1,19 @@
-﻿using DOJO2.Infrastructure.Services;
+﻿﻿using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DOJO2.Controllers;
 
-
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class TodoController : ControllerBase
+public class TodoController : BaseApiController
 {
     private readonly ITodoService _todoService;
-    private readonly ILogger<TodoController> _logger;
 
     public TodoController(ITodoService todoService, ILogger<TodoController> logger)
+        : base(logger)
     {
         _todoService = todoService ?? throw new ArgumentNullException(nameof(todoService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    
-    private int? GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId)
-            ? userId
-            : null;
-    }
-
-    /// <summary>
-    /// Перевіряє авторизацію користувача
-    /// </summary>
-    private IActionResult? ValidateUserAuthorization()
-    {
-        var userId = GetCurrentUserId();
-        if (userId == null || userId <= 0)
-        {
-            _logger.LogWarning("Невалідний userId або користувач не авторизований");
-            return Unauthorized(new { success = false, message = "Користувача не знайдено" });
-        }
-
-        return null;
     }
 
     
@@ -69,12 +40,7 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.CreateTodoAsync(userId, model);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     
@@ -90,12 +56,7 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.GetUserTodosAsync(userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     
@@ -111,12 +72,7 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.MarkTodoAsCompletedAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
   
@@ -132,12 +88,7 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.MarkTodoAsIncompleteAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
     
@@ -153,12 +104,7 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.DeleteTodoAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
   
@@ -185,11 +131,6 @@ public class TodoController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _todoService.UpdateTodoAsync(id, userId, model);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 }
