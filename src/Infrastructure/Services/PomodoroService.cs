@@ -14,10 +14,10 @@ public interface IPomodoroService
 
 public class PomodoroService : IPomodoroService
 {
-    private readonly AppDbContext _context;
+    private readonly IAppDbContext _context;
     private readonly ILogger<PomodoroService> _logger;
 
-    public PomodoroService(AppDbContext context, ILogger<PomodoroService> logger)
+    public PomodoroService(IAppDbContext context, ILogger<PomodoroService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
