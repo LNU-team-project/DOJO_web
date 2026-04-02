@@ -730,6 +730,7 @@
   border: 1.5px solid var(--dojo-border);
   border-radius: 14px;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .todo-item:hover {

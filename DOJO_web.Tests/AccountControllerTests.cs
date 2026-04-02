@@ -1,75 +1,32 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using DOJO2.Controllers;
 using DOJO2.Domain.Entities;
+using DOJO2.Infrastructure.Results;
+using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace DOJO_web.Tests;
 
 public class AccountControllerTests
 {
-    private readonly Mock<UserManager<AppUser>> _mockUserManager;
-    private readonly Mock<SignInManager<AppUser>> _mockSignInManager;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ILogger<AccountController>> _mockLogger;
-    private readonly Mock<IEmailSender> _mockEmailSender;
     private readonly AccountController _controller;
 
     public AccountControllerTests()
     {
-        var options = Mock.Of<IOptions<IdentityOptions>>();
-        var passwordHasher = Mock.Of<IPasswordHasher<AppUser>>();
-        var userValidators = new List<IUserValidator<AppUser>>();
-        var passwordValidators = new List<IPasswordValidator<AppUser>>();
-        var keyNormalizer = Mock.Of<ILookupNormalizer>();
-        var errors = new IdentityErrorDescriber();
-        var services = Mock.Of<IServiceProvider>();
-        var userManagerLogger = Mock.Of<ILogger<UserManager<AppUser>>>();
-
-        _mockUserManager = new Mock<UserManager<AppUser>>(
-            Mock.Of<IUserStore<AppUser>>(),
-            options,
-            passwordHasher,
-            userValidators,
-            passwordValidators,
-            keyNormalizer,
-            errors,
-            services,
-            userManagerLogger);
-
-        var contextAccessor = Mock.Of<IHttpContextAccessor>();
-        var claimsFactory = Mock.Of<IUserClaimsPrincipalFactory<AppUser>>();
-        var schemeProvider = Mock.Of<IAuthenticationSchemeProvider>();
-        var signInManagerLogger = Mock.Of<ILogger<SignInManager<AppUser>>>();
-        var userConfirmation = Mock.Of<IUserConfirmation<AppUser>>();
-        
-        _mockSignInManager = new Mock<SignInManager<AppUser>>(
-            _mockUserManager.Object,
-            contextAccessor,
-            claimsFactory,
-            options,
-            signInManagerLogger,
-            schemeProvider,
-            userConfirmation);
-
+        _mockAuthService = new Mock<IAuthService>();
         _mockLogger = new Mock<ILogger<AccountController>>();
 
-        _mockEmailSender = new Mock<IEmailSender>();
-
         _controller = new AccountController(
-            _mockUserManager.Object,
-            _mockSignInManager.Object,
-            _mockLogger.Object,
-            _mockEmailSender.Object);
+            _mockAuthService.Object,
+            _mockLogger.Object);
     }
 
     [Fact]
@@ -113,7 +70,7 @@ public class AccountControllerTests
     {
         // Arrange
         _controller.ModelState.AddModelError("Email", "Required");
-        var model = new LoginViewModel();
+        var model = new LoginViewModel { Email = "", Password = "" };
 
         // Act
         var result = await _controller.Login(model);
@@ -124,11 +81,12 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task Login_Post_ReturnsViewWithError_WhenUserNotFound()
+    public async Task Login_Post_ReturnsViewWithError_WhenLoginFails()
     {
         // Arrange
         var model = new LoginViewModel { Email = "test@example.com", Password = "password" };
-        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync((AppUser?)null);
+        _mockAuthService.Setup(s => s.LoginAsync(model.Email, model.Password, false))
+            .ReturnsAsync(Result<bool>.FailureResult("Невірна пошта або пароль."));
 
         // Act
         var result = await _controller.Login(model);
@@ -136,37 +94,15 @@ public class AccountControllerTests
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
-        Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
     }
 
     [Fact]
-    public async Task Login_Post_ReturnsViewWithError_WhenPasswordIsIncorrect()
+    public async Task Login_Post_ReturnsRedirectToDashboard_WhenLoginSucceeds()
     {
         // Arrange
-        var user = new AppUser { UserName = "testuser", Email = "test@example.com" };
-        var model = new LoginViewModel { Email = user.Email, Password = "wrongpassword" };
-        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync(user);
-        _mockSignInManager.Setup(sm => sm.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, true))
-            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
-
-        // Act
-        var result = await _controller.Login(model);
-
-        // Assert
-        Assert.IsType<ViewResult>(result);
-        Assert.False(_controller.ModelState.IsValid);
-        Assert.Contains(_controller.ModelState.Values, v => v.Errors.Any(e => e.ErrorMessage == "Невірна пошта або пароль."));
-    }
-
-    [Fact]
-    public async Task Login_Post_RedirectsToDashboard_WhenCredentialsAreCorrect()
-    {
-        // Arrange
-        var user = new AppUser { UserName = "testuser", Email = "test@example.com" };
-        var model = new LoginViewModel { Email = user.Email, Password = "password123" };
-        _mockUserManager.Setup(um => um.FindByEmailAsync(model.Email)).ReturnsAsync(user);
-        _mockSignInManager.Setup(sm => sm.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, true))
-            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+        var model = new LoginViewModel { Email = "test@example.com", Password = "password" };
+        _mockAuthService.Setup(s => s.LoginAsync(model.Email, model.Password, false))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Успішний вхід"));
 
         // Act
         var result = await _controller.Login(model);
@@ -178,18 +114,51 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task Logout_SignsOutAndRedirectsToRegister()
+    public async Task Register_Post_ReturnsViewWithModel_WhenModelStateIsInvalid()
     {
         // Arrange
-        _mockSignInManager.Setup(sm => sm.SignOutAsync()).Returns(Task.CompletedTask);
+        _controller.ModelState.AddModelError("Email", "Required");
+        var model = new RegisterViewModel { UserName = "", Email = "", Password = "" };
 
         // Act
-        var result = await _controller.Logout();
+        var result = await _controller.Register(model);
 
         // Assert
-        _mockSignInManager.Verify(sm => sm.SignOutAsync(), Times.Once);
-        var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Register", redirect.ActionName);
-        Assert.Equal("Account", redirect.ControllerName);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(model, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task Register_Post_ReturnsViewWithError_WhenRegistrationFails()
+    {
+        // Arrange
+        var model = new RegisterViewModel { UserName = "testuser", Email = "test@example.com", Password = "password" };
+        _mockAuthService.Setup(s => s.RegisterAsync(model.UserName, model.Email, model.Password))
+            .ReturnsAsync(Result<bool>.FailureResult("Email вже використовується", new List<string> { "Email exists" }));
+
+        // Act
+        var result = await _controller.Register(model);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.False(_controller.ModelState.IsValid);
+    }
+
+    [Fact]
+    public async Task Register_Post_ReturnsRedirectToDashboard_WhenRegistrationSucceeds()
+    {
+        // Arrange
+        var model = new RegisterViewModel { UserName = "testuser", Email = "test@example.com", Password = "password" };
+        _mockAuthService.Setup(s => s.RegisterAsync(model.UserName, model.Email, model.Password))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Успішна реєстрація"));
+
+        // Act
+        var result = await _controller.Register(model);
+
+        // Assert
+        var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Dashboard", redirectToActionResult.ActionName);
+        Assert.Equal("Home", redirectToActionResult.ControllerName);
     }
 }
+

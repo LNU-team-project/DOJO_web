@@ -80,6 +80,7 @@ try
     builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("SendGrid"));
     
     // Реєстрація сервісів
+    builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IAdminService, AdminService>();
     builder.Services.AddScoped<ITodoService, TodoService>();
     builder.Services.AddScoped<IPlanService, PlanService>();
