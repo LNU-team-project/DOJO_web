@@ -234,7 +234,7 @@ public class CalendarControllerTests
         // Arrange
         var (service, context) = CreateServiceWithInMemoryDb();
         
-        // Додаємо плани та звичайні TODO
+        // Додаємо плани та звичайні завдання
         context.Tasks.AddRange(
             new TaskItem 
             { 
@@ -246,7 +246,7 @@ public class CalendarControllerTests
             new TaskItem 
             { 
                 UserId = 1, 
-                Title = "Звичайне TODO", 
+                Title = "Звичайне завдання", 
                 IsPlan = false,  // ← Це НЕ план
                 ScheduledAt = new DateTime(2026, 4, 5, 10, 0, 0, DateTimeKind.Utc) 
             }

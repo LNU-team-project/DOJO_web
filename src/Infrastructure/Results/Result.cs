@@ -86,7 +86,7 @@ public class Result<T>
     /// Явне приведення T до Result<T> (успішний результат)
     /// </summary>
     public static explicit operator Result<T>(T data)
-        => data != null ? SuccessResult(data) : FailureResult("Дані не можуть бути null");
+        => SuccessResult(data);
 
     /// <summary>
     /// Явне приведення string до Result<T> (помилка)

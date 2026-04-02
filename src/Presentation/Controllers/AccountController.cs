@@ -60,7 +60,7 @@ public class AccountController : Controller
     [HttpPost]
     public async Task<IActionResult> Logout()
     {
-        var result = await _authService.LogoutAsync();
+        await _authService.LogoutAsync();
         return RedirectToAction("Register", AccountControllerName);
     }
 
@@ -108,7 +108,7 @@ public class AccountController : Controller
         {
             var callbackUrl = Url.Action("ResetPassword", AccountControllerName, new { code = "PLACEHOLDER" }, protocol: HttpContext.Request.Scheme);
             // Замінюємо PLACEHOLDER на реальний код у сервісі
-            var result = await _authService.ForgotPasswordAsync(model.Email ?? string.Empty, callbackUrl ?? string.Empty);
+            await _authService.ForgotPasswordAsync(model.Email ?? string.Empty, callbackUrl ?? string.Empty);
             
             // Завжди показуємо одну й ту ж сторінку, щоб не розкривати чи користувач існує
             return View("ForgotPasswordConfirmation");

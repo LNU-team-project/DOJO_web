@@ -22,6 +22,9 @@ public interface IAuthService
 
 public class AuthService : IAuthService
 {
+    private const string EmptyEmailMessage = "Email не може бути порожним";
+    private const string UserNotFoundMessage = "Користувача не знайдено";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly IEmailSender _emailSender;
@@ -44,7 +47,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Спроба входу з порожним email");
-            return Result<bool>.FailureResult("Email не може бути порожним");
+            return Result<bool>.FailureResult(EmptyEmailMessage);
         }
 
         if (string.IsNullOrWhiteSpace(password))
@@ -87,7 +90,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Спроба реєстрації з порожним email");
-            return Result<bool>.FailureResult("Email не може бути порожним");
+            return Result<bool>.FailureResult(EmptyEmailMessage);
         }
 
         if (string.IsNullOrWhiteSpace(password))
@@ -135,7 +138,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Спроба скидання пароля з порожним email");
-            return Result<bool>.FailureResult("Email не може бути порожним");
+            return Result<bool>.FailureResult(EmptyEmailMessage);
         }
 
         var user = await _userManager.FindByEmailAsync(email.Trim());
@@ -147,13 +150,14 @@ public class AuthService : IAuthService
         }
 
         var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetUrl = callbackUrl.Replace("PLACEHOLDER", Uri.EscapeDataString(code), StringComparison.Ordinal);
 
         try
         {
             await _emailSender.SendEmailAsync(
                 email.Trim(),
                 "Скидання пароля",
-                $"Будь ласка, скиньте пароль натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>посилання</a>");
+            $"Будь ласка, скиньте пароль натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(resetUrl)}'>посилання</a>");
 
             _logger.LogInformation("Email для скидання пароля відправлено на {Email}", email);
             return Result<bool>.SuccessResult(true, "Інструкції скидання пароля відправлено на вашу поштову скриньку");
@@ -189,7 +193,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             _logger.LogWarning("Користувач з email {Email} не знайдено для скидання пароля", email);
-            return Result<bool>.FailureResult("Користувача не знайдено");
+            return Result<bool>.FailureResult(UserNotFoundMessage);
         }
 
         var result = await _userManager.ResetPasswordAsync(user, code, newPassword);
@@ -216,7 +220,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             _logger.LogWarning("Користувач {UserId} не знайдено", userId);
-            return Result<AppUser>.FailureResult("Користувача не знайдено");
+            return Result<AppUser>.FailureResult(UserNotFoundMessage);
         }
 
         return Result<AppUser>.SuccessResult(user, "Користувача отримано");
@@ -227,24 +231,25 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Спроба відправити підтвердження email з порожним email");
-            return Result<bool>.FailureResult("Email не може бути порожним");
+            return Result<bool>.FailureResult(EmptyEmailMessage);
         }
 
         var user = await _userManager.FindByEmailAsync(email.Trim());
         if (user == null)
         {
             _logger.LogWarning("Користувач з email {Email} не знайдено для підтвердження email", email);
-            return Result<bool>.FailureResult("Користувача не знайдено");
+            return Result<bool>.FailureResult(UserNotFoundMessage);
         }
 
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var confirmUrl = callbackUrl.Replace("PLACEHOLDER", Uri.EscapeDataString(code), StringComparison.Ordinal);
 
         try
         {
             await _emailSender.SendEmailAsync(
                 email.Trim(),
                 "Підтвердження email",
-                $"Будь ласка, підтвердіть свій email натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>підтвердити</a>");
+                $"Будь ласка, підтвердіть свій email натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(confirmUrl)}'>підтвердити</a>");
 
             _logger.LogInformation("Email підтвердження відправлено на {Email}", email);
             return Result<bool>.SuccessResult(true, "Лист з підтвердженням надіслано");
@@ -274,7 +279,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             _logger.LogWarning("Користувач {UserId} не знайдено для підтвердження email", userId);
-            return Result<bool>.FailureResult("Користувача не знайдено");
+            return Result<bool>.FailureResult(UserNotFoundMessage);
         }
 
         var result = await _userManager.ConfirmEmailAsync(user, code);
@@ -294,7 +299,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Спроба відправити тестовий email з порожним email");
-            return Result<bool>.FailureResult("Email не може бути порожним");
+            return Result<bool>.FailureResult(EmptyEmailMessage);
         }
 
         try

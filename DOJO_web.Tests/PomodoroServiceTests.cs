@@ -203,7 +203,7 @@ public class PomodoroServiceTests
         var pomodoros = new List<Pomodoro>();
         var tasks = new List<TaskItem> { new() { Id = 7, UserId = 3, Title = "Task" } };
         var service = BuildService(pomodoros, tasks, out var contextMock);
-        var start = DateTime.SpecifyKind(new DateTime(2026, 4, 2, 10, 0, 0), DateTimeKind.Local);
+        var start = new DateTime(2026, 4, 2, 10, 0, 0, DateTimeKind.Local);
         var end = start.AddMinutes(25);
         var model = new PomodoroSessionCreateViewModel
         {

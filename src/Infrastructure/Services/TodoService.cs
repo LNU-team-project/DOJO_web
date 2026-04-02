@@ -20,6 +20,8 @@ public interface ITodoService
 
 public class TodoService : ITodoService
 {
+    private const string TodoNotFoundMessage = "TODO завдання не знайдено";
+
     private static class PriorityLevels
     {
         public const int Low = 1;
@@ -104,7 +106,7 @@ public class TodoService : ITodoService
         if (todo == null)
         {
             _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
-            return Result<bool>.FailureResult("TODO завдання не знайдено");
+            return Result<bool>.FailureResult(TodoNotFoundMessage);
         }
 
         if (todo.IsCompleted)
@@ -131,7 +133,7 @@ public class TodoService : ITodoService
         if (todo == null)
         {
             _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
-            return Result<bool>.FailureResult("TODO завдання не знайдено");
+            return Result<bool>.FailureResult(TodoNotFoundMessage);
         }
 
         if (!todo.IsCompleted)
@@ -158,7 +160,7 @@ public class TodoService : ITodoService
         if (todo == null)
         {
             _logger.LogWarning("TODO {TodoId} не знайдено для видалення користувачем {UserId}", todoId, userId);
-            return Result<bool>.FailureResult("TODO завдання не знайдено");
+            return Result<bool>.FailureResult(TodoNotFoundMessage);
         }
 
         _context.Tasks.Remove(todo);
@@ -194,7 +196,7 @@ public class TodoService : ITodoService
         if (todo == null)
         {
             _logger.LogWarning("TODO {TodoId} не знайдено для користувача {UserId}", todoId, userId);
-            return Result<TodoItemViewModel>.FailureResult("TODO завдання не знайдено");
+            return Result<TodoItemViewModel>.FailureResult(TodoNotFoundMessage);
         }
 
         todo.Title = model.Title.Trim();
