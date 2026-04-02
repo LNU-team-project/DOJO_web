@@ -48,6 +48,7 @@ try
     // Підключення до PostgreSQL через EF Core
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
     // Identity: користувачі, ролі, токени
     builder.Services.AddDataProtection(); // Використовуємо персистентні ключі, щоб куки лишались валідними після рестарту без виходу

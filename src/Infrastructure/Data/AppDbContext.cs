@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Data;
 
-public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
+public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, IAppDbContext
 {
     private const string CreatedAtColumnName = "created_at";
     private const string NowSqlExpression = "NOW()";
