@@ -160,4 +160,36 @@ public class TodoController : ControllerBase
 
         return Ok(new { success = true, message = result.Message });
     }
+
+  
+    [HttpPut("update/{id:int}")]
+    public async Task<IActionResult> UpdateTodo(int id, [FromBody] UpdateTodoViewModel? model)
+    {
+        if (model == null)
+        {
+            return BadRequest(new { success = false, message = "Модель завдання не може бути порожною" });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+        }
+
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _todoService.UpdateTodoAsync(id, userId, model);
+
+        if (!result.Success)
+        {
+            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
+        }
+
+        return Ok(new { success = true, message = result.Message, data = result.Data });
+    }
 }

@@ -36,10 +36,19 @@
     return;
   }
 
-  const openModal = () => {
+  const openModal = (isEditMode = false) => {
     todoModal.style.display = "flex";
     todoModal.setAttribute("aria-hidden", "false");
-    todoForm.reset();
+    if (!isEditMode) {
+      todoForm.reset();
+      // Скидаємо режим редагування при відкритті для нового завдання
+      delete todoForm.dataset.editingTodoId;
+      const submitBtn = todoForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = "Додати TODO";
+      }
+      document.getElementById("todoModalTitle").textContent = "Додати ціль";
+    }
     const titleInput = document.getElementById("todoTitle");
     if (titleInput) {
       titleInput.focus();
@@ -117,12 +126,10 @@
     titleSpan.textContent = todo.title;
     contentDiv.appendChild(titleSpan);
 
-    if (todo.description) {
-      const descriptionSpan = document.createElement("div");
-      descriptionSpan.className = "todo-item-description";
-      descriptionSpan.textContent = todo.description;
-      contentDiv.appendChild(descriptionSpan);
-    }
+    const descriptionSpan = document.createElement("div");
+    descriptionSpan.className = "todo-item-description";
+    descriptionSpan.textContent = todo.description || "";
+    contentDiv.appendChild(descriptionSpan);
 
     const metaDiv = document.createElement("div");
     metaDiv.className = "todo-item-meta";
@@ -134,6 +141,28 @@
 
     contentDiv.appendChild(metaDiv);
 
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "todo-item-edit";
+    editBtn.setAttribute("aria-label", "Редагувати завдання");
+    editBtn.innerHTML = "✏️";
+
+    const descriptionBtn = document.createElement("button");
+    descriptionBtn.type = "button";
+    descriptionBtn.className = "todo-item-description-btn";
+    descriptionBtn.setAttribute("aria-label", "Показати опис");
+    descriptionBtn.innerHTML = "👁️";
+    
+    // Якщо опису немає - робимо кнопку неактивною та приховуємо опис за замовчуванням
+    if (!todo.description || todo.description.trim() === "") {
+      descriptionBtn.disabled = true;
+      descriptionBtn.style.opacity = "0.5";
+      descriptionSpan.style.display = "none";
+    } else {
+      // Якщо опис є - приховуємо його за замовчуванням
+      descriptionSpan.style.display = "none";
+    }
+
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "todo-item-delete";
@@ -142,12 +171,22 @@
 
     div.appendChild(checkbox);
     div.appendChild(contentDiv);
+    div.appendChild(descriptionBtn);
+    div.appendChild(editBtn);
     div.appendChild(deleteBtn);
 
     // Обробники подій
     checkbox.addEventListener("change", () =>
       handleTodoStatusChange(todo.id, checkbox.checked),
     );
+    descriptionBtn.addEventListener("click", () => {
+      if (descriptionSpan && (todo.description && todo.description.trim() !== "")) {
+        const isHidden = descriptionSpan.style.display === "none";
+        descriptionSpan.style.display = isHidden ? "block" : "none";
+        descriptionBtn.classList.toggle("active", isHidden);
+      }
+    });
+    editBtn.addEventListener("click", () => handleTodoEdit(todo));
     deleteBtn.addEventListener("click", () => handleTodoDelete(todo.id));
 
     return div;
@@ -261,6 +300,29 @@
     }
   };
 
+  const handleTodoEdit = (todo) => {
+    const titleInput = document.getElementById("todoTitle");
+    const descriptionInput = document.getElementById("todoDescription");
+    const priorityInput = document.querySelector(
+      `input[name="priority"][value="${todo.priority}"]`,
+    );
+    const submitBtn = todoForm.querySelector('button[type="submit"]');
+
+    if (titleInput && descriptionInput && submitBtn) {
+      titleInput.value = todo.title;
+      descriptionInput.value = todo.description || "";
+      if (priorityInput) {
+        priorityInput.checked = true;
+      }
+
+      submitBtn.textContent = "Оновити TODO";
+      todoForm.dataset.editingTodoId = todo.id;
+
+      document.getElementById("todoModalTitle").textContent = "Редагувати завдання";
+      openModal(true);
+    }
+  };
+
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
@@ -289,19 +351,41 @@
     }
 
     const priority = priorityInput.value;
+    const editingTodoId = todoForm.dataset.editingTodoId;
 
     try {
-      const response = await fetch("/api/todo/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          priority: Number.parseInt(priority, 10),
-        }),
-      });
+      let response;
+      let successMessage;
+
+      if (editingTodoId) {
+        // Редагування існуючого завдання
+        response = await fetch(`/api/todo/update/${editingTodoId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            description: description || null,
+            priority: Number.parseInt(priority, 10),
+          }),
+        });
+        successMessage = "Завдання успішно оновлено!";
+      } else {
+        // Створення нового завдання
+        response = await fetch("/api/todo/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            description: description || null,
+            priority: Number.parseInt(priority, 10),
+          }),
+        });
+        successMessage = MESSAGES.TASK_CREATED;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -315,11 +399,20 @@
         return;
       }
 
-      showSuccess(MESSAGES.TASK_CREATED);
+      showSuccess(successMessage);
       closeModal();
+      
+      // Скидаємо режим редагування
+      delete todoForm.dataset.editingTodoId;
+      const submitBtn = todoForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = "Додати TODO";
+      }
+      document.getElementById("todoModalTitle").textContent = "Додати ціль";
+      
       loadTodos();
     } catch (error) {
-      console.error("Помилка при створенні TODO:", error);
+      console.error("Помилка при створенні/оновленні TODO:", error);
       showError(MESSAGES.CREATE_ERROR);
     }
   };

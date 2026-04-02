@@ -9,6 +9,13 @@ public class TodoCreateViewModel
     public DateOnly? DueDate { get; set; }
 }
 
+public class UpdateTodoViewModel
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public short Priority { get; set; } = 2;
+    public DateOnly? DueDate { get; set; }
+}
 
 public class TodoItemViewModel
 {
@@ -27,4 +34,3 @@ public class TodoListViewModel
     public List<TodoItemViewModel> IncompleteTodos { get; set; } = new();
     public List<TodoItemViewModel> CompletedTodos { get; set; } = new();
 }
-

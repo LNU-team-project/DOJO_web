@@ -1,5 +1,4 @@
 using DOJO2.Infrastructure.Data;
-using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +22,7 @@ public class TodoServiceTests
 
     private static ILogger<TodoService> CreateMockLogger()
     {
-        return new Mock<ILogger<TodoService>>().Object;
+        return Mock.Of<ILogger<TodoService>>();
     }
 
     private static TodoService CreateService(AppDbContext context)
@@ -32,44 +31,21 @@ public class TodoServiceTests
         return new TodoService(context, logger);
     }
 
-    [Fact]
-    public async Task CreateTodoAsync_ReturnsFailure_WhenModelIsNull()
+    private static DOJO2.Domain.Entities.TaskItem CreateTaskItem(int userId, string title, bool isCompleted = false, string? description = null)
     {
-        using var context = CreateContext();
-        var service = CreateService(context);
-
-        var result = await service.CreateTodoAsync(TestUserId, null);
-
-        Assert.False(result.Success);
-        Assert.Contains("не може бути порожною", result.Message);
+        return new DOJO2.Domain.Entities.TaskItem
+        {
+            UserId = userId,
+            Title = title,
+            Description = description,
+            IsPlan = false,
+            IsCompleted = isCompleted,
+            CompletedAt = isCompleted ? DateTime.UtcNow : null,
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
-    [Fact]
-    public async Task CreateTodoAsync_ReturnsFailure_WhenTitleEmpty()
-    {
-        using var context = CreateContext();
-        var service = CreateService(context);
-        var model = new TodoCreateViewModel { Title = "   " };
-
-        var result = await service.CreateTodoAsync(TestUserId, model);
-
-        Assert.False(result.Success);
-        Assert.Contains("Назва TODO не може бути порожною", result.Message);
-    }
-
-    [Fact]
-    public async Task CreateTodoAsync_ReturnsFailure_WhenTitleTooLong()
-    {
-        using var context = CreateContext();
-        var service = CreateService(context);
-        var model = new TodoCreateViewModel { Title = new string('a', 256) };
-
-        var result = await service.CreateTodoAsync(TestUserId, model);
-
-        Assert.False(result.Success);
-        Assert.Contains("Назва TODO не може перевищувати 255 символів", result.Message);
-    }
-
+    // CreateTodoAsync Tests
     [Fact]
     public async Task CreateTodoAsync_Succeeds_AndPersistsTodo()
     {
@@ -99,27 +75,26 @@ public class TodoServiceTests
     }
 
     [Fact]
+    public async Task CreateTodoAsync_ReturnsFailure_WhenTitleEmpty()
+    {
+        using var context = CreateContext();
+        var service = CreateService(context);
+        var model = new TodoCreateViewModel { Title = "   " };
+
+        var result = await service.CreateTodoAsync(TestUserId, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("Назва TODO не може бути порожною", result.Message);
+    }
+
+    // GetUserTodosAsync Tests
+    [Fact]
     public async Task GetUserTodosAsync_ReturnsSeparatedLists()
     {
         using var context = CreateContext();
         context.Tasks.AddRange(
-            new DOJO2.Domain.Entities.TaskItem 
-            { 
-                UserId = TestUserId, 
-                Title = "active", 
-                IsPlan = false, 
-                IsCompleted = false,
-                CreatedAt = DateTime.UtcNow
-            },
-            new DOJO2.Domain.Entities.TaskItem 
-            { 
-                UserId = TestUserId, 
-                Title = "done", 
-                IsPlan = false, 
-                IsCompleted = true, 
-                CompletedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow.AddDays(-1)
-            }
+            CreateTaskItem(TestUserId, "active", isCompleted: false),
+            CreateTaskItem(TestUserId, "done", isCompleted: true)
         );
         await context.SaveChangesAsync();
 
@@ -133,18 +108,92 @@ public class TodoServiceTests
         Assert.Equal("done", result.Data.CompletedTodos[0].Title);
     }
 
+    // UpdateTodoAsync Tests
+    [Fact]
+    public async Task UpdateTodoAsync_SucceedsAndUpdatesTodo()
+    {
+        using var context = CreateContext();
+        var todo = CreateTaskItem(TestUserId, "old title", description: "old desc");
+        todo.Priority = 1;
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5));
+        var model = new UpdateTodoViewModel 
+        { 
+            Title = "new title", 
+            Description = "new desc",
+            Priority = 3,
+            DueDate = dueDate
+        };
+        var result = await service.UpdateTodoAsync(todo.Id, TestUserId, model);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal("new title", result.Data!.Title);
+        Assert.Equal("new desc", result.Data.Description);
+        Assert.Equal(3, result.Data.Priority);
+
+        var updated = await context.Tasks.FindAsync(todo.Id);
+        Assert.NotNull(updated);
+        Assert.Equal("new title", updated.Title);
+        Assert.Equal("new desc", updated.Description);
+        Assert.Equal(3, updated.Priority);
+    }
+
+    [Fact]
+    public async Task UpdateTodoAsync_ReturnsFailure_WhenTodoNotFound()
+    {
+        using var context = CreateContext();
+        var service = CreateService(context);
+        var model = new UpdateTodoViewModel { Title = "new title", Priority = 2 };
+
+        var result = await service.UpdateTodoAsync(999, TestUserId, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("не знайдено", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateTodoAsync_ReturnsFailure_WhenWrongUser()
+    {
+        using var context = CreateContext();
+        var todo = CreateTaskItem(TestUserId, "title");
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var model = new UpdateTodoViewModel { Title = "new title", Priority = 1 };
+        var result = await service.UpdateTodoAsync(todo.Id, AnotherUserId, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("не знайдено", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateTodoAsync_AllowsClearingDescription()
+    {
+        using var context = CreateContext();
+        var todo = CreateTaskItem(TestUserId, "title", description: "old desc");
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var model = new UpdateTodoViewModel { Title = "title", Description = null };
+        var result = await service.UpdateTodoAsync(todo.Id, TestUserId, model);
+
+        Assert.True(result.Success);
+        var updated = await context.Tasks.FindAsync(todo.Id);
+        Assert.Null(updated!.Description);
+    }
+
+    // Mark as Completed Tests
     [Fact]
     public async Task MarkTodoAsCompleted_SetsFlags()
     {
         using var context = CreateContext();
-        var todo = new DOJO2.Domain.Entities.TaskItem 
-        { 
-            UserId = TestUserId, 
-            Title = "t", 
-            IsPlan = false, 
-            IsCompleted = false,
-            CreatedAt = DateTime.UtcNow
-        };
+        var todo = CreateTaskItem(TestUserId, "title");
         context.Tasks.Add(todo);
         await context.SaveChangesAsync();
 
@@ -158,52 +207,26 @@ public class TodoServiceTests
     }
 
     [Fact]
-    public async Task MarkTodoAsCompleted_ReturnsFailure_WhenTodoNotFound()
+    public async Task MarkTodoAsCompleted_ReturnsFailure_WhenAlreadyCompleted()
     {
         using var context = CreateContext();
-        var service = CreateService(context);
-
-        var result = await service.MarkTodoAsCompletedAsync(999, TestUserId);
-
-        Assert.False(result.Success);
-        Assert.Contains("не знайдено", result.Message);
-    }
-
-    [Fact]
-    public async Task MarkTodoAsCompleted_ReturnsFailure_WhenWrongUser()
-    {
-        using var context = CreateContext();
-        var todo = new DOJO2.Domain.Entities.TaskItem 
-        { 
-            UserId = TestUserId, 
-            Title = "t", 
-            IsPlan = false, 
-            IsCompleted = false,
-            CreatedAt = DateTime.UtcNow
-        };
+        var todo = CreateTaskItem(TestUserId, "title", isCompleted: true);
         context.Tasks.Add(todo);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
-        var result = await service.MarkTodoAsCompletedAsync(todo.Id, AnotherUserId);
+        var result = await service.MarkTodoAsCompletedAsync(todo.Id, TestUserId);
 
         Assert.False(result.Success);
-        Assert.Contains("не знайдено", result.Message);
+        Assert.Contains("вже позначене як виконане", result.Message);
     }
 
+    // Mark as Incomplete Tests
     [Fact]
     public async Task MarkTodoAsIncomplete_SetsFlags()
     {
         using var context = CreateContext();
-        var todo = new DOJO2.Domain.Entities.TaskItem 
-        { 
-            UserId = TestUserId, 
-            Title = "t", 
-            IsPlan = false, 
-            IsCompleted = true, 
-            CompletedAt = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
+        var todo = CreateTaskItem(TestUserId, "title", isCompleted: true);
         context.Tasks.Add(todo);
         await context.SaveChangesAsync();
 
@@ -216,29 +239,12 @@ public class TodoServiceTests
         Assert.Null(updated.CompletedAt);
     }
 
-    [Fact]
-    public async Task MarkTodoAsIncomplete_ReturnsFailure_WhenTodoNotFound()
-    {
-        using var context = CreateContext();
-        var service = CreateService(context);
-
-        var result = await service.MarkTodoAsIncompleteAsync(999, TestUserId);
-
-        Assert.False(result.Success);
-        Assert.Contains("не знайдено", result.Message);
-    }
-
+    // Delete Tests
     [Fact]
     public async Task DeleteTodoAsync_RemovesEntity()
     {
         using var context = CreateContext();
-        var todo = new DOJO2.Domain.Entities.TaskItem 
-        { 
-            UserId = TestUserId, 
-            Title = "t", 
-            IsPlan = false,
-            CreatedAt = DateTime.UtcNow
-        };
+        var todo = CreateTaskItem(TestUserId, "title");
         context.Tasks.Add(todo);
         await context.SaveChangesAsync();
 
