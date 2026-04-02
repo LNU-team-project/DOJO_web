@@ -1096,9 +1096,9 @@
 
 /* Improve contrast for text on gradient badges */
 .plan-slot,
-.plan-priority-1,
-.plan-priority-2,
-.plan-priority-3,
+.plan-priority-badge.plan-priority-1,
+.plan-priority-badge.plan-priority-2,
+.plan-priority-badge.plan-priority-3,
 .dashboard-todo-btn,
 .btn-primary,
 .profile-btn,
@@ -1146,14 +1146,14 @@
   color: #fff;
   font-size: 0.85rem;
 }
-.plan-priority-1 {
+.plan-priority-badge.plan-priority-1 {
   background: linear-gradient(135deg, #8fd3a6 0%, #6cc58a 100%);
 }
-.plan-priority-2 {
+.plan-priority-badge.plan-priority-2 {
   background: linear-gradient(135deg, #ffd66b 0%, #ffbe3b 100%);
   color: #2b2b2b;
 }
-.plan-priority-3 {
+.plan-priority-badge.plan-priority-3 {
   background: linear-gradient(135deg, #ff8a7a 0%, #ff5a78 100%);
 }
 

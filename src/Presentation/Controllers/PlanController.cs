@@ -2,41 +2,18 @@ using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DOJO2.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class PlanController : ControllerBase
+public class PlanController : BaseApiController
 {
     private readonly IPlanService _planService;
-    private readonly ILogger<PlanController> _logger;
 
     public PlanController(IPlanService planService, ILogger<PlanController> logger)
+        : base(logger)
     {
         _planService = planService ?? throw new ArgumentNullException(nameof(planService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId)
-            ? userId
-            : null;
-    }
-
-    private IActionResult? ValidateUserAuthorization()
-    {
-        var userId = GetCurrentUserId();
-        if (userId == null || userId <= 0)
-        {
-            _logger.LogWarning("Невалідний userId або користувач не авторизований");
-            return Unauthorized(new { success = false, message = "Користувача не знайдено" });
-        }
-        return null;
     }
 
     [HttpPost("create")]
@@ -62,12 +39,7 @@ public class PlanController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.CreatePlanAsync(userId, model);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     [HttpGet("list")]
@@ -82,12 +54,7 @@ public class PlanController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.GetUserPlansAsync(userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     [HttpPut("complete/{id:int}")]
@@ -102,12 +69,7 @@ public class PlanController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.MarkPlanAsCompletedAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
     [HttpPut("incomplete/{id:int}")]
@@ -122,12 +84,7 @@ public class PlanController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.MarkPlanAsIncompleteAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
     [HttpDelete("delete/{id:int}")]
@@ -142,12 +99,7 @@ public class PlanController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.DeletePlanAsync(id, userId);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
     [HttpGet("{id:int}")]
@@ -158,11 +110,7 @@ public class PlanController : ControllerBase
 
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.GetPlanByIdAsync(id, userId);
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     [HttpPut("{id:int}")]
@@ -180,11 +128,6 @@ public class PlanController : ControllerBase
 
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.UpdatePlanAsync(id, userId, model);
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 }

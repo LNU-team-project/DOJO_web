@@ -1,10 +1,7 @@
-using DOJO2.Domain.Entities;
+using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using src.Presentation.ViewModels;
-using System.Text.Encodings.Web;
 
 namespace DOJO2.Controllers;
 
@@ -14,21 +11,15 @@ public class AccountController : Controller
     private const string HomeControllerName = "Home";
     private const string DashboardActionName = "Dashboard";
 
-    private readonly UserManager<AppUser> _userManager;
-    private readonly SignInManager<AppUser> _signInManager;
+    private readonly IAuthService _authService;
     private readonly ILogger<AccountController> _logger;
-    private readonly IEmailSender _emailSender;
 
     public AccountController(
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager,
-        ILogger<AccountController> logger,
-        IEmailSender emailSender)
+        IAuthService authService,
+        ILogger<AccountController> logger)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _logger = logger;
-        _emailSender = emailSender;
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpGet]
@@ -54,34 +45,22 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
-        if (user == null)
+        var result = await _authService.LoginAsync(model.Email.Trim(), model.Password, model.RememberMe);
+
+        if (!result.Success)
         {
-            ModelState.AddModelError(string.Empty, "Невірна пошта або пароль.");
+            ModelState.AddModelError(string.Empty, result.Message ?? "Помилка при вході");
             return View(model);
         }
 
-        var signInResult = await _signInManager.PasswordSignInAsync(
-            user.UserName ?? string.Empty,
-            model.Password,
-            model.RememberMe,
-            lockoutOnFailure: true);
-
-        if (!signInResult.Succeeded)
-        {
-            ModelState.AddModelError(string.Empty, "Невірна пошта або пароль.");
-            return View(model);
-        }
-
-        _logger.LogInformation("User logged in: {UserName}", user.UserName);
+        _logger.LogInformation("Користувач успішно увійшов");
         return RedirectToAction(DashboardActionName, HomeControllerName);
     }
 
     [HttpPost]
-    // Знімаємо перевірку антифрогері для виклику з JS профілю
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
+        await _authService.LogoutAsync();
         return RedirectToAction("Register", AccountControllerName);
     }
 
@@ -100,25 +79,18 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = new AppUser
-        {
-            UserName = model.UserName.Trim(),
-            Email = model.Email.Trim()
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
+        var result = await _authService.RegisterAsync(model.UserName.Trim(), model.Email.Trim(), model.Password);
+        
+        if (!result.Success)
         {
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, error);
             }
-
             return View(model);
         }
 
-        _logger.LogInformation("User created: {UserName}", user.UserName);
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        _logger.LogInformation("Користувач успішно зареєстрований");
         return RedirectToAction(DashboardActionName, HomeControllerName);
     }
     
@@ -134,21 +106,11 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email ?? string.Empty);
-            if (user == null)
-            {
-                // Don't reveal that the user does not exist
-                return View("ForgotPasswordConfirmation");
-            }
-
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", AccountControllerName, new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
-
-            await _emailSender.SendEmailAsync(
-                model.Email ?? string.Empty,
-                "Reset Password",
-                $"Please reset your password by clicking here: <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>link</a>");
-
+            var callbackUrl = Url.Action("ResetPassword", AccountControllerName, new { code = "PLACEHOLDER" }, protocol: HttpContext.Request.Scheme);
+            // Замінюємо PLACEHOLDER на реальний код у сервісі
+            await _authService.ForgotPasswordAsync(model.Email ?? string.Empty, callbackUrl ?? string.Empty);
+            
+            // Завжди показуємо одну й ту ж сторінку, щоб не розкривати чи користувач існує
             return View("ForgotPasswordConfirmation");
         }
 
@@ -169,20 +131,18 @@ public class AccountController : Controller
         {
             return View(model);
         }
-        var user = await _userManager.FindByEmailAsync(model.Email ?? string.Empty);
-        if (user == null)
+
+        var result = await _authService.ResetPasswordAsync(model.Email ?? string.Empty, model.Code ?? string.Empty, model.Password ?? string.Empty);
+        
+        if (result.Success)
         {
-            // Don't reveal that the user does not exist
+            _logger.LogInformation("Пароль успішно скинут для користувача");
             return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
         }
-        var result = await _userManager.ResetPasswordAsync(user, model.Code ?? string.Empty, model.Password ?? string.Empty);
-        if (result.Succeeded)
-        {
-            return RedirectToAction(nameof(ResetPasswordConfirmation), AccountControllerName);
-        }
+
         foreach (var error in result.Errors)
         {
-            ModelState.AddModelError(string.Empty, error.Description);
+            ModelState.AddModelError(string.Empty, error);
         }
         return View(model);
     }
@@ -201,33 +161,41 @@ public class AccountController : Controller
             return Content("Будь ласка, надайте email адресу в query string, наприклад: /Account/TestEmail?email=your-email@example.com");
         }
 
-        await _emailSender.SendEmailAsync(email, "SendGrid Test", "Це тестовий email з SendGrid.");
-        return Content($"Тестовий email відправлено на {email}. Перевірте свою поштову скриньку.");
+        var result = await _authService.SendTestEmailAsync(email);
+        return Content(result.Message ?? "Помилка при відправленні email");
     }
 
     [HttpPost]
     public async Task<IActionResult> SendEmailConfirmation()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
-            return Unauthorized();
+            return Unauthorized(new { success = false, message = "Користувача не знайдено" });
         }
 
-        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var userResult = await _authService.GetUserAsync(userId.ToString());
+        if (!userResult.Success || userResult.Data == null)
+        {
+            return NotFound(new { success = false, message = "Користувача не знайдено" });
+        }
+
+        var user = userResult.Data;
         var callbackUrl = Url.Action(
             nameof(ConfirmEmail),
             AccountControllerName,
-            new { userId = user.Id, code },
+            new { userId = user.Id, code = "PLACEHOLDER" },
             protocol: Request.Scheme);
 
-        await _emailSender.SendEmailAsync(
-            user.Email ?? string.Empty,
-            "Підтвердження email",
-            $"Будь ласка, підтвердіть свій email натиснувши на посилання: <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>підтвердити</a>");
+        var result = await _authService.SendEmailConfirmationAsync(user.Email ?? string.Empty, callbackUrl ?? string.Empty);
+
+        if (!result.Success)
+        {
+            return BadRequest(new { success = false, message = result.Message });
+        }
 
         TempData["EmailConfirmationSent"] = true;
-        return Ok(new { success = true, message = "Лист з підтвердженням надіслано" });
+        return Ok(new { success = true, message = result.Message });
     }
 
     [HttpGet]
@@ -238,18 +206,15 @@ public class AccountController : Controller
             return BadRequest(ModelState);
         }
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
+        var result = await _authService.ConfirmEmailAsync(userId, code);
+        
+        if (result.Success)
         {
-            return RedirectToAction("Login", AccountControllerName);
-        }
-
-        var result = await _userManager.ConfirmEmailAsync(user, code);
-        if (result.Succeeded)
-        {
+            _logger.LogInformation("Email підтверджено для користувача {UserId}", userId);
             return RedirectToAction(DashboardActionName, HomeControllerName, new { confirmed = true });
         }
 
+        _logger.LogWarning("Не вдалося підтвердити email для користувача {UserId}", userId);
         return RedirectToAction("Login", AccountControllerName);
     }
 }

@@ -2,48 +2,18 @@ using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DOJO2.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class ProfileController : ControllerBase
+public class ProfileController : BaseApiController
 {
     private readonly IUserService _userService;
-    private readonly ILogger<ProfileController> _logger;
 
     public ProfileController(IUserService userService, ILogger<ProfileController> logger)
+        : base(logger)
     {
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    /// <summary>
-    /// Отримує ідентифікатор поточного користувача з claims
-    /// </summary>
-    private int? GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId)
-            ? userId
-            : null;
-    }
-
-    /// <summary>
-    /// Перевіряє авторизацію користувача
-    /// </summary>
-    private IActionResult? ValidateUserAuthorization()
-    {
-        var userId = GetCurrentUserId();
-        if (userId == null || userId <= 0)
-        {
-            _logger.LogWarning("Невалідний userId або користувач не авторизований");
-            return Unauthorized(new { success = false, message = "Користувача не знайдено" });
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -61,12 +31,7 @@ public class ProfileController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _userService.GetUserProfileAsync(userId);
 
-        if (!result.Success)
-        {
-            return NotFound(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResultWithNotFound(result);
     }
 
     /// <summary>
@@ -89,12 +54,7 @@ public class ProfileController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _userService.UpdateUserProfileAsync(userId, model);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     /// <summary>
@@ -117,12 +77,7 @@ public class ProfileController : ControllerBase
         var userId = GetCurrentUserId() ?? 0;
         var result = await _userService.UpdateUserAvatarAsync(userId, avatar);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message });
+        return ToActionResult(result);
     }
 
     /// <summary>
@@ -164,12 +119,7 @@ public class ProfileController : ControllerBase
             UserName = model.UserName
         });
 
-        if (!result.Success)
-        {
-            return BadRequest(new { success = false, message = result.Message, errors = result.Errors });
-        }
-
-        return Ok(new { success = true, message = result.Message, data = result.Data });
+        return ToActionResult(result);
     }
 
     /// <summary>
@@ -200,8 +150,6 @@ public class ProfileController : ControllerBase
             return BadRequest(new { success = false, message = "Не вдалося отримати email користувача" });
         }
 
-        // Реюз логіку з AccountController ForgotPassword через редирект/URL
-        var resetUrl = Url.Action("ForgotPassword", "Account", null, Request.Scheme);
-        return Ok(new { success = true, message = "Перейдіть для скидання паролю", resetUrl });
+        return Ok(new { success = true, message = "Посилання для скидання пароля відправлено" });
     }
 }
