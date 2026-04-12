@@ -6,6 +6,9 @@ namespace DOJO2.Controllers
 {
     public class AdminController : Controller
     {
+        private const string SuccessMessageTempDataKey = "AdminUsersSuccessMessage";
+        private const string ErrorMessageTempDataKey = "AdminUsersErrorMessage";
+
         private readonly IAdminService _adminService;
         private readonly ILogger<AdminController> _logger;
 
@@ -63,6 +66,40 @@ namespace DOJO2.Controllers
             };
 
             return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlockUser(int userId, string? search)
+        {
+            var result = await _adminService.BlockUserAsync(userId);
+            if (result.Success)
+            {
+                TempData[SuccessMessageTempDataKey] = result.Message ?? "Користувача успішно заблоковано";
+            }
+            else
+            {
+                TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося заблокувати користувача";
+            }
+
+            return RedirectToAction(nameof(Users), new { search });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnblockUser(int userId, string? search)
+        {
+            var result = await _adminService.UnblockUserAsync(userId);
+            if (result.Success)
+            {
+                TempData[SuccessMessageTempDataKey] = result.Message ?? "Користувача успішно розблоковано";
+            }
+            else
+            {
+                TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося розблокувати користувача";
+            }
+
+            return RedirectToAction(nameof(Users), new { search });
         }
     }
 }

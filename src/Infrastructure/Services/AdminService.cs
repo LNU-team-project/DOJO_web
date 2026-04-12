@@ -10,11 +10,14 @@ public interface IAdminService
 {
     Task<Result<bool>> AuthenticateAdminAsync(string login, string password);
     Task<Result<List<AdminUserListItemViewModel>>> GetUsersAsync(string? search);
+    Task<Result<bool>> BlockUserAsync(int userId);
+    Task<Result<bool>> UnblockUserAsync(int userId);
 }
 
 public class AdminService : IAdminService
 {
     private const int MaxUsersForAdminPage = 200;
+    private const int LockoutYears = 100;
     private readonly AppDbContext _context;
     private readonly ILogger<AdminService> _logger;
 
@@ -56,6 +59,7 @@ public class AdminService : IAdminService
     public async Task<Result<List<AdminUserListItemViewModel>>> GetUsersAsync(string? search)
     {
         var normalizedSearch = search?.Trim();
+        var nowUtc = DateTimeOffset.UtcNow;
 
         var query = _context.Users.AsNoTracking();
 
@@ -76,12 +80,60 @@ public class AdminService : IAdminService
                 Email = u.Email ?? string.Empty,
                 Level = u.Level,
                 ExpPoints = u.ExpPoints,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                IsBlocked = u.LockoutEnabled && u.LockoutEnd.HasValue && u.LockoutEnd > nowUtc,
+                LockoutEnd = u.LockoutEnd
             })
             .ToListAsync();
 
         _logger.LogInformation("Адміністратор отримав список користувачів. Кількість: {Count}", users.Count);
         return Result<List<AdminUserListItemViewModel>>.SuccessResult(users, "Користувачів успішно завантажено");
+    }
+
+    public async Task<Result<bool>> BlockUserAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Користувач для блокування не знайдено. UserId: {UserId}", userId);
+            return Result<bool>.FailureResult("Користувача не знайдено");
+        }
+
+        user.LockoutEnabled = true;
+        user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(LockoutYears);
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Користувача заблоковано. UserId: {UserId}", userId);
+
+        return Result<bool>.SuccessResult(true, "Користувача успішно заблоковано");
+    }
+
+    public async Task<Result<bool>> UnblockUserAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Користувач для розблокування не знайдено. UserId: {UserId}", userId);
+            return Result<bool>.FailureResult("Користувача не знайдено");
+        }
+
+        user.LockoutEnabled = false;
+        user.LockoutEnd = null;
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Користувача розблоковано. UserId: {UserId}", userId);
+
+        return Result<bool>.SuccessResult(true, "Користувача успішно розблоковано");
     }
 }
 

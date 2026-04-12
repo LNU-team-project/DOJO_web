@@ -267,6 +267,26 @@ body {
   font-size: 0.95rem;
 }
 
+.admin-users-alert {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-users-alert-success {
+  background: rgba(43, 182, 115, 0.12);
+  border: 1px solid rgba(43, 182, 115, 0.35);
+  color: #156842;
+}
+
+.admin-users-alert-error {
+  background: rgba(226, 75, 75, 0.12);
+  border: 1px solid rgba(226, 75, 75, 0.35);
+  color: #932727;
+}
+
 .admin-users-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--dojo-border);
@@ -296,6 +316,42 @@ body {
 
 .admin-users-table tbody tr:hover {
   background: #fff8fa;
+}
+
+.admin-users-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-users-status-active {
+  background: rgba(43, 182, 115, 0.15);
+  color: #1d7a50;
+}
+
+.admin-users-status-blocked {
+  background: rgba(226, 75, 75, 0.15);
+  color: #a32c2c;
+}
+
+.admin-users-inline-form {
+  margin: 0;
+}
+
+.admin-users-row-btn {
+  width: auto;
+  min-width: 132px;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.admin-users-row-btn-danger {
+  background: linear-gradient(135deg, #ff8c8c 0%, #e24b4b 100%);
 }
 
 .admin-users-footer-actions {

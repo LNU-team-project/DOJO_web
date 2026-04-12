@@ -11,6 +11,8 @@ public class AdminUserListItemViewModel
     public int Level { get; set; }
     public int ExpPoints { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsBlocked { get; set; }
+    public DateTimeOffset? LockoutEnd { get; set; }
 }
 
 public class AdminUsersPageViewModel

@@ -1,11 +1,12 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using DOJO2.Controllers;
 using DOJO2.Infrastructure.Results;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -15,6 +16,8 @@ namespace DOJO_web.Tests;
 public class AdminControllerTests
 {
     private const string ModelErrorKey = "";
+    private const string SuccessMessageTempDataKey = "AdminUsersSuccessMessage";
+    private const string ErrorMessageTempDataKey = "AdminUsersErrorMessage";
 
     private readonly Mock<IAdminService> _adminServiceMock;
     private readonly Mock<ILogger<AdminController>> _loggerMock;
@@ -104,8 +107,93 @@ public class AdminControllerTests
         Assert.Contains(entry!.Errors, error => error.ErrorMessage == string.Empty);
     }
 
+
+//TEST BLOCK/UNBLOCK
+    [Fact]
+    public async Task BlockUser_RedirectsAndWritesSuccessTempData_WhenServiceSucceeds()
+    {
+        _adminServiceMock
+            .Setup(s => s.BlockUserAsync(7))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Користувача успішно заблоковано"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.BlockUser(7, "vlad");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("vlad", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Користувача успішно заблоковано", controller.TempData[SuccessMessageTempDataKey]);
+        Assert.Null(controller.TempData[ErrorMessageTempDataKey]);
+    }
+
+    [Fact]
+    public async Task BlockUser_RedirectsAndWritesErrorTempData_WhenServiceFails()
+    {
+        _adminServiceMock
+            .Setup(s => s.BlockUserAsync(7))
+            .ReturnsAsync(Result<bool>.FailureResult("Не вдалося заблокувати користувача"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.BlockUser(7, "vlad");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("vlad", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Не вдалося заблокувати користувача", controller.TempData[ErrorMessageTempDataKey]);
+        Assert.Null(controller.TempData[SuccessMessageTempDataKey]);
+    }
+
+    [Fact]
+    public async Task UnblockUser_RedirectsAndWritesSuccessTempData_WhenServiceSucceeds()
+    {
+        _adminServiceMock
+            .Setup(s => s.UnblockUserAsync(9))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Користувача успішно розблоковано"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.UnblockUser(9, "mail");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("mail", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Користувача успішно розблоковано", controller.TempData[SuccessMessageTempDataKey]);
+        Assert.Null(controller.TempData[ErrorMessageTempDataKey]);
+    }
+
+    [Fact]
+    public async Task UnblockUser_RedirectsAndWritesErrorTempData_WhenServiceFails()
+    {
+        _adminServiceMock
+            .Setup(s => s.UnblockUserAsync(9))
+            .ReturnsAsync(Result<bool>.FailureResult("Не вдалося розблокувати користувача"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.UnblockUser(9, "mail");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("mail", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Не вдалося розблокувати користувача", controller.TempData[ErrorMessageTempDataKey]);
+        Assert.Null(controller.TempData[SuccessMessageTempDataKey]);
+    }
+
     private AdminController CreateController()
     {
-        return new AdminController(_adminServiceMock.Object, _loggerMock.Object);
+        var controller = new AdminController(_adminServiceMock.Object, _loggerMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+
+        var tempDataProvider = new Mock<ITempDataProvider>();
+        controller.TempData = new TempDataDictionary(controller.HttpContext, tempDataProvider.Object);
+
+        return controller;
     }
 }

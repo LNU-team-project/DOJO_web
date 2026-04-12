@@ -31,6 +31,16 @@
             Знайдено: <strong>@Model.Users.Count</strong>
         </div>
 
+        @if (TempData["AdminUsersSuccessMessage"] is string successMessage)
+        {
+            <div class="admin-users-alert admin-users-alert-success" role="status">@successMessage</div>
+        }
+
+        @if (TempData["AdminUsersErrorMessage"] is string errorMessage)
+        {
+            <div class="admin-users-alert admin-users-alert-error" role="alert">@errorMessage</div>
+        }
+
         @if (Model.Users.Count == 0)
         {
             <p class="register-footer">Користувачів за цим фільтром не знайдено.</p>
@@ -47,6 +57,8 @@
                             <th>Рівень</th>
                             <th>XP</th>
                             <th>Створено</th>
+                            <th>Статус</th>
+                            <th>Дія</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,6 +71,36 @@
                                 <td>@user.Level</td>
                                 <td>@user.ExpPoints</td>
                                 <td>@user.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @if (user.IsBlocked)
+                                    {
+                                        <span class="admin-users-status admin-users-status-blocked">Заблоковано</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-users-status admin-users-status-active">Активний</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.IsBlocked)
+                                    {
+                                        <form asp-action="UnblockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <input type="hidden" name="search" value="@Model.Search" />
+                                            <button type="submit" class="register-btn ghost admin-users-row-btn">Розблокувати</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="BlockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <input type="hidden" name="search" value="@Model.Search" />
+                                            <button type="submit" class="register-btn admin-users-row-btn admin-users-row-btn-danger">Блокувати</button>
+                                        </form>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
