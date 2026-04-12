@@ -45,5 +45,24 @@ namespace DOJO2.Controllers
         {
             return View();
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Users(string? search)
+        {
+            var result = await _adminService.GetUsersAsync(search);
+            if (!result.Success || result.Data == null)
+            {
+                _logger.LogWarning("Не вдалося завантажити список користувачів для адмін-панелі");
+                ModelState.AddModelError(string.Empty, result.Message ?? "Не вдалося завантажити користувачів");
+            }
+
+            var vm = new AdminUsersPageViewModel
+            {
+                Search = search?.Trim() ?? string.Empty,
+                Users = result.Data ?? new List<AdminUserListItemViewModel>()
+            };
+
+            return View(vm);
+        }
     }
 }
