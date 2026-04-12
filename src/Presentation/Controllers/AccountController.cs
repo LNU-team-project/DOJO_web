@@ -27,6 +27,11 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null, bool blocked = false)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction(DashboardActionName, HomeControllerName);
