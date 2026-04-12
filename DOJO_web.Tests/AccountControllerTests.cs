@@ -47,6 +47,22 @@ public class AccountControllerTests
     }
 
     [Fact]
+    public void Login_SetsBlockedMessage_WhenBlockedFlagIsTrue()
+    {
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
+        var result = _controller.Login(blocked: true);
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.NotNull(viewResult.Model);
+        Assert.Equal("Ваш обліковий запис заблоковано. Зверніться до адміністратора.", _controller.ViewData["BlockedMessage"]);
+    }
+
+    [Fact]
     public void Login_RedirectsToDashboard_WhenUserIsAuthenticated()
     {
         // Arrange

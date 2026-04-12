@@ -33,7 +33,7 @@
 
         @if (TempData["AdminUsersSuccessMessage"] is string successMessage)
         {
-            <div class="admin-users-alert admin-users-alert-success" role="status">@successMessage</div>
+            <output class="admin-users-alert admin-users-alert-success">@successMessage</output>
         }
 
         @if (TempData["AdminUsersErrorMessage"] is string errorMessage)

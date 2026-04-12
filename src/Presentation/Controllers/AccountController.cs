@@ -7,9 +7,11 @@ namespace DOJO2.Controllers;
 
 public class AccountController : Controller
 {
+    private const string BlockedNoticeCookieName = "dojo_blocked_notice";
     private const string AccountControllerName = "Account";
     private const string HomeControllerName = "Home";
     private const string DashboardActionName = "Dashboard";
+    private const string BlockedUserMessage = "Ваш обліковий запис заблоковано. Зверніться до адміністратора.";
 
     private readonly IAuthService _authService;
     private readonly ILogger<AccountController> _logger;
@@ -23,11 +25,20 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null, bool blocked = false)
     {
         if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction(DashboardActionName, HomeControllerName);
+        }
+
+        var hasBlockedCookieNotice = Request.Cookies.TryGetValue(BlockedNoticeCookieName, out var blockedCookieValue)
+            && string.Equals(blockedCookieValue, "1", StringComparison.Ordinal);
+
+        if (blocked || hasBlockedCookieNotice)
+        {
+            ViewData["BlockedMessage"] = BlockedUserMessage;
+            Response.Cookies.Delete(BlockedNoticeCookieName);
         }
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -49,6 +60,11 @@ public class AccountController : Controller
 
         if (!result.Success)
         {
+            if (string.Equals(result.Message, BlockedUserMessage, StringComparison.Ordinal))
+            {
+                ViewData["BlockedMessage"] = BlockedUserMessage;
+            }
+
             ModelState.AddModelError(string.Empty, result.Message ?? "Помилка при вході");
             return View(model);
         }

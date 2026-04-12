@@ -276,15 +276,15 @@ body {
 }
 
 .admin-users-alert-success {
-  background: rgba(43, 182, 115, 0.12);
-  border: 1px solid rgba(43, 182, 115, 0.35);
-  color: #156842;
+  background: #eaf8f1;
+  border: 1px solid #9ed7b8;
+  color: #0a3a24;
 }
 
 .admin-users-alert-error {
-  background: rgba(226, 75, 75, 0.12);
-  border: 1px solid rgba(226, 75, 75, 0.35);
-  color: #932727;
+  background: #fcecec;
+  border: 1px solid #e3a8a8;
+  color: #5a1515;
 }
 
 .admin-users-table-wrap {
@@ -328,13 +328,13 @@ body {
 }
 
 .admin-users-status-active {
-  background: rgba(43, 182, 115, 0.15);
-  color: #1d7a50;
+  background: #eaf8f1;
+  color: #0a3a24;
 }
 
 .admin-users-status-blocked {
-  background: rgba(226, 75, 75, 0.15);
-  color: #a32c2c;
+  background: #fcecec;
+  color: #5a1515;
 }
 
 .admin-users-inline-form {
@@ -352,6 +352,34 @@ body {
 
 .admin-users-row-btn-danger {
   background: linear-gradient(135deg, #ff8c8c 0%, #e24b4b 100%);
+}
+
+.account-status-dialog {
+  border: none;
+  border-radius: 18px;
+  padding: 0;
+  max-width: min(420px, calc(100% - 24px));
+  box-shadow: 0 16px 36px rgba(24, 22, 22, 0.26);
+}
+
+.account-status-dialog::backdrop {
+  background: rgba(31, 31, 31, 0.32);
+}
+
+.account-status-dialog-content {
+  padding: 18px;
+  background: #fffdfa;
+  color: var(--dojo-ink);
+}
+
+.account-status-dialog-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.account-status-dialog-text {
+  margin: 0 0 14px;
+  line-height: 1.4;
 }
 
 .admin-users-footer-actions {

@@ -72,6 +72,12 @@ namespace DOJO2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BlockUser(int userId, string? search)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                return RedirectToAction(nameof(Users), new { search });
+            }
+
             var result = await _adminService.BlockUserAsync(userId);
             if (result.Success)
             {
@@ -89,6 +95,12 @@ namespace DOJO2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UnblockUser(int userId, string? search)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                return RedirectToAction(nameof(Users), new { search });
+            }
+
             var result = await _adminService.UnblockUserAsync(userId);
             if (result.Success)
             {
