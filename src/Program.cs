@@ -2,10 +2,12 @@ using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Middleware;
 using DOJO2.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -68,12 +70,51 @@ try
 
     builder.Services.ConfigureApplicationCookie(options =>
     {
+        const string BlockedNoticeCookieName = "dojo_blocked_notice";
+
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/Login";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true; // ��одовжуємо сесію під час активності
         options.Cookie.IsEssential = true;
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var principal = context.Principal;
+            var userId = principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return;
+            }
+
+            var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<AppUser>>();
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync();
+                return;
+            }
+
+            var isBlocked = user.LockoutEnabled && user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
+            if (!isBlocked)
+            {
+                return;
+            }
+
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync();
+            context.HttpContext.Response.Cookies.Append(
+                BlockedNoticeCookieName,
+                "1",
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(5)
+                });
+        };
     });
 
     builder.Services.AddTransient<IEmailSender, EmailSender>();

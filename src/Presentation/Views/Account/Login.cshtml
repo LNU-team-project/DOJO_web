@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Увійти";
     var returnUrl = ViewData["ReturnUrl"] as string;
+    var blockedMessage = ViewData["BlockedMessage"] as string;
 }
 
 <div class="register-page">
@@ -66,3 +67,16 @@
         </p>
     </div>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(blockedMessage))
+{
+    <dialog class="account-status-dialog" open>
+        <div class="account-status-dialog-content">
+            <h2 class="account-status-dialog-title">Доступ обмежено</h2>
+            <p class="account-status-dialog-text">@blockedMessage</p>
+            <form method="dialog">
+                <button type="submit" class="register-btn">Зрозуміло</button>
+            </form>
+        </div>
+    </dialog>
+}

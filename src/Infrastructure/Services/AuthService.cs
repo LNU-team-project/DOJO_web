@@ -24,6 +24,7 @@ public class AuthService : IAuthService
 {
     private const string EmptyEmailMessage = "Email не може бути порожним";
     private const string UserNotFoundMessage = "Користувача не знайдено";
+    private const string BlockedUserMessage = "Ваш обліковий запис заблоковано. Зверніться до адміністратора.";
 
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
@@ -68,6 +69,12 @@ public class AuthService : IAuthService
             password,
             rememberMe,
             lockoutOnFailure: true);
+
+        if (signInResult.IsLockedOut)
+        {
+            _logger.LogWarning("Спроба входу заблокованого користувача: {UserName}", user.UserName);
+            return Result<bool>.FailureResult(BlockedUserMessage);
+        }
 
         if (!signInResult.Succeeded)
         {

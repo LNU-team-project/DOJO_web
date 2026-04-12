@@ -6,6 +6,9 @@ namespace DOJO2.Controllers
 {
     public class AdminController : Controller
     {
+        private const string SuccessMessageTempDataKey = "AdminUsersSuccessMessage";
+        private const string ErrorMessageTempDataKey = "AdminUsersErrorMessage";
+
         private readonly IAdminService _adminService;
         private readonly ILogger<AdminController> _logger;
 
@@ -44,6 +47,71 @@ namespace DOJO2.Controllers
         public IActionResult LoginSuccess()
         {
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Users(string? search)
+        {
+            var result = await _adminService.GetUsersAsync(search);
+            if (!result.Success || result.Data == null)
+            {
+                _logger.LogWarning("Не вдалося завантажити список користувачів для адмін-панелі");
+                ModelState.AddModelError(string.Empty, result.Message ?? "Не вдалося завантажити користувачів");
+            }
+
+            var vm = new AdminUsersPageViewModel
+            {
+                Search = search?.Trim() ?? string.Empty,
+                Users = result.Data ?? new List<AdminUserListItemViewModel>()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlockUser(int userId, string? search)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                return RedirectToAction(nameof(Users), new { search });
+            }
+
+            var result = await _adminService.BlockUserAsync(userId);
+            if (result.Success)
+            {
+                TempData[SuccessMessageTempDataKey] = result.Message ?? "Користувача успішно заблоковано";
+            }
+            else
+            {
+                TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося заблокувати користувача";
+            }
+
+            return RedirectToAction(nameof(Users), new { search });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnblockUser(int userId, string? search)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                return RedirectToAction(nameof(Users), new { search });
+            }
+
+            var result = await _adminService.UnblockUserAsync(userId);
+            if (result.Success)
+            {
+                TempData[SuccessMessageTempDataKey] = result.Message ?? "Користувача успішно розблоковано";
+            }
+            else
+            {
+                TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося розблокувати користувача";
+            }
+
+            return RedirectToAction(nameof(Users), new { search });
         }
     }
 }
