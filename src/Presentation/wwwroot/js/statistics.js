@@ -1,0 +1,290 @@
+﻿/**
+ * Модуль управління статистикою користувача
+ * Відповідає за отримання та відображення статистики
+ */
+
+(function () {
+  'use strict';
+
+  const STATS_CONFIG = {
+    apiEndpoint: '/api/statistics',
+    selectors: {
+      widget: '[data-statistics-root]',
+      modal: '#statisticsModal',
+      modalBody: '#statisticsModalBody',
+      modalClose: '#closeStatisticsModal',
+      openButton: '#openStatisticsModal',
+      completedTodos: '[data-stat-completed-todos]',
+      completedPlans: '[data-stat-completed-plans]',
+      pomodoroSessions: '[data-stat-pomodoro-sessions]',
+      pomodoroMinutes: '[data-stat-pomodoro-minutes]'
+    }
+  };
+
+  /**
+   * Отримує статистику за день з сервера
+   */
+  async function fetchTodayStatistics() {
+    try {
+      const response = await fetch(`${STATS_CONFIG.apiEndpoint}/today`);
+      if (!response.ok) {
+        throw new Error('Помилка при отриманні статистики');
+      }
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Невірний формат відповіді');
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Помилка завантаження статистики:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Отримує детальну статистику з сервера
+   */
+  async function fetchDetailedStatistics(startDate = null) {
+    try {
+      const url = new URL(`${STATS_CONFIG.apiEndpoint}/detailed`, window.location.origin);
+      if (startDate) {
+        url.searchParams.append('startDate', startDate);
+      }
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        throw new Error('Помилка при отриманні детальної статистики');
+      }
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Невірний формат відповіді');
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Помилка завантаження детальної статистики:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Оновлює віджет статистики на головній сторінці
+   */
+  function updateWidgetDisplay(stats) {
+    if (!stats) return;
+
+    const els = {
+      todos: document.querySelector(STATS_CONFIG.selectors.completedTodos),
+      plans: document.querySelector(STATS_CONFIG.selectors.completedPlans),
+      sessions: document.querySelector(STATS_CONFIG.selectors.pomodoroSessions),
+      minutes: document.querySelector(STATS_CONFIG.selectors.pomodoroMinutes)
+    };
+
+    if (els.todos) els.todos.textContent = stats.completedTodos || 0;
+    if (els.plans) els.plans.textContent = stats.completedPlans || 0;
+    if (els.sessions) els.sessions.textContent = stats.completedPomodoroSessions || 0;
+    if (els.minutes) els.minutes.textContent = stats.totalPomodoroMinutes || 0;
+  }
+
+  /**
+   * Форматує дату для відображення
+   */
+  function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  /**
+   * Створює HTML для детальної статистики
+   */
+  function createDetailedStatsHTML(stats) {
+    if (!stats) {
+      return '<div class="statistics-empty">Не вдалося завантажити статистику</div>';
+    }
+
+    const todoRate = (stats.todoCompletionRate || 0).toFixed(1);
+    const planRate = (stats.planCompletionRate || 0).toFixed(1);
+
+    return `
+      <div class="statistics-section">
+        <h3 class="statistics-section-title">Завдання</h3>
+        <div class="statistics-metric">
+          <span class="statistics-metric-label">Виконано завдань</span>
+          <div>
+            <span class="statistics-metric-value">${stats.completedTodos || 0}</span>
+            <span class="statistics-metric-unit">із ${stats.totalTodos || 0}</span>
+          </div>
+        </div>
+        <div class="statistics-progress">
+          <div class="statistics-progress-label">
+            <span>Відсоток виконання</span>
+            <span>${todoRate}%</span>
+          </div>
+          <div class="statistics-progress-bar">
+            <div class="statistics-progress-fill" style="width: ${todoRate}%"></div>
+          </div>
+        </div>
+        ${stats.lastCompletedTodo ? `
+          <div class="statistics-metric" style="margin-top: 8px;">
+            <span class="statistics-metric-label">Останнє завдання</span>
+            <span class="statistics-metric-value">${formatDate(stats.lastCompletedTodo)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="statistics-section">
+        <h3 class="statistics-section-title">Плани</h3>
+        <div class="statistics-metric">
+          <span class="statistics-metric-label">Виконано планів</span>
+          <div>
+            <span class="statistics-metric-value">${stats.completedPlans || 0}</span>
+            <span class="statistics-metric-unit">із ${stats.totalPlans || 0}</span>
+          </div>
+        </div>
+        <div class="statistics-progress">
+          <div class="statistics-progress-label">
+            <span>Відсоток виконання</span>
+            <span>${planRate}%</span>
+          </div>
+          <div class="statistics-progress-bar">
+            <div class="statistics-progress-fill" style="width: ${planRate}%"></div>
+          </div>
+        </div>
+        ${stats.lastCompletedPlan ? `
+          <div class="statistics-metric" style="margin-top: 8px;">
+            <span class="statistics-metric-label">Останній план</span>
+            <span class="statistics-metric-value">${formatDate(stats.lastCompletedPlan)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="statistics-section">
+        <h3 class="statistics-section-title">Помодоро</h3>
+        <div class="statistics-metric">
+          <span class="statistics-metric-label">Сесій фокусу</span>
+          <span class="statistics-metric-value accent">${stats.completedPomodoroSessions || 0}</span>
+        </div>
+        <div class="statistics-metric">
+          <span class="statistics-metric-label">Хвилин фокусу</span>
+          <div>
+            <span class="statistics-metric-value">${stats.totalPomodoroMinutes || 0}</span>
+            <span class="statistics-metric-unit">хвилин</span>
+          </div>
+        </div>
+        <div class="statistics-metric">
+          <span class="statistics-metric-label">Всього сесій</span>
+          <span class="statistics-metric-value">${stats.totalPomodoroSessions || 0}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Відкриває модальне вікно з детальною статистикою
+   */
+  async function openDetailedStatistics() {
+    const modal = document.querySelector(STATS_CONFIG.selectors.modal);
+    const modalBody = document.querySelector(STATS_CONFIG.selectors.modalBody);
+
+    if (!modal || !modalBody) return;
+
+    // Показати модаль
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Показати спіннер
+    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+
+    // Завантажити дані
+    const stats = await fetchDetailedStatistics();
+
+    // Оновити вміст модалі
+    modalBody.innerHTML = createDetailedStatsHTML(stats);
+  }
+
+  /**
+   * Закриває модальне вікно
+   */
+  function closeDetailedStatistics() {
+    const modal = document.querySelector(STATS_CONFIG.selectors.modal);
+    if (!modal) return;
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  /**
+   * Оновлює статистику (публічний метод для інших модулів)
+   */
+  async function refreshStatistics() {
+    const stats = await fetchTodayStatistics();
+    if (stats) {
+      updateWidgetDisplay(stats);
+    }
+  }
+
+  /**
+   * Ініціалізує модуль статистики
+   */
+  function init() {
+    // Оновити віджет при завантаженні
+    fetchTodayStatistics().then(stats => {
+      if (stats) {
+        updateWidgetDisplay(stats);
+      }
+    });
+
+    // Слухачі подій
+    const openBtn = document.querySelector(STATS_CONFIG.selectors.openButton);
+    const closeBtn = document.querySelector(STATS_CONFIG.selectors.modalClose);
+    const modal = document.querySelector(STATS_CONFIG.selectors.modal);
+
+    if (openBtn) {
+      openBtn.addEventListener('click', openDetailedStatistics);
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeDetailedStatistics);
+    }
+
+    // Закрити модаль при кліку поза нею
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeDetailedStatistics();
+        }
+      });
+    }
+
+    // Оновлювати статистику щохвилини
+    setInterval(() => {
+      fetchTodayStatistics().then(stats => {
+        if (stats) {
+          updateWidgetDisplay(stats);
+        }
+      });
+    }, 60000);
+  }
+
+  // Ініціалізувати при завантаженні DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Експортувати функції для глобального використання
+  window.StatisticsModule = {
+    fetchTodayStatistics,
+    fetchDetailedStatistics,
+    updateWidgetDisplay,
+    openDetailedStatistics,
+    closeDetailedStatistics,
+    refreshStatistics
+  };
+})();
