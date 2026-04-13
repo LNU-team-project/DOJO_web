@@ -66,6 +66,30 @@
   }
 
   /**
+   * Отримує статистику за тиждень з сервера
+   */
+  async function fetchWeeklyProgress(dateInWeek = null) {
+    try {
+      const url = new URL(`${STATS_CONFIG.apiEndpoint}/weekly`, window.location.origin);
+      if (dateInWeek) {
+        url.searchParams.append('dateInWeek', dateInWeek);
+      }
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        throw new Error('Помилка при отриманні статистики за тиждень');
+      }
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Невірний формат відповіді');
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Помилка завантаження статистики за тиждень:', error);
+      return null;
+    }
+  }
+
+  /**
    * Оновлює віджет статистики на головній сторінці
    */
   function updateWidgetDisplay(stats) {
@@ -96,6 +120,18 @@
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  /**
+   * Форматує дату для відображення у графіку
+   */
+  function formatDateShort(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA', {
+      month: 'short',
+      day: 'numeric'
     });
   }
 
@@ -184,6 +220,88 @@
     `;
   }
 
+
+  function createWeeklyChartHTML(weeklyData) {
+    if (!weeklyData || !weeklyData.dailyStats) {
+      return '<div class="statistics-empty">Не вдалося завантажити статистику за тиждень</div>';
+    }
+
+    const maxValue = Math.max(
+      ...weeklyData.dailyStats.map(d => Math.max(d.completedTodos, d.completedPlans, d.pomodoroSessions))
+    ) || 1;
+
+    const chartHTML = weeklyData.dailyStats.map(day => {
+      const todosHeight = (day.completedTodos / maxValue) * 100;
+      const plansHeight = (day.completedPlans / maxValue) * 100;
+      const pomodoroHeight = (day.pomodoroSessions / maxValue) * 100;
+
+      return `
+        <div class="weekly-chart-bar-group">
+          <div class="weekly-chart-bars">
+            <div class="weekly-chart-bar-item">
+              <div class="weekly-chart-bar" style="height: ${todosHeight}%" title="${day.completedTodos} завдань">
+                <span class="weekly-chart-bar-label">${day.completedTodos}</span>
+              </div>
+              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-primary);">Завдання</span>
+            </div>
+            <div class="weekly-chart-bar-item">
+              <div class="weekly-chart-bar weekly-chart-bar-plans" style="height: ${plansHeight}%" title="${day.completedPlans} планів">
+                <span class="weekly-chart-bar-label">${day.completedPlans}</span>
+              </div>
+              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-accent);">Плани</span>
+            </div>
+            <div class="weekly-chart-bar-item">
+              <div class="weekly-chart-bar weekly-chart-bar-pomodoro" style="height: ${pomodoroHeight}%" title="${day.pomodoroSessions} сесій">
+                <span class="weekly-chart-bar-label">${day.pomodoroSessions}</span>
+              </div>
+              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-success);">Помодоро</span>
+            </div>
+          </div>
+          <div class="weekly-chart-day-label">${day.dayName}</div>
+          <div class="weekly-chart-date">${formatDateShort(day.date)}</div>
+        </div>
+      `;
+    }).join('');
+
+    const weekStart = new Date(weeklyData.weekStartDate).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    const weekEnd = new Date(weeklyData.weekEndDate).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+
+    return `
+      <div class="statistics-section">
+        <div class="statistics-weekly-header">
+          <h3 class="statistics-section-title">Тижневий прогрес (${weekStart} - ${weekEnd})</h3>
+        </div>
+        
+        <div class="weekly-chart-container">
+          ${chartHTML}
+        </div>
+
+        <div class="statistics-grid" style="margin-top: 24px;">
+          <div class="statistics-item">
+            <span class="statistics-label">Завдань за тиждень</span>
+            <span class="statistics-value">${weeklyData.totalCompletedTodos}</span>
+            <span class="statistics-metric-unit">середньо ${weeklyData.averageTodosPerDay} в день</span>
+          </div>
+          <div class="statistics-item">
+            <span class="statistics-label">Планів за тиждень</span>
+            <span class="statistics-value">${weeklyData.totalCompletedPlans}</span>
+            <span class="statistics-metric-unit">середньо ${weeklyData.averagePlansPerDay} в день</span>
+          </div>
+          <div class="statistics-item">
+            <span class="statistics-label">Помодоро сесій</span>
+            <span class="statistics-value accent">${weeklyData.totalPomodoroSessions}</span>
+            <span class="statistics-metric-unit">середньо ${weeklyData.averagePomodoroSessionsPerDay} в день</span>
+          </div>
+          <div class="statistics-item">
+            <span class="statistics-label">Хвилин фокусу</span>
+            <span class="statistics-value">${weeklyData.totalPomodoroMinutes}</span>
+            <span class="statistics-metric-unit">хвилин</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   /**
    * Відкриває модальне вікно з детальною статистикою
    */
@@ -205,6 +323,78 @@
 
     // Оновити вміст модалі
     modalBody.innerHTML = createDetailedStatsHTML(stats);
+  }
+
+  /**
+   * Отримує детальну статистику з кнопкою для перегляду тижневої
+   */
+  async function openDetailedStatisticsWithTabs() {
+    const modal = document.querySelector(STATS_CONFIG.selectors.modal);
+    const modalBody = document.querySelector(STATS_CONFIG.selectors.modalBody);
+
+    if (!modal || !modalBody) return;
+
+    // Показати модаль
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Показати спіннер
+    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+
+    // Завантажити дані
+    const stats = await fetchDetailedStatistics();
+
+    // Оновити вміст модалі з кнопкою для тижневої статистики
+    const detailedHTML = createDetailedStatsHTML(stats);
+    const weeklyButtonHTML = `
+      <div class="statistics-action-buttons">
+        <button type="button" class="statistics-tab-button" id="viewWeeklyBtn">
+          📊 Переглянути статистику за 7 днів
+        </button>
+      </div>
+    `;
+
+    modalBody.innerHTML = weeklyButtonHTML + detailedHTML;
+
+    // Додати слухач на кнопку тижневої статистики
+    const weeklyBtn = document.getElementById('viewWeeklyBtn');
+    if (weeklyBtn) {
+      weeklyBtn.addEventListener('click', openWeeklyProgress);
+    }
+  }
+
+  /**
+   * Відкриває вікно з тижневою статистикою
+   */
+  async function openWeeklyProgress() {
+    const modal = document.querySelector(STATS_CONFIG.selectors.modal);
+    const modalBody = document.querySelector(STATS_CONFIG.selectors.modalBody);
+
+    if (!modal || !modalBody) return;
+
+    // Показати спіннер
+    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+
+    // Завантажити дані
+    const weeklyData = await fetchWeeklyProgress();
+
+    // Оновити вміст модалі
+    const weeklyHTML = createWeeklyChartHTML(weeklyData);
+    const backButtonHTML = `
+      <div class="statistics-action-buttons">
+        <button type="button" class="statistics-tab-button" id="backToDetailedBtn">
+          ← Повернутись до детальної статистики
+        </button>
+      </div>
+    `;
+
+    modalBody.innerHTML = backButtonHTML + weeklyHTML;
+
+    // Додати слухач на кнопку повернення
+    const backBtn = document.getElementById('backToDetailedBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', openDetailedStatisticsWithTabs);
+    }
   }
 
   /**
@@ -245,7 +435,7 @@
     const modal = document.querySelector(STATS_CONFIG.selectors.modal);
 
     if (openBtn) {
-      openBtn.addEventListener('click', openDetailedStatistics);
+      openBtn.addEventListener('click', openDetailedStatisticsWithTabs);
     }
 
     if (closeBtn) {

@@ -9,6 +9,7 @@ public interface IStatisticsService
 {
     Task<Result<StatisticsViewModel>> GetTodayStatisticsAsync(int userId, DateTime utcNow);
     Task<Result<DetailedStatisticsViewModel>> GetDetailedStatisticsAsync(int userId, DateTime? startDate = null);
+    Task<Result<WeeklyProgressViewModel>> GetWeeklyProgressAsync(int userId, DateTime? dateInWeek = null);
 }
 
 public class StatisticsService : IStatisticsService
@@ -146,6 +147,107 @@ public class StatisticsService : IStatisticsService
         {
             _logger.LogError(ex, "Помилка при отриманні детальної статистики для користувача {UserId}", userId);
             return Result<DetailedStatisticsViewModel>.FailureResult("Помилка при отриманні детальної статистики");
+        }
+    }
+
+    public async Task<Result<WeeklyProgressViewModel>> GetWeeklyProgressAsync(int userId, DateTime? dateInWeek = null)
+    {
+        try
+        {
+            const int DaysInWeek = 7;
+            
+            // Встановлюємо початок тижня (неділя)
+            var currentDate = dateInWeek?.Date ?? DateTime.UtcNow.Date;
+            var weekStartDate = currentDate.AddDays(-(int)currentDate.DayOfWeek);
+            var weekEndDate = weekStartDate.AddDays(DaysInWeek);
+
+            var weekStartDateUtc = DateTime.SpecifyKind(weekStartDate, DateTimeKind.Utc);
+            var weekEndDateUtc = DateTime.SpecifyKind(weekEndDate, DateTimeKind.Utc);
+
+            // Отримуємо всі завершені дані за тиждень
+            var todos = await _context.Tasks
+                .Where(t => t.UserId == userId 
+                    && !t.IsPlan 
+                    && t.GoalId == null 
+                    && t.ParentTaskId == null
+                    && t.IsCompleted
+                    && t.CompletedAt.HasValue
+                    && t.CompletedAt >= weekStartDateUtc 
+                    && t.CompletedAt < weekEndDateUtc)
+                .ToListAsync();
+
+            var plans = await _context.Tasks
+                .Where(t => t.UserId == userId 
+                    && t.IsPlan 
+                    && t.IsCompleted
+                    && t.CompletedAt.HasValue
+                    && t.CompletedAt >= weekStartDateUtc 
+                    && t.CompletedAt < weekEndDateUtc)
+                .ToListAsync();
+
+            var pomodoros = await _context.Pomodoros
+                .Where(p => p.UserId == userId 
+                    && p.StartTime >= weekStartDateUtc 
+                    && p.StartTime < weekEndDateUtc)
+                .ToListAsync();
+
+            // Будуємо дневну статистику
+            var dailyStatsList = new List<DailyStatisticsViewModel>();
+            var dayNames = new[] { "Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб" };
+
+            for (int i = 0; i < DaysInWeek; i++)
+            {
+                var dayDate = weekStartDate.AddDays(i);
+                var dayStartUtc = DateTime.SpecifyKind(dayDate, DateTimeKind.Utc);
+                var dayEndUtc = dayStartUtc.AddDays(1);
+
+                var completedTodosForDay = todos.Count(t => t.CompletedAt >= dayStartUtc && t.CompletedAt < dayEndUtc);
+                var completedPlansForDay = plans.Count(t => t.CompletedAt >= dayStartUtc && t.CompletedAt < dayEndUtc);
+                var pomodorosForDay = pomodoros
+                    .Where(p => p.StartTime >= dayStartUtc && p.StartTime < dayEndUtc)
+                    .ToList();
+
+                var dailyStat = new DailyStatisticsViewModel
+                {
+                    Date = dayDate,
+                    DayOfWeek = (int)dayDate.DayOfWeek,
+                    DayName = dayNames[(int)dayDate.DayOfWeek],
+                    CompletedTodos = completedTodosForDay,
+                    CompletedPlans = completedPlansForDay,
+                    PomodoroSessions = pomodorosForDay.Count,
+                    TotalPomodoroMinutes = pomodorosForDay.Sum(p => p.DurationMinutes ?? 0)
+                };
+
+                dailyStatsList.Add(dailyStat);
+            }
+
+            // Розраховуємо загальні та середні показники
+            var totalTodos = todos.Count;
+            var totalPlans = plans.Count;
+            var totalPomodoros = pomodoros.Count;
+            var totalPomodoroMinutes = pomodoros.Sum(p => p.DurationMinutes ?? 0);
+
+            var weeklyStats = new WeeklyProgressViewModel
+            {
+                WeekStartDate = weekStartDate,
+                WeekEndDate = weekEndDate,
+                DailyStats = dailyStatsList,
+                TotalCompletedTodos = totalTodos,
+                TotalCompletedPlans = totalPlans,
+                TotalPomodoroSessions = totalPomodoros,
+                TotalPomodoroMinutes = totalPomodoroMinutes,
+                AverageTodosPerDay = Math.Round((double)totalTodos / DaysInWeek, 1),
+                AveragePlansPerDay = Math.Round((double)totalPlans / DaysInWeek, 1),
+                AveragePomodoroSessionsPerDay = Math.Round((double)totalPomodoros / DaysInWeek, 1)
+            };
+
+            _logger.LogInformation("Статистику за тиждень отримано для користувача {UserId}", userId);
+            return Result<WeeklyProgressViewModel>.SuccessResult(weeklyStats, "Статистику за тиждень успішно отримано");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Помилка при отриманні статистики за тиждень для користувача {UserId}", userId);
+            return Result<WeeklyProgressViewModel>.FailureResult("Помилка при отриманні статистики за тиждень");
         }
     }
 }

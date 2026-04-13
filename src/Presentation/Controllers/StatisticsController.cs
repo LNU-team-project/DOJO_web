@@ -76,5 +76,33 @@ public class StatisticsController : ControllerBase
             return StatusCode(500, new { success = false, message = "Внутрішня помилка сервера" });
         }
     }
-}
 
+    [HttpGet("weekly")]
+    public async Task<IActionResult> GetWeeklyProgress([FromQuery] DateTime? dateInWeek = null)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogWarning("Не вдалося розпарсити userId з Claims");
+                return BadRequest(new { success = false, message = "Помилка аутентифікації" });
+            }
+
+            var result = await _statisticsService.GetWeeklyProgressAsync(userId, dateInWeek);
+            
+            if (!result.Success)
+            {
+                _logger.LogError("Помилка при отриманні статистики за тиждень: {Message}", result.Message);
+                return BadRequest(new { success = false, message = result.Message });
+            }
+
+            return Ok(new { success = true, data = result.Data, message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Необроблена помилка при отриманні статистики за тиждень");
+            return StatusCode(500, new { success = false, message = "Внутрішня помилка сервера" });
+        }
+    }
+}

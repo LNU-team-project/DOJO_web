@@ -15,9 +15,12 @@ html {
   --dojo-muted: #6f6f6f;
   --dojo-surface: #ffffff;
   --dojo-border: #e6e2dc;
+  --dojo-primary: #4a3a82;
+  --dojo-primary-dark: #3a2a62;
   --dojo-accent: #ff7a90;
   --dojo-accent-strong: #ff5a78;
   --dojo-success: #2bb673;
+  --dojo-success-dark: #1f9458;
   --dojo-danger: #e24b4b;
   --dojo-shadow: 0 18px 40px rgba(24, 22, 22, 0.12);
   --dashboard-scrollbar-offset: 0px;
