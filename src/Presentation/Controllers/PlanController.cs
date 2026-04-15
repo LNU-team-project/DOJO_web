@@ -138,4 +138,46 @@ public class PlanController : BaseApiController
         var result = await _planService.UpdatePlanAsync(id, userId, model);
         return ToActionResult(result);
     }
+
+    [HttpGet("{id:int}/attachments")]
+    public async Task<IActionResult> GetPlanAttachments(int id)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.GetPlanAttachmentsAsync(id, userId);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{id:int}/attachments")]
+    public async Task<IActionResult> UploadPlanAttachment(int id, [FromForm] IFormFile? file)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.UploadPlanAttachmentAsync(id, userId, file);
+        return ToActionResult(result);
+    }
+
+    [HttpDelete("{id:int}/attachments/{attachmentId:int}")]
+    public async Task<IActionResult> DeletePlanAttachment(int id, int attachmentId)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.DeletePlanAttachmentAsync(id, attachmentId, userId);
+        return ToActionResult(result);
+    }
 }

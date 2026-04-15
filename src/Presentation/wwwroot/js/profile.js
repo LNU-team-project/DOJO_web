@@ -48,6 +48,9 @@
   const settingsResetPasswordBtn = document.getElementById(
     "settingsResetPasswordBtn",
   );
+  const settingsDeleteAccountBtn = document.getElementById(
+    "settingsDeleteAccountBtn",
+  );
   const settingsEditUserNameBtn = document.getElementById("editUserNameBtn");
   const closeSettingsModalFooterBtn = document.getElementById(
     "closeProfileSettingsModalFooter",
@@ -478,6 +481,35 @@
   };
 
   /**
+   * Видаляє акаунт поточного користувача (self-service)
+   */
+  const deleteOwnAccount = async () => {
+    const hasConfirmed = confirm(
+      "Видалити ваш акаунт? Всі пов'язані дані буде втрачено без можливості відновлення.",
+    );
+
+    if (!hasConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/me`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${response.status}`);
+      }
+
+      navigateTo("/Account/Register");
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  /**
    * Відправляє запит на підтвердження електронної пошти
    */
   const sendEmailConfirmation = async () => {
@@ -605,6 +637,12 @@
     "click",
     sendPasswordResetLink,
     "✅ Event listener на settingsResetPasswordBtn додано",
+  );
+  bindEventIfPresent(
+    settingsDeleteAccountBtn,
+    "click",
+    deleteOwnAccount,
+    "✅ Event listener на settingsDeleteAccountBtn додано",
   );
 
   bindEventIfPresent(

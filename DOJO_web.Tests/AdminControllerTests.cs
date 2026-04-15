@@ -181,6 +181,42 @@ public class AdminControllerTests
         Assert.Null(controller.TempData[SuccessMessageTempDataKey]);
     }
 
+    [Fact]
+    public async Task DeleteUser_RedirectsAndWritesSuccessTempData_WhenServiceSucceeds()
+    {
+        _adminServiceMock
+            .Setup(s => s.DeleteUserAsync(5))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Користувача успішно видалено"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.DeleteUser(5, "vlad");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("vlad", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Користувача успішно видалено", controller.TempData[SuccessMessageTempDataKey]);
+        Assert.Null(controller.TempData[ErrorMessageTempDataKey]);
+    }
+
+    [Fact]
+    public async Task DeleteUser_RedirectsAndWritesErrorTempData_WhenServiceFails()
+    {
+        _adminServiceMock
+            .Setup(s => s.DeleteUserAsync(5))
+            .ReturnsAsync(Result<bool>.FailureResult("Не вдалося видалити користувача"));
+
+        var controller = CreateController();
+
+        var actionResult = await controller.DeleteUser(5, "vlad");
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Users", redirectResult.ActionName);
+        Assert.Equal("vlad", redirectResult.RouteValues?["search"]);
+        Assert.Equal("Не вдалося видалити користувача", controller.TempData[ErrorMessageTempDataKey]);
+        Assert.Null(controller.TempData[SuccessMessageTempDataKey]);
+    }
+
     private AdminController CreateController()
     {
         var controller = new AdminController(_adminServiceMock.Object, _loggerMock.Object)

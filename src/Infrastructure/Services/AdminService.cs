@@ -1,5 +1,6 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
+using DOJO2.Domain.Entities;
 using DOJO2.Presentation.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ public interface IAdminService
     Task<Result<List<AdminUserListItemViewModel>>> GetUsersAsync(string? search);
     Task<Result<bool>> BlockUserAsync(int userId);
     Task<Result<bool>> UnblockUserAsync(int userId);
+    Task<Result<bool>> DeleteUserAsync(int userId);
 }
 
 public class AdminService : IAdminService
@@ -19,12 +21,17 @@ public class AdminService : IAdminService
     private const int MaxUsersForAdminPage = 200;
     private const int LockoutYears = 100;
     private readonly AppDbContext _context;
+    private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<AdminService> _logger;
 
-    public AdminService(AppDbContext context, ILogger<AdminService> logger)
+    public AdminService(
+        AppDbContext context,
+        UserManager<AppUser> userManager,
+        ILogger<AdminService> logger)
     {
-        _context = context;
-        _logger = logger;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result<bool>> AuthenticateAdminAsync(string login, string password)
@@ -134,6 +141,32 @@ public class AdminService : IAdminService
         _logger.LogInformation("Користувача розблоковано. UserId: {UserId}", userId);
 
         return Result<bool>.SuccessResult(true, "Користувача успішно розблоковано");
+    }
+
+    public async Task<Result<bool>> DeleteUserAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            _logger.LogWarning("Користувач для видалення не знайдено. UserId: {UserId}", userId);
+            return Result<bool>.FailureResult("Користувача не знайдено");
+        }
+
+        var deleteResult = await _userManager.DeleteAsync(user);
+        if (!deleteResult.Succeeded)
+        {
+            var errors = deleteResult.Errors.Select(e => e.Description).ToList();
+            _logger.LogWarning("Помилка при видаленні користувача {UserId}: {Errors}", userId, string.Join(", ", errors));
+            return Result<bool>.FailureResult("Не вдалося видалити користувача", errors);
+        }
+
+        _logger.LogInformation("Адміністратор видалив користувача. UserId: {UserId}", userId);
+        return Result<bool>.SuccessResult(true, "Користувача успішно видалено");
     }
 }
 

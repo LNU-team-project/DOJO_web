@@ -11,10 +11,13 @@ public interface IUserService
     Task<Result<UserProfileViewModel>> GetUserProfileAsync(int userId);
     Task<Result<UserProfileViewModel>> UpdateUserProfileAsync(int userId, UpdateUserProfileViewModel model);
     Task<Result<bool>> UpdateUserAvatarAsync(int userId, IFormFile avatarFile);
+    Task<Result<bool>> DeleteUserAccountAsync(int userId);
 }
 
 public class UserService : IUserService
 {
+    private const string InvalidUserIdMessage = "Невалідний ідентифікатор користувача";
+    private const string UserNotFoundMessage = "Користувача не знайдено";
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<UserService> _logger;
     private readonly IWebHostEnvironment _webHostEnvironment;
@@ -37,7 +40,7 @@ public class UserService : IUserService
         if (userId <= 0)
         {
             _logger.LogWarning("Спроба отримати профіль з невалідним userId: {UserId}", userId);
-            return Result<UserProfileViewModel>.FailureResult("Невалідний ідентифікатор користувача");
+            return Result<UserProfileViewModel>.FailureResult(InvalidUserIdMessage);
         }
 
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -45,7 +48,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _logger.LogWarning("Користувач {UserId} не знайдено", userId);
-            return Result<UserProfileViewModel>.FailureResult("Користувача не знайдено");
+            return Result<UserProfileViewModel>.FailureResult(UserNotFoundMessage);
         }
 
         var profileVm = MapToProfileViewModel(user);
@@ -65,7 +68,7 @@ public class UserService : IUserService
         if (userId <= 0)
         {
             _logger.LogWarning("Спроба оновити профіль з невалідним userId: {UserId}", userId);
-            return Result<UserProfileViewModel>.FailureResult("Невалідний ідентифікатор користувача");
+            return Result<UserProfileViewModel>.FailureResult(InvalidUserIdMessage);
         }
 
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -73,7 +76,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _logger.LogWarning("Користувач {UserId} не знайдено при оновленні профіля", userId);
-            return Result<UserProfileViewModel>.FailureResult("Користувача не знайдено");
+            return Result<UserProfileViewModel>.FailureResult(UserNotFoundMessage);
         }
 
         if (!string.IsNullOrWhiteSpace(model.UserName) && model.UserName != user.UserName)
@@ -113,7 +116,7 @@ public class UserService : IUserService
         if (userId <= 0)
         {
             _logger.LogWarning("Спроба оновити аватар з невалідним userId: {UserId}", userId);
-            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+            return Result<bool>.FailureResult(InvalidUserIdMessage);
         }
 
         if (avatarFile == null || avatarFile.Length == 0)
@@ -139,7 +142,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _logger.LogWarning("Користувач {UserId} не знайдено при завантаженні аватара", userId);
-            return Result<bool>.FailureResult("Користувача не знайдено");
+            return Result<bool>.FailureResult(UserNotFoundMessage);
         }
 
         var uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, AvatarDirectory);
@@ -176,6 +179,36 @@ public class UserService : IUserService
         _logger.LogInformation("Аватар користувача {UserId} успішно завантажено: {FileName}", userId, fileName);
 
         return Result<bool>.SuccessResult(true, "Аватар успішно завантажено");
+    }
+
+    public async Task<Result<bool>> DeleteUserAccountAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            _logger.LogWarning("Спроба видалити акаунт з невалідним userId: {UserId}", userId);
+            return Result<bool>.FailureResult(InvalidUserIdMessage);
+        }
+
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Користувач {UserId} не знайдено при видаленні акаунта", userId);
+            return Result<bool>.FailureResult(UserNotFoundMessage);
+        }
+
+        var avatarUrl = user.AvatarUrl;
+        var deleteResult = await _userManager.DeleteAsync(user);
+        if (!deleteResult.Succeeded)
+        {
+            var errors = deleteResult.Errors.Select(e => e.Description).ToList();
+            _logger.LogWarning("Помилка при видаленні акаунта {UserId}: {Errors}", userId, string.Join(", ", errors));
+            return Result<bool>.FailureResult("Не вдалося видалити акаунт", errors);
+        }
+
+        TryDeleteAvatarFileByUrl(avatarUrl, userId);
+        _logger.LogInformation("Акаунт користувача {UserId} успішно видалено", userId);
+
+        return Result<bool>.SuccessResult(true, "Акаунт успішно видалено");
     }
 
     private static UserProfileViewModel MapToProfileViewModel(AppUser user)
@@ -228,6 +261,45 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Не вдалося видалити завантажений аватар");
+        }
+    }
+
+    private void TryDeleteAvatarFileByUrl(string? avatarUrl, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(avatarUrl))
+        {
+            return;
+        }
+
+        var webRootPath = _webHostEnvironment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(webRootPath))
+        {
+            return;
+        }
+
+        var relativePath = avatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var candidatePath = Path.GetFullPath(Path.Combine(webRootPath, relativePath));
+        var rootPath = Path.GetFullPath(webRootPath);
+
+        if (!candidatePath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Спроба видалити аватар за межами web root для користувача {UserId}", userId);
+            return;
+        }
+
+        if (!File.Exists(candidatePath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(candidatePath);
+            _logger.LogInformation("Файл аватара користувача {UserId} видалено", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не вдалося видалити файл аватара користувача {UserId}", userId);
         }
     }
 }
