@@ -84,21 +84,41 @@
                                 <td>
                                     @if (user.IsBlocked)
                                     {
-                                        <form asp-action="UnblockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="userId" value="@user.Id" />
-                                            <input type="hidden" name="search" value="@Model.Search" />
-                                            <button type="submit" class="register-btn ghost admin-users-row-btn">Розблокувати</button>
-                                        </form>
+                                        <div class="admin-users-inline-form">
+                                            <form asp-action="UnblockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <button type="submit" class="register-btn ghost admin-users-row-btn">Розблокувати</button>
+                                            </form>
+
+                                            <form asp-action="DeleteUser" asp-controller="Admin" method="post" class="admin-users-inline-form"
+                                                  onsubmit="return confirm('Видалити користувача @user.UserName? Цю дію неможливо скасувати.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <button type="submit" class="register-btn admin-users-row-btn admin-users-row-btn-danger">Видалити</button>
+                                            </form>
+                                        </div>
                                     }
                                     else
                                     {
-                                        <form asp-action="BlockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="userId" value="@user.Id" />
-                                            <input type="hidden" name="search" value="@Model.Search" />
-                                            <button type="submit" class="register-btn admin-users-row-btn admin-users-row-btn-danger">Блокувати</button>
-                                        </form>
+                                        <div class="admin-users-inline-form">
+                                            <form asp-action="BlockUser" asp-controller="Admin" method="post" class="admin-users-inline-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <button type="submit" class="register-btn admin-users-row-btn admin-users-row-btn-danger">Блокувати</button>
+                                            </form>
+
+                                            <form asp-action="DeleteUser" asp-controller="Admin" method="post" class="admin-users-inline-form"
+                                                  onsubmit="return confirm('Видалити користувача @user.UserName? Цю дію неможливо скасувати.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <button type="submit" class="register-btn admin-users-row-btn admin-users-row-btn-danger">Видалити</button>
+                                            </form>
+                                        </div>
                                     }
                                 </td>
                             </tr>
