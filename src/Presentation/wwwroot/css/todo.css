@@ -1189,6 +1189,63 @@
   justify-content: flex-end;
 }
 
+.plan-attachments-header {
+  margin-bottom: 10px;
+  color: var(--dojo-ink);
+}
+
+.plan-attachments-upload-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.plan-attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fffdfa;
+  border: 1px solid rgba(255, 122, 144, 0.18);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.plan-attachment-link {
+  color: var(--dojo-accent);
+  text-decoration: none;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 380px;
+}
+
+.plan-attachment-link:hover {
+  text-decoration: underline;
+}
+
+.plan-attachment-delete {
+  border: 1px solid rgba(255, 122, 144, 0.4);
+  background: rgba(255, 122, 144, 0.12);
+  color: var(--dojo-accent);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.plan-attachment-empty {
+  color: var(--dojo-muted);
+  font-style: italic;
+}
+
 @media (max-width: 600px) {
   .plan-details-header {
     flex-direction: column;

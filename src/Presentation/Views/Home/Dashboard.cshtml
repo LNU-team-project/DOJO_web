@@ -315,6 +315,16 @@
                 </fieldset>
             </div>
 
+            <div class="form-group">
+                <label for="planCreateAttachments">Файли (необов'язково)</label>
+                <input type="file"
+                       id="planCreateAttachments"
+                       name="planCreateAttachments"
+                       class="form-control"
+                       multiple
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp" />
+            </div>
+
             <div class="todo-modal-footer">
                 <button type="button" class="btn-secondary" id="cancelPlanBtn">Скасувати</button>
                 <button type="submit" class="btn-primary">Додати план</button>
@@ -350,6 +360,17 @@
                 <div class="plan-details-meta-row" style="margin-top:12px;">
                     <span><strong>Дата та час:</strong>&nbsp;<span id="detailDateTime">-</span></span>
                 </div>
+            </div>
+
+            <div class="plan-details-card">
+                <div class="plan-attachments-header">
+                    <strong>Вкладення плану</strong>
+                </div>
+                <div class="plan-attachments-upload-row">
+                    <input type="file" id="planAttachmentInput" class="hidden-file-input" />
+                    <button type="button" class="btn-primary" id="uploadPlanAttachmentBtn">Прикріпити файл</button>
+                </div>
+                <div id="planAttachmentsList" class="plan-attachments-list"></div>
             </div>
 
             <div class="plan-details-actions">
