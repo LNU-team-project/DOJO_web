@@ -348,7 +348,7 @@
     });
   };
 
-  const handlePlanStatusChange = async (planId, isCompleted) => {
+    const handlePlanStatusChange = async (planId, isCompleted) => {
     const endpoint = isCompleted
       ? `/api/plan/complete/${planId}`
       : `/api/plan/incomplete/${planId}`;
@@ -362,14 +362,44 @@
       showSuccess(
         isCompleted ? "План позначено виконаним" : "План повернуто до активних",
       );
-      await loadPlans();
 
-      // Оновлюємо статистику після змінення статусу плану
-      if (
-        window.StatisticsModule &&
-        window.StatisticsModule.refreshStatistics
-      ) {
-        await window.StatisticsModule.refreshStatistics();
+      try {
+        const payload = await response.json();
+
+        if (payload && payload.success && payload.data) {
+          const data = payload.data;
+
+          if (data.hasLeveledUp) {
+            if (window.HeroModule && window.HeroModule.showLevelUp) {
+              window.HeroModule.showLevelUp(data);
+            }
+          } else {
+            if (window.HeroModule && window.HeroModule.applyStatus) {
+              window.HeroModule.applyStatus(data);
+            } else if (window.HeroModule && window.HeroModule.refresh) {
+              await window.HeroModule.refresh();
+            }
+          }
+        } else {
+          if (window.HeroModule && window.HeroModule.refresh) {
+            await window.HeroModule.refresh();
+          }
+        }
+      } catch (err) {
+        console.warn("Не вдалося обробити відповідь героя", err);
+        if (window.HeroModule && window.HeroModule.refresh) {
+          await window.HeroModule.refresh();
+        }
+      } finally {
+        // Завантажуємо плани та оновлюємо статистику в будь-якому випадку
+        await loadPlans();
+
+        if (
+          window.StatisticsModule &&
+          window.StatisticsModule.refreshStatistics
+        ) {
+          await window.StatisticsModule.refreshStatistics();
+        }
       }
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
