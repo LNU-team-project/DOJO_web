@@ -264,11 +264,36 @@
         ? MESSAGES.TASK_COMPLETED
         : MESSAGES.TASK_INCOMPLETE;
       showSuccess(message);
-      loadTodos();
-      
-      // Оновлюємо статистику після змінення статусу завдання
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
-        await window.StatisticsModule.refreshStatistics();
+
+      // Парсимо тіло відповіді: контролер повертає оновлений статус героя
+      try {
+        const payload = await response.json();
+        // Оновлюємо список завдань
+        await loadTodos();
+
+        if (payload && payload.success && payload.data) {
+          const data = payload.data;
+          if (data.hasLeveledUp) {
+            if (window.HeroModule && window.HeroModule.showLevelUp) {
+              window.HeroModule.showLevelUp(data);
+            }
+          } else {
+            if (window.HeroModule && window.HeroModule.applyStatus) {
+              window.HeroModule.applyStatus(data);
+            } else if (window.HeroModule && window.HeroModule.refresh) {
+              await window.HeroModule.refresh();
+            }
+          }
+        } else {
+          // якщо формат відповіді не той — просто оновимо віджет
+          if (window.HeroModule && window.HeroModule.refresh) {
+            await window.HeroModule.refresh();
+          }
+        }
+      } catch (err) {
+        console.warn('Не вдалося обробити відповідь героя', err);
+        await loadTodos();
+        if (window.HeroModule && window.HeroModule.refresh) await window.HeroModule.refresh();
       }
     } catch (error) {
       console.error("Помилка при оновленні статусу TODO:", error);

@@ -14,8 +14,8 @@ namespace DOJO2.Controllers
 
         public AdminController(IAdminService adminService, ILogger<AdminController> logger)
         {
-            _adminService = adminService;
-            _logger = logger;
+            _adminService = adminService ?? throw new ArgumentNullException(nameof(adminService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
@@ -109,6 +109,29 @@ namespace DOJO2.Controllers
             else
             {
                 TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося розблокувати користувача";
+            }
+
+            return RedirectToAction(nameof(Users), new { search });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(int userId, string? search)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                return RedirectToAction(nameof(Users), new { search });
+            }
+
+            var result = await _adminService.DeleteUserAsync(userId);
+            if (result.Success)
+            {
+                TempData[SuccessMessageTempDataKey] = result.Message ?? "Користувача успішно видалено";
+            }
+            else
+            {
+                TempData[ErrorMessageTempDataKey] = result.Message ?? "Не вдалося видалити користувача";
             }
 
             return RedirectToAction(nameof(Users), new { search });

@@ -15,6 +15,7 @@ public class TaskItem
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsPlan { get; set; } = false;
     public DateTime? ScheduledAt { get; set; }
+    public bool XpAwarded { get; set; } = false;
 
     // Navigation properties
     public virtual AppUser User { get; set; } = null!;

@@ -171,8 +171,25 @@
             </div>
 
             <div class="sidebar-card sidebar-placeholder">
-                <div class="sidebar-card-title">В майбутньому</div>
-                <p class="sidebar-card-text">Ще один блок для розширень.</p>
+                <link rel="stylesheet" href="@Url.Content("~/css/hero-widget.css")" />
+
+                <section class="hero-widget" aria-label="Твій герой">
+                    <div class="hero-left">
+                        <div class="hero-title">Твій герой</div>
+                    </div>
+
+                    <div class="hero-img" aria-hidden="true">
+                        <img src="@Url.Content("~/images/piggy.svg")" alt="Свинка">
+                    </div>
+
+                    <div class="hero-center">
+                        <div class="level-badge" id="heroLevel">Рівень 1</div>
+                        <div class="exp-bar" aria-hidden="true">
+                            <div class="exp-bar-inner" id="heroExpInner" style="width:0%"></div>
+                        </div>
+                        <div class="exp-text" id="heroExpText">Потрібно 300 XP до наступного рівня</div>
+                    </div>
+                </section>
             </div>
         </aside>
     </div>
@@ -315,6 +332,16 @@
                 </fieldset>
             </div>
 
+            <div class="form-group">
+                <label for="planCreateAttachments">Файли (необов'язково)</label>
+                <input type="file"
+                       id="planCreateAttachments"
+                       name="planCreateAttachments"
+                       class="form-control"
+                       multiple
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp" />
+            </div>
+
             <div class="todo-modal-footer">
                 <button type="button" class="btn-secondary" id="cancelPlanBtn">Скасувати</button>
                 <button type="submit" class="btn-primary">Додати план</button>
@@ -350,6 +377,17 @@
                 <div class="plan-details-meta-row" style="margin-top:12px;">
                     <span><strong>Дата та час:</strong>&nbsp;<span id="detailDateTime">-</span></span>
                 </div>
+            </div>
+
+            <div class="plan-details-card">
+                <div class="plan-attachments-header">
+                    <strong>Вкладення плану</strong>
+                </div>
+                <div class="plan-attachments-upload-row">
+                    <input type="file" id="planAttachmentInput" class="hidden-file-input" />
+                    <button type="button" class="btn-primary" id="uploadPlanAttachmentBtn">Прикріпити файл</button>
+                </div>
+                <div id="planAttachmentsList" class="plan-attachments-list"></div>
             </div>
 
             <div class="plan-details-actions">
@@ -516,6 +554,17 @@
                     </div>
                 </div>
             </div>
+
+            <div class="profile-section" style="margin-top: 8px;">
+                <div class="profile-info" style="width:100%;">
+                    <div class="profile-info-item" style="width:100%;">
+                        <label for="settingsDeleteAccountBtn">Небезпечна дія</label>
+                        <button type="button" class="profile-btn profile-btn-logout" id="settingsDeleteAccountBtn" style="width:100%;">
+                            🗑️ Видалити мій акаунт
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="profile-modal-footer" style="flex-direction: column; gap: 10px; align-items: stretch;">
@@ -552,4 +601,5 @@
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
     <script src="~/js/statistics.js" asp-append-version="true"></script>
+    <script src="~/js/hero-widget.js" asp-append-version="true"></script>
 }

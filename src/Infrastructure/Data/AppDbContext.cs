@@ -108,6 +108,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.Property(task => task.Description).HasColumnName("description");
             e.Property(task => task.IsCompleted).HasColumnName("is_completed").HasDefaultValue(false);
             e.Property(task => task.DueDate).HasColumnName("due_date");
+            e.Property(task => task.XpAwarded).HasColumnName("xp_awarded").HasDefaultValue(false);
             e.Property(task => task.Priority).HasColumnName("priority").HasDefaultValue((short)2);
             e.Property(task => task.CompletedAt).HasColumnName("completed_at");
             e.Property(task => task.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);

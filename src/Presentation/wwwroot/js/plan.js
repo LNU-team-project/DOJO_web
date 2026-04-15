@@ -7,6 +7,14 @@
   const timeGrid = document.querySelector("[data-time-grid]");
   const rangeLabel = document.querySelector("[data-range-label]");
   const planListContainer = document.getElementById("allPlanItems");
+  const planCreateAttachmentsInput = document.getElementById(
+    "planCreateAttachments",
+  );
+  const planAttachmentInput = document.getElementById("planAttachmentInput");
+  const uploadPlanAttachmentBtn = document.getElementById(
+    "uploadPlanAttachmentBtn",
+  );
+  const planAttachmentsList = document.getElementById("planAttachmentsList");
 
   if (
     !planModal ||
@@ -26,6 +34,11 @@
     CREATE_ERROR: "Не вдалося створити план",
     LOAD_ERROR: "Не вдалося завантажити плани",
     INVALID_FORMAT: "Невірний формат відповіді",
+    ATTACHMENTS_LOAD_ERROR: "Не вдалося завантажити вкладення",
+    ATTACHMENT_UPLOAD_ERROR: "Не вдалося прикріпити файл",
+    ATTACHMENT_DELETE_ERROR: "Не вдалося видалити вкладення",
+    PLAN_ATTACHMENTS_UPLOAD_ERROR:
+      "План створено, але частину файлів не вдалося прикріпити",
   };
 
   const PRIORITY_LABELS = {
@@ -139,6 +152,24 @@
         return;
       }
 
+      const createdPlanId = data.data.id;
+      const selectedFiles = Array.from(planCreateAttachmentsInput?.files || []);
+
+      if (createdPlanId && selectedFiles.length > 0) {
+        const uploadResult = await uploadAttachmentsForPlan(
+          createdPlanId,
+          selectedFiles,
+        );
+
+        if (uploadResult.failedCount > 0) {
+          showError(
+            `${MESSAGES.PLAN_ATTACHMENTS_UPLOAD_ERROR}: ${uploadResult.failedCount}`,
+          );
+        } else {
+          showSuccess(`Прикріплено файлів: ${uploadResult.uploadedCount}`);
+        }
+      }
+
       showSuccess("План створено");
       globalThis.dispatchEvent(
         new CustomEvent("dashboard:plan-created", {
@@ -147,15 +178,55 @@
       );
       closeModal();
       await loadPlans();
-      
+
       // Оновлюємо статистику після створення плану
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+      if (
+        window.StatisticsModule &&
+        window.StatisticsModule.refreshStatistics
+      ) {
         await window.StatisticsModule.refreshStatistics();
       }
     } catch (error) {
       console.error("Помилка при створенні плану", error);
       showError(MESSAGES.CREATE_ERROR);
     }
+  };
+
+  const uploadAttachmentsForPlan = async (planId, files) => {
+    let uploadedCount = 0;
+    let failedCount = 0;
+
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`/api/plan/${planId}/attachments`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          failedCount += 1;
+          continue;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          uploadedCount += 1;
+        } else {
+          failedCount += 1;
+        }
+      } catch (error) {
+        console.error(
+          "Помилка при прикріпленні файлу під час створення",
+          error,
+        );
+        failedCount += 1;
+      }
+    }
+
+    return { uploadedCount, failedCount };
   };
 
   const loadPlans = async () => {
@@ -277,7 +348,7 @@
     });
   };
 
-  const handlePlanStatusChange = async (planId, isCompleted) => {
+    const handlePlanStatusChange = async (planId, isCompleted) => {
     const endpoint = isCompleted
       ? `/api/plan/complete/${planId}`
       : `/api/plan/incomplete/${planId}`;
@@ -291,11 +362,44 @@
       showSuccess(
         isCompleted ? "План позначено виконаним" : "План повернуто до активних",
       );
-      await loadPlans();
-      
-      // Оновлюємо статистику після змінення статусу плану
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
-        await window.StatisticsModule.refreshStatistics();
+
+      try {
+        const payload = await response.json();
+
+        if (payload && payload.success && payload.data) {
+          const data = payload.data;
+
+          if (data.hasLeveledUp) {
+            if (window.HeroModule && window.HeroModule.showLevelUp) {
+              window.HeroModule.showLevelUp(data);
+            }
+          } else {
+            if (window.HeroModule && window.HeroModule.applyStatus) {
+              window.HeroModule.applyStatus(data);
+            } else if (window.HeroModule && window.HeroModule.refresh) {
+              await window.HeroModule.refresh();
+            }
+          }
+        } else {
+          if (window.HeroModule && window.HeroModule.refresh) {
+            await window.HeroModule.refresh();
+          }
+        }
+      } catch (err) {
+        console.warn("Не вдалося обробити відповідь героя", err);
+        if (window.HeroModule && window.HeroModule.refresh) {
+          await window.HeroModule.refresh();
+        }
+      } finally {
+        // Завантажуємо плани та оновлюємо статистику в будь-якому випадку
+        await loadPlans();
+
+        if (
+          window.StatisticsModule &&
+          window.StatisticsModule.refreshStatistics
+        ) {
+          await window.StatisticsModule.refreshStatistics();
+        }
       }
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
@@ -317,9 +421,12 @@
       }
       showSuccess("План видалено");
       await loadPlans();
-      
+
       // Оновлюємо статистику після видалення плану
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+      if (
+        window.StatisticsModule &&
+        window.StatisticsModule.refreshStatistics
+      ) {
         await window.StatisticsModule.refreshStatistics();
       }
     } catch (error) {
@@ -344,6 +451,12 @@
     if (!modal) return;
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
+    if (planAttachmentsList) {
+      planAttachmentsList.innerHTML = "";
+    }
+    if (planAttachmentInput) {
+      planAttachmentInput.value = "";
+    }
     // reset view/edit states
     document.getElementById("planDetailsView").style.display = "block";
     document.getElementById("planEditForm").style.display = "none";
@@ -367,6 +480,174 @@
       console.error(err);
       showError("Не вдалося завантажити план");
       return null;
+    }
+  };
+
+  const formatAttachmentDate = (iso) => {
+    if (!iso) {
+      return "";
+    }
+
+    const value = new Date(iso);
+    if (Number.isNaN(value.getTime())) {
+      return "";
+    }
+
+    return value.toLocaleString("uk-UA", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const renderPlanAttachments = (planId, attachments) => {
+    if (!planAttachmentsList) {
+      return;
+    }
+
+    planAttachmentsList.innerHTML = "";
+
+    if (!Array.isArray(attachments) || attachments.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "plan-attachment-empty";
+      empty.textContent = "Файлів ще немає";
+      planAttachmentsList.appendChild(empty);
+      return;
+    }
+
+    attachments.forEach((attachment) => {
+      const row = document.createElement("div");
+      row.className = "plan-attachment-item";
+
+      const link = document.createElement("a");
+      link.className = "plan-attachment-link";
+      link.href = attachment.fileUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      const uploadedAt = formatAttachmentDate(attachment.createdAt);
+      link.textContent = uploadedAt
+        ? `${attachment.fileName} (${uploadedAt})`
+        : attachment.fileName;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "plan-attachment-delete";
+      deleteBtn.textContent = "Видалити";
+      deleteBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        await deletePlanAttachment(planId, attachment.id);
+      });
+
+      row.appendChild(link);
+      row.appendChild(deleteBtn);
+      planAttachmentsList.appendChild(row);
+    });
+  };
+
+  const loadPlanAttachments = async (planId) => {
+    if (!planId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/plan/${planId}/attachments`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.ATTACHMENTS_LOAD_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.ATTACHMENTS_LOAD_ERROR);
+        return;
+      }
+
+      renderPlanAttachments(planId, data.data || []);
+    } catch (error) {
+      console.error("Помилка при завантаженні вкладень", error);
+      showError(MESSAGES.ATTACHMENTS_LOAD_ERROR);
+    }
+  };
+
+  const uploadPlanAttachment = async (planId) => {
+    if (!planId || !planAttachmentInput) {
+      return;
+    }
+
+    const file = planAttachmentInput.files?.[0];
+    if (!file) {
+      showError("Оберіть файл для завантаження");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`/api/plan/${planId}/attachments`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.ATTACHMENT_UPLOAD_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.ATTACHMENT_UPLOAD_ERROR);
+        return;
+      }
+
+      showSuccess("Файл успішно прикріплено");
+      planAttachmentInput.value = "";
+      await loadPlanAttachments(planId);
+    } catch (error) {
+      console.error("Помилка при прикріпленні файлу", error);
+      showError(MESSAGES.ATTACHMENT_UPLOAD_ERROR);
+    }
+  };
+
+  const deletePlanAttachment = async (planId, attachmentId) => {
+    const hasConfirmed = confirm("Видалити це вкладення?");
+    if (!hasConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/plan/${planId}/attachments/${attachmentId}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.ATTACHMENT_DELETE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.ATTACHMENT_DELETE_ERROR);
+        return;
+      }
+
+      showSuccess("Вкладення видалено");
+      await loadPlanAttachments(planId);
+    } catch (error) {
+      console.error("Помилка при видаленні вкладення", error);
+      showError(MESSAGES.ATTACHMENT_DELETE_ERROR);
     }
   };
 
@@ -428,6 +709,8 @@
     if (detailsModal) {
       detailsModal.dataset.currentPlanId = String(planId);
     }
+
+    await loadPlanAttachments(planId);
   };
 
   const fillPlanEditForm = (plan) => {
@@ -455,6 +738,10 @@
   const attachDetailHandlers = () => {
     // List items click
     planListContainer.addEventListener("click", async (ev) => {
+      if (ev.target.closest("input, button, a")) {
+        return;
+      }
+
       const item = ev.target.closest(".todo-item");
       if (!item) return;
       await openPlanDetailsById(item.dataset.planId);
@@ -474,6 +761,23 @@
     document
       .getElementById("closePlanDetailsBtn")
       .addEventListener("click", closePlanDetailsModal);
+
+    if (uploadPlanAttachmentBtn && planAttachmentInput) {
+      uploadPlanAttachmentBtn.addEventListener("click", () => {
+        planAttachmentInput.click();
+      });
+
+      planAttachmentInput.addEventListener("change", async () => {
+        const planId =
+          document.getElementById("planDetailsModal").dataset.currentPlanId;
+        if (!planId) {
+          return;
+        }
+
+        await uploadPlanAttachment(planId);
+      });
+    }
+
     document
       .getElementById("editPlanBtn")
       .addEventListener("click", async () => {
@@ -540,9 +844,12 @@
           showSuccess("План оновлено");
           closePlanDetailsModal();
           await loadPlans();
-          
+
           // Оновлюємо статистику після редагування плану
-          if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+          if (
+            window.StatisticsModule &&
+            window.StatisticsModule.refreshStatistics
+          ) {
             await window.StatisticsModule.refreshStatistics();
           }
         } catch (err) {

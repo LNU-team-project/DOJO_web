@@ -1,0 +1,129 @@
+/* Styles for hero widget (винос із Dashboard.cshtml) */
+.hero-widget {
+  background: linear-gradient(180deg,#ffd7e6,#ffbfdc);
+  border-radius: 12px;
+  padding: 22px 18px;
+  color: #3b1a2b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 260px;
+  border: 1px solid rgba(255,123,150,0.14);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.hero-left {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.hero-title {
+  font-weight: 800;
+  font-size: 18px;
+  text-align: left;
+  color: #4a1725;
+  pointer-events: auto;
+}
+
+.hero-img {
+  width: 140px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto 0 auto;
+  flex: 0 0 auto;
+}
+
+.hero-img img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform .35s ease, opacity .35s ease;
+}
+
+.hero-center {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 24px 12px 24px;
+  box-sizing: border-box;
+}
+
+.level-badge {
+  background: #ff9dc6;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(255,122,144,0.12);
+  transition: transform .25s ease, background .3s ease, color .3s ease;
+}
+
+.level-badge.level-up {
+  transform: scale(1.06);
+  box-shadow: 0 10px 26px rgba(255,90,120,0.18);
+}
+
+.exp-bar {
+  width: 70%;
+  max-width: 320px;
+  height: 14px;
+  background: rgba(59,26,43,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.exp-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg,#ff7aa3,#ff4d8a);
+  width: 40%;
+  transition: width .35s ease;
+}
+
+.exp-text {
+  font-size: 13px;
+  color: #5a2839;
+  text-align: center;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(380px) rotate(720deg); opacity: 0; }
+}
+
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 14px;
+  will-change: transform, opacity;
+  opacity: 0;
+  transform-origin: center;
+  border-radius: 2px;
+}
+
+/* Small responsive tweak */
+@media (max-width: 640px) {
+  .hero-widget { min-height: 220px; padding: 18px; }
+  .hero-img { width: 120px; height: 150px; }
+  .exp-bar { width: 80%; }
+}

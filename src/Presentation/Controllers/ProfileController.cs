@@ -1,5 +1,6 @@
 using DOJO2.Infrastructure.Services;
 using DOJO2.Presentation.ViewModels;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -151,5 +152,39 @@ public class ProfileController : BaseApiController
         }
 
         return Ok(new { success = true, message = "Посилання для скидання пароля відправлено" });
+    }
+
+    /// <summary>
+    /// Видаляє акаунт поточного користувача (self-service)
+    /// </summary>
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMyAccount()
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.DeleteUserAccountAsync(userId);
+
+        if (!result.Success)
+        {
+            return ToActionResult(result);
+        }
+
+        if (HttpContext.RequestServices != null)
+        {
+            await HttpContext.SignOutAsync();
+        }
+        else
+        {
+            _logger.LogWarning("Не вдалося виконати sign-out після видалення акаунта: RequestServices не налаштовано");
+        }
+
+        _logger.LogInformation("Користувач {UserId} видалив власний акаунт", userId);
+
+        return ToActionResult(result);
     }
 }

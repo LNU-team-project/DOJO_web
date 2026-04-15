@@ -24,3 +24,11 @@ public class PlanListViewModel
     public List<PlanItemViewModel> IncompletePlans { get; set; } = new();
     public List<PlanItemViewModel> CompletedPlans { get; set; } = new();
 }
+
+public class PlanAttachmentItemViewModel
+{
+    public int Id { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}

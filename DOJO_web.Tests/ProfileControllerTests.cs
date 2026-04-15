@@ -212,6 +212,47 @@ public class ProfileControllerTests
         Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
     }
 
+    [Fact]
+    public async Task DeleteMyAccount_ReturnsUnauthorized_WhenUserIdClaimMissing()
+    {
+        var controller = CreateControllerWithoutUserIdClaim();
+
+        var result = await controller.DeleteMyAccount();
+
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(StatusCodes.Status401Unauthorized, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccount_ReturnsBadRequest_WhenServiceFails()
+    {
+        _userServiceMock
+            .Setup(s => s.DeleteUserAccountAsync(ValidUserId))
+            .ReturnsAsync(Result<bool>.FailureResult("Не вдалося видалити акаунт"));
+
+        var controller = CreateControllerWithUserId(ValidUserId);
+
+        var result = await controller.DeleteMyAccount();
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteMyAccount_ReturnsOk_WhenServiceSucceeds()
+    {
+        _userServiceMock
+            .Setup(s => s.DeleteUserAccountAsync(ValidUserId))
+            .ReturnsAsync(Result<bool>.SuccessResult(true, "Акаунт успішно видалено"));
+
+        var controller = CreateControllerWithUserId(ValidUserId);
+
+        var result = await controller.DeleteMyAccount();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+    }
+
     private ProfileController CreateControllerWithUserId(int userId)
     {
         var controller = new ProfileController(_userServiceMock.Object, _loggerMock.Object);
