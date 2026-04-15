@@ -293,6 +293,15 @@
       );
       await loadPlans();
       
+      // Оновлюємо віджет героя
+      if (window.HeroModule && window.HeroModule.refresh) {
+        try {
+          await window.HeroModule.refresh();
+        } catch (e) {
+          console.warn('Не вдалося оновити віджет героя', e);
+        }
+      }
+
       // Оновлюємо статистику після змінення статусу плану
       if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
         await window.StatisticsModule.refreshStatistics();

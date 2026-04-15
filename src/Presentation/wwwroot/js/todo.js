@@ -264,8 +264,17 @@
         ? MESSAGES.TASK_COMPLETED
         : MESSAGES.TASK_INCOMPLETE;
       showSuccess(message);
-      loadTodos();
+      await loadTodos();
       
+      // Оновлюємо віджет героя одразу після зміни
+      if (window.HeroModule && window.HeroModule.refresh) {
+        try {
+          await window.HeroModule.refresh();
+        } catch (e) {
+          console.warn('Не вдалося оновити віджет героя', e);
+        }
+      }
+
       // Оновлюємо статистику після змінення статусу завдання
       if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
         await window.StatisticsModule.refreshStatistics();

@@ -171,8 +171,25 @@
             </div>
 
             <div class="sidebar-card sidebar-placeholder">
-                <div class="sidebar-card-title">В майбутньому</div>
-                <p class="sidebar-card-text">Ще один блок для розширень.</p>
+                <link rel="stylesheet" href="@Url.Content("~/css/hero-widget.css")" />
+
+                <section class="hero-widget" aria-label="Твій герой">
+                    <div class="hero-left">
+                        <div class="hero-title">Твій герой</div>
+                    </div>
+
+                    <div class="hero-img" aria-hidden="true">
+                        <img src="@Url.Content("~/images/piggy.svg")" alt="Свинка">
+                    </div>
+
+                    <div class="hero-center">
+                        <div class="level-badge" id="heroLevel">Рівень 1</div>
+                        <div class="exp-bar" aria-hidden="true">
+                            <div class="exp-bar-inner" id="heroExpInner" style="width:0%"></div>
+                        </div>
+                        <div class="exp-text" id="heroExpText">Потрібно 300 XP до наступного рівня</div>
+                    </div>
+                </section>
             </div>
         </aside>
     </div>
@@ -552,4 +569,5 @@
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
     <script src="~/js/statistics.js" asp-append-version="true"></script>
+    <script src="~/js/hero-widget.js" asp-append-version="true"></script>
 }
