@@ -71,27 +71,44 @@ public class HeroService : IHeroService
         task.XpAwarded = true;
         _context.Tasks.Update(task);
 
-        // Ми поки не реалізуємо перехід на новий рівень (завдання користувача)
+        // Обчислюємо новий рівень за кумулятивними очками
+        var prevLevel = user.Level;
+        var newLevel = (user.ExpPoints / ExpToNextLevel) + 1; // integer division
+        var levelsGained = Math.Max(0, newLevel - prevLevel);
+        var hasLeveledUp = levelsGained > 0;
+
+        if (hasLeveledUp)
+        {
+            user.Level = newLevel;
+        }
+
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Нараховано {Award} XP користувачу {UserId} за завдання {TaskId}", award, userId, taskId);
+        _logger.LogInformation("Нараховано {Award} XP користувачу {UserId} за завдання {TaskId}. Level up: {HasLeveledUp}", award, userId, taskId, hasLeveledUp);
 
         var vm = MapToViewModel(user);
+        vm.HasLeveledUp = hasLeveledUp;
+        vm.LevelsGained = levelsGained;
+
         return Result<HeroStatusViewModel>.SuccessResult(vm, $"Нараховано {award} XP");
     }
 
     private static HeroStatusViewModel MapToViewModel(AppUser user)
     {
         var expPoints = user.ExpPoints;
-        var progressPercent = (int)Math.Round((Math.Min(expPoints, ExpToNextLevel) / (double)ExpToNextLevel) * 100);
+        // Прогрес для поточного рівня = залишок від ділення на поріг
+        var remainder = expPoints % ExpToNextLevel;
+        var progressPercent = (int)Math.Round((remainder / (double)ExpToNextLevel) * 100);
+        var remainingToNext = ExpToNextLevel - remainder;
 
         return new HeroStatusViewModel
         {
             Level = user.Level,
             ExpPoints = user.ExpPoints,
             ExpToNextLevel = ExpToNextLevel,
-            ProgressPercent = progressPercent
+            ProgressPercent = progressPercent,
+            ExpToLevelRemaining = remainingToNext
         };
     }
 }

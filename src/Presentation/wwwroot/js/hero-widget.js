@@ -17,6 +17,16 @@
     FETCH_ERROR: "Не вдалося завантажити статус героя",
   };
 
+  function applyStatus(data) {
+    if (!data) return;
+    levelEl.textContent = `Рівень ${data.level}`;
+    const percent = Math.max(0, Math.min(100, Number(data.progressPercent || 0)));
+    expInner.style.width = `${percent}%`;
+    // Використовуємо спеціальне поле для того, щоб точно показати скільки лишилось
+    const remaining = Number(data.expToLevelRemaining ?? (Number(data.expToNextLevel || 0) - Number(data.expPoints || 0)));
+    expText.textContent = `Потрібно ${Math.max(0, remaining)} XP до наступного рівня`;
+  }
+
   async function refresh() {
     try {
       const res = await fetch("/api/hero/status", { method: "GET" });
@@ -32,18 +42,55 @@
       }
 
       const data = payload.data;
-      levelEl.textContent = `Рівень ${data.level}`;
-      const percent = Math.max(0, Math.min(100, Number(data.progressPercent || 0)));
-      expInner.style.width = `${percent}%`;
-      expText.textContent = `Потрібно ${Math.max(0, Number(data.expToNextLevel || 0) - Number(data.expPoints || 0))} XP до наступного рівня`;
+      applyStatus(data);
     } catch (err) {
       console.error("Помилка при отриманні статусу героя:", err);
+    }
+  }
+
+  // Показати анімацію підвищення рівня з тимчасовою заміною картинки
+  async function showLevelUp(data) {
+    try {
+      applyStatus(data);
+
+      // знаходимо img елемент свинки у віджеті
+      const img = document.querySelector('.hero-img img');
+      if (!img) return;
+
+      const originalSrc = img.getAttribute('src');
+      const newSrc = '/images/piggy_new.svg';
+
+      // замінюємо іконку
+      img.setAttribute('src', newSrc);
+
+      // тимчасово зберігаємо оригінальний текст level badge
+      const originalBadgeText = levelEl.textContent;
+      const originalBadgeStyle = levelEl.getAttribute('data-original-style') || '';
+
+      // замінюємо текст бейджу на 'Новий рівень!'
+      levelEl.textContent = 'Новий рівень!';
+      // трохи змінюємо стиль, щоб було помітно
+      levelEl.style.background = 'linear-gradient(90deg,#ff9ab8,#ff6f99)';
+      levelEl.style.color = '#fff';
+      levelEl.style.fontWeight = '700';
+
+      // через 3 секунди повертаємо назад і оновимо статус
+      setTimeout(async () => {
+        levelEl.textContent = originalBadgeText;
+        levelEl.removeAttribute('style');
+        img.setAttribute('src', originalSrc);
+        await refresh();
+      }, 3000);
+    } catch (err) {
+      console.error('Помилка при показі LevelUp анімації', err);
     }
   }
 
   // Глобальна експозиція
   window.HeroModule = {
     refresh,
+    showLevelUp,
+    applyStatus,
   };
 
   // Слухаємо глобальну подію на оновлення
@@ -57,4 +104,3 @@
     setTimeout(refresh, 50);
   });
 })();
-

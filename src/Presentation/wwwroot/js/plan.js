@@ -291,20 +291,29 @@
       showSuccess(
         isCompleted ? "План позначено виконаним" : "План повернуто до активних",
       );
-      await loadPlans();
-      
-      // Оновлюємо віджет героя
-      if (window.HeroModule && window.HeroModule.refresh) {
-        try {
-          await window.HeroModule.refresh();
-        } catch (e) {
-          console.warn('Не вдалося оновити віджет героя', e);
+      try {
+        const payload = await response.json();
+        await loadPlans();
+        if (payload && payload.success && payload.data) {
+          const data = payload.data;
+          if (data.hasLeveledUp) {
+            if (window.HeroModule && window.HeroModule.showLevelUp) {
+              window.HeroModule.showLevelUp(data);
+            }
+          } else {
+            if (window.HeroModule && window.HeroModule.applyStatus) {
+              window.HeroModule.applyStatus(data);
+            } else if (window.HeroModule && window.HeroModule.refresh) {
+              await window.HeroModule.refresh();
+            }
+          }
+        } else {
+          if (window.HeroModule && window.HeroModule.refresh) await window.HeroModule.refresh();
         }
-      }
-
-      // Оновлюємо статистику після змінення статусу плану
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
-        await window.StatisticsModule.refreshStatistics();
+      } catch (err) {
+        console.warn('Не вдалося обробити відповідь героя', err);
+        await loadPlans();
+        if (window.HeroModule && window.HeroModule.refresh) await window.HeroModule.refresh();
       }
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
