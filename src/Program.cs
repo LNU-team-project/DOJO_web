@@ -128,6 +128,7 @@ try
     builder.Services.AddScoped<ICalendarService, CalendarService>();
     builder.Services.AddScoped<IPomodoroService, PomodoroService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
     var app = builder.Build();
 

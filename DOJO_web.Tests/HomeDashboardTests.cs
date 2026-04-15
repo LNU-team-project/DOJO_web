@@ -1,6 +1,8 @@
-using System.IO;
-using DOJO2.Controllers;
+using DOJO2.Presentation.Controllers;
+using DOJO2.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace DOJO_web.Tests;
 
@@ -12,7 +14,9 @@ public class HomeDashboardTests
     [Fact]
     public void Dashboard_Action_ReturnsViewResult()
     {
-        var controller = new HomeController();
+        var statisticsServiceMock = new Mock<IStatisticsService>();
+        var loggerMock = new Mock<ILogger<HomeController>>();
+        var controller = new HomeController(statisticsServiceMock.Object, loggerMock.Object);
 
         var result = controller.Dashboard();
 

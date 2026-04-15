@@ -265,6 +265,11 @@
         : MESSAGES.TASK_INCOMPLETE;
       showSuccess(message);
       loadTodos();
+      
+      // Оновлюємо статистику після змінення статусу завдання
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при оновленні статусу TODO:", error);
       showError(MESSAGES.UPDATE_ERROR);
@@ -294,6 +299,11 @@
 
       showSuccess(MESSAGES.TASK_DELETED);
       loadTodos();
+      
+      // Оновлюємо статистику після видалення завдання
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при видаленні TODO:", error);
       showError(MESSAGES.DELETE_ERROR);
@@ -411,6 +421,11 @@
       document.getElementById("todoModalTitle").textContent = "Додати ціль";
       
       loadTodos();
+      
+      // Оновлюємо статистику після створення/оновлення завдання
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при створенні/оновленні TODO:", error);
       showError(MESSAGES.CREATE_ERROR);

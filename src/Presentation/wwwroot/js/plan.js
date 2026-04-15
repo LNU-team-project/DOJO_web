@@ -147,6 +147,11 @@
       );
       closeModal();
       await loadPlans();
+      
+      // Оновлюємо статистику після створення плану
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при створенні плану", error);
       showError(MESSAGES.CREATE_ERROR);
@@ -287,6 +292,11 @@
         isCompleted ? "План позначено виконаним" : "План повернуто до активних",
       );
       await loadPlans();
+      
+      // Оновлюємо статистику після змінення статусу плану
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
       showError("Не вдалося оновити план");
@@ -307,6 +317,11 @@
       }
       showSuccess("План видалено");
       await loadPlans();
+      
+      // Оновлюємо статистику після видалення плану
+      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+        await window.StatisticsModule.refreshStatistics();
+      }
     } catch (error) {
       console.error("Помилка при видаленні плану", error);
       showError("Не вдалося видалити план");
@@ -525,6 +540,11 @@
           showSuccess("План оновлено");
           closePlanDetailsModal();
           await loadPlans();
+          
+          // Оновлюємо статистику після редагування плану
+          if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
+            await window.StatisticsModule.refreshStatistics();
+          }
         } catch (err) {
           console.error(err);
           showError("Не вдалося оновити план");

@@ -136,9 +136,38 @@
                 </div>
             </div>
 
-            <div class="sidebar-card sidebar-placeholder">
-                <div class="sidebar-card-title">В майбутньому</div>
-                <p class="sidebar-card-text">Тут зʼявиться новий віджет.</p>
+            <div class="sidebar-card statistics-widget" data-statistics-root aria-label="Статистика користувача">
+                <div class="statistics-card">
+                    <div class="statistics-header">
+                        <div>
+                            <p class="statistics-eyebrow">Твій прогрес</p>
+                            <h2 class="statistics-title">Статистика</h2>
+                        </div>
+                    </div>
+
+                    <div class="statistics-grid">
+                        <div class="statistics-item">
+                            <span class="statistics-label">Завдань виконано</span>
+                            <span class="statistics-value" data-stat-completed-todos>0</span>
+                        </div>
+                        <div class="statistics-item">
+                            <span class="statistics-label">Планів виконано</span>
+                            <span class="statistics-value" data-stat-completed-plans>0</span>
+                        </div>
+                        <div class="statistics-item">
+                            <span class="statistics-label">Помодоро сесій</span>
+                            <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
+                        </div>
+                        <div class="statistics-item">
+                            <span class="statistics-label">Хвилин фокусу</span>
+                            <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="statistics-button" id="openStatisticsModal">
+                        Переглянути детальніше
+                    </button>
+                </div>
             </div>
 
             <div class="sidebar-card sidebar-placeholder">
@@ -497,6 +526,24 @@
     </div>
 </div>
 
+<!-- Statistics Modal -->
+<div class="statistics-modal" id="statisticsModal" aria-hidden="true" aria-labelledby="statisticsModalTitle">
+    <div class="statistics-modal-content">
+        <div class="statistics-modal-header">
+            <h2 id="statisticsModalTitle">Детальна статистика</h2>
+            <button type="button" class="statistics-modal-close" id="closeStatisticsModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div class="statistics-modal-body" id="statisticsModalBody">
+            <div class="statistics-loading">
+                <div class="statistics-spinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
@@ -504,4 +551,5 @@
     <script src="~/js/profile.js" asp-append-version="true"></script>
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
+    <script src="~/js/statistics.js" asp-append-version="true"></script>
 }
