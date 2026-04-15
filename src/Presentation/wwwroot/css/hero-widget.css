@@ -46,6 +46,7 @@
   width: 100%;
   height: auto;
   display: block;
+  transition: transform .35s ease, opacity .35s ease;
 }
 
 .hero-center {
@@ -66,6 +67,12 @@
   font-weight: 700;
   color: #fff;
   box-shadow: 0 6px 18px rgba(255,122,144,0.12);
+  transition: transform .25s ease, background .3s ease, color .3s ease;
+}
+
+.level-badge.level-up {
+  transform: scale(1.06);
+  box-shadow: 0 10px 26px rgba(255,90,120,0.18);
 }
 
 .exp-bar {
@@ -91,10 +98,32 @@
   text-align: center;
 }
 
+@keyframes confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(380px) rotate(720deg); opacity: 0; }
+}
+
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 14px;
+  will-change: transform, opacity;
+  opacity: 0;
+  transform-origin: center;
+  border-radius: 2px;
+}
+
 /* Small responsive tweak */
 @media (max-width: 640px) {
   .hero-widget { min-height: 220px; padding: 18px; }
   .hero-img { width: 120px; height: 150px; }
   .exp-bar { width: 80%; }
 }
-

@@ -65,25 +65,54 @@
 
       // тимчасово зберігаємо оригінальний текст level badge
       const originalBadgeText = levelEl.textContent;
-      const originalBadgeStyle = levelEl.getAttribute('data-original-style') || '';
 
-      // замінюємо текст бейджу на 'Новий рівень!'
+      // замінюємо текст бейджу та додаємо клас для анімації
       levelEl.textContent = 'Новий рівень!';
-      // трохи змінюємо стиль, щоб було помітно
-      levelEl.style.background = 'linear-gradient(90deg,#ff9ab8,#ff6f99)';
-      levelEl.style.color = '#fff';
-      levelEl.style.fontWeight = '700';
+      levelEl.classList.add('level-up');
+
+      // запуск конфетті ефекту
+      spawnConfetti(20);
 
       // через 3 секунди повертаємо назад і оновимо статус
       setTimeout(async () => {
         levelEl.textContent = originalBadgeText;
-        levelEl.removeAttribute('style');
+        levelEl.classList.remove('level-up');
         img.setAttribute('src', originalSrc);
         await refresh();
       }, 3000);
     } catch (err) {
       console.error('Помилка при показі LevelUp анімації', err);
     }
+  }
+
+  function spawnConfetti(count) {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    const widget = document.querySelector('.hero-widget');
+    if (!widget) return;
+    widget.appendChild(container);
+
+    const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#B983FF'];
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      // random start position near top-center of widget
+      const startX = 40 + Math.random() * 60; // percent
+      piece.style.left = `${startX}%`;
+      piece.style.top = `${10 + Math.random() * 20}px`;
+      const delay = Math.random() * 0.6;
+      piece.style.animation = `confetti-fall 1.6s cubic-bezier(.2,.8,.2,1) ${delay}s forwards`;
+      // random rotate
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      container.appendChild(piece);
+    }
+
+    // remove container after animation
+    setTimeout(() => {
+      if (container && container.parentNode) container.parentNode.removeChild(container);
+    }, 2200);
   }
 
   // Глобальна експозиція
