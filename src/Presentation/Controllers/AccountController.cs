@@ -1,12 +1,13 @@
 using DOJO2.Application.Interfaces;
+using DOJO2.Application.Common;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace DOJO2.Controllers;
 
 public class AccountController : Controller
 {
-    private const string BlockedNoticeCookieName = "dojo_blocked_notice";
     private const string AccountControllerName = "Account";
     private const string HomeControllerName = "Home";
     private const string DashboardActionName = "Dashboard";
@@ -14,13 +15,20 @@ public class AccountController : Controller
 
     private readonly IAuthService _authService;
     private readonly ILogger<AccountController> _logger;
+    private readonly string _blockedNoticeCookieName;
 
     public AccountController(
         IAuthService authService,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IOptions<AuthCookieOptions>? authCookieOptions = null)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        var configuredCookieName = authCookieOptions is null ? null : authCookieOptions.Value.BlockedNoticeCookieName;
+        _blockedNoticeCookieName = string.IsNullOrWhiteSpace(configuredCookieName)
+            ? AuthCookieOptions.DefaultBlockedNoticeCookieName
+            : configuredCookieName;
     }
 
     [HttpGet]
@@ -36,13 +44,13 @@ public class AccountController : Controller
             return RedirectToAction(DashboardActionName, HomeControllerName);
         }
 
-        var hasBlockedCookieNotice = Request.Cookies.TryGetValue(BlockedNoticeCookieName, out var blockedCookieValue)
+        var hasBlockedCookieNotice = Request.Cookies.TryGetValue(_blockedNoticeCookieName, out var blockedCookieValue)
             && string.Equals(blockedCookieValue, "1", StringComparison.Ordinal);
 
         if (blocked || hasBlockedCookieNotice)
         {
             ViewData["BlockedMessage"] = BlockedUserMessage;
-            Response.Cookies.Delete(BlockedNoticeCookieName);
+            Response.Cookies.Delete(_blockedNoticeCookieName);
         }
 
         ViewData["ReturnUrl"] = returnUrl;

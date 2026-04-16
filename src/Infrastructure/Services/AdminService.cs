@@ -5,25 +5,27 @@ using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DOJO2.Infrastructure.Services;
 
 public class AdminService : IAdminService
 {
-    private const int MaxUsersForAdminPage = 200;
-    private const int LockoutYears = 100;
     private readonly AppDbContext _context;
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<AdminService> _logger;
+    private readonly AdminUsersOptions _adminUsersOptions;
 
     public AdminService(
         AppDbContext context,
         UserManager<AppUser> userManager,
-        ILogger<AdminService> logger)
+        ILogger<AdminService> logger,
+        IOptions<AdminUsersOptions> adminUsersOptions)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _adminUsersOptions = (adminUsersOptions ?? throw new ArgumentNullException(nameof(adminUsersOptions))).Value;
     }
 
     public async Task<Result<bool>> AuthenticateAdminAsync(string login, string password)
@@ -59,10 +61,12 @@ public class AdminService : IAdminService
     {
         var normalizedSearch = search?.Trim();
         var nowUtc = DateTimeOffset.UtcNow;
+        var minSearchLength = _adminUsersOptions.MinSearchLength >= 0 ? _adminUsersOptions.MinSearchLength : 0;
+        var maxUsersForAdminPage = _adminUsersOptions.MaxUsersForAdminPage > 0 ? _adminUsersOptions.MaxUsersForAdminPage : 200;
 
         var query = _context.Users.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(normalizedSearch))
+        if (!string.IsNullOrWhiteSpace(normalizedSearch) && normalizedSearch.Length >= minSearchLength)
         {
             query = query.Where(u =>
                 (u.UserName != null && EF.Functions.ILike(u.UserName, $"%{normalizedSearch}%")) ||
@@ -71,7 +75,7 @@ public class AdminService : IAdminService
 
         var users = await query
             .OrderByDescending(u => u.CreatedAt)
-            .Take(MaxUsersForAdminPage)
+            .Take(maxUsersForAdminPage)
             .Select(u => new AdminUserListItemViewModel
             {
                 Id = u.Id,
@@ -104,7 +108,8 @@ public class AdminService : IAdminService
         }
 
         user.LockoutEnabled = true;
-        user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(LockoutYears);
+        var lockoutYears = _adminUsersOptions.LockoutYears > 0 ? _adminUsersOptions.LockoutYears : 100;
+        user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(lockoutYears);
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Користувача заблоковано. UserId: {UserId}", userId);

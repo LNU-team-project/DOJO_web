@@ -3,14 +3,13 @@ using DOJO2.Application.Interfaces;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Middleware;
 using DOJO2.Infrastructure.Services;
+using DOJO2.Application.Common;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.DataProtection;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -48,6 +47,11 @@ try
             options.ViewLocationFormats.Add("/Presentation/Views/Shared/{0}.cshtml");
         });
 
+    // Прив'язка секцій конфігурації до типізованих options
+    builder.Services.Configure<AdminUsersOptions>(builder.Configuration.GetSection(AdminUsersOptions.SectionName));
+    builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
+    builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection(EmailSenderOptions.SectionName));
+    
     // Підключення до PostgreSQL через EF Core
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -120,7 +124,8 @@ try
     });
 
     builder.Services.AddTransient<IEmailSender, EmailSender>();
-    builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("SendGrid"));
+    builder.Services.Configure<DOJO2.Infrastructure.Services.AuthMessageSenderOptions>(
+        builder.Configuration.GetSection("SendGrid"));
     
     // Реєстрація сервісів
     builder.Services.AddScoped<IAuthService, AuthService>();
