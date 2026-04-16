@@ -1,5 +1,5 @@
-﻿using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Infrastructure.Services;
+using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,13 +24,13 @@ public class TodoController : BaseApiController
     {
         if (model == null)
         {
-            return BadRequest(new { success = false, message = "Модель завдання не може бути порожною" });
+            return BadRequest(new { success = false, message = "Модель запиту не може бути порожньою" });
         }
 
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+            return BadRequest(new { success = false, message = "Помилки валідації", errors });
         }
 
         var authError = ValidateUserAuthorization();
@@ -79,7 +79,7 @@ public class TodoController : BaseApiController
             return ToActionResult(result);
         }
 
-        // Після успішного виконання туду — нарахувати XP та повернути оновлений статус героя
+        // Після виконання завдання нараховуємо XP за завершення конкретної задачі.
         var heroResult = await _heroService.AwardExpForTaskAsync(id, userId);
         return ToActionResult(heroResult);
     }
@@ -122,13 +122,13 @@ public class TodoController : BaseApiController
     {
         if (model == null)
         {
-            return BadRequest(new { success = false, message = "Модель завдання не може бути порожною" });
+            return BadRequest(new { success = false, message = "Модель запиту не може бути порожньою" });
         }
 
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+            return BadRequest(new { success = false, message = "Помилки валідації", errors });
         }
 
         var authError = ValidateUserAuthorization();

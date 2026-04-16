@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Xunit;
 
 namespace DOJO_web.Tests;

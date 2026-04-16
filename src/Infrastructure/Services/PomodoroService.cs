@@ -1,7 +1,7 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;

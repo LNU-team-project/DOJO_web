@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
@@ -299,7 +299,7 @@ public class StatisticsServiceTests1
         Assert.Equal(Math.Round(66.66666666666666, 1), result.Data.PlanCompletionRate);
     }
 
-    // ТЕСТИ GetWeeklyProgressAsync 
+    // Тести для GetWeeklyProgressAsync
 
     [Fact]
     public async Task GetWeeklyProgressAsync_ReturnsSuccess_WithEmptyData()
@@ -350,7 +350,6 @@ public class StatisticsServiceTests1
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.TotalCompletedTodos);
-        Assert.Equal(3, result.Data.DailyStats[1].CompletedTodos); // Monday has 2 todos
         Assert.Equal(2, result.Data.DailyStats[1].CompletedTodos);
         Assert.Equal(1, result.Data.DailyStats[2].CompletedTodos); // Tuesday has 1 
     }
@@ -661,7 +660,7 @@ public class StatisticsServiceTests1
         var tasks = new List<TaskItem>();
         var pomodoros = new List<Pomodoro>();
 
-        // Додаємо завдання на кожен день тижня
+        // Додаємо дані на кожен день тижня
         for (int i = 0; i < 7; i++)
         {
             var dayDate = sunday.AddDays(i);
@@ -686,7 +685,7 @@ public class StatisticsServiceTests1
         Assert.Equal(1.0, result.Data.AveragePlansPerDay);
         Assert.Equal(1.0, result.Data.AveragePomodoroSessionsPerDay);
 
-        // Перевіряємо дневну статистику
+        // Перевіряємо денну статистику
         for (int i = 0; i < 7; i++)
         {
             Assert.Equal(1, result.Data.DailyStats[i].CompletedTodos);
@@ -721,7 +720,7 @@ public class StatisticsServiceTests1
         var sunday = saturday.AddDays(1); // Sunday of next week
         var userId = 1;
 
-        // Завдання на суботу та неділю
+        // Дані на межі тижнів
         var tasks = new List<TaskItem>
         {
             new() { Id = 1, UserId = userId, Title = "Todo Saturday", IsCompleted = true, CompletedAt = saturday, IsPlan = false, GoalId = null, ParentTaskId = null, CreatedAt = saturday, Priority = 2 },
@@ -740,11 +739,11 @@ public class StatisticsServiceTests1
         Assert.NotNull(resultWeek1.Data);
         Assert.NotNull(resultWeek2.Data);
         
-        // На першому тижні тільки субота має завдання
+        // Для першого тижня рахується лише субота
         Assert.Equal(1, resultWeek1.Data.TotalCompletedTodos);
         Assert.Equal(1, resultWeek1.Data.DailyStats[6].CompletedTodos); // Saturday is index 6
         
-        // На другому тижні тільки неділя має завдання
+        // Для другого тижня рахується лише неділя
         Assert.Equal(1, resultWeek2.Data.TotalCompletedTodos);
         Assert.Equal(1, resultWeek2.Data.DailyStats[0].CompletedTodos); // Sunday is index 0
     }

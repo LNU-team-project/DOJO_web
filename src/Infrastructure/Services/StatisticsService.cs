@@ -1,6 +1,6 @@
-﻿using DOJO2.Infrastructure.Data;
+using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
@@ -156,7 +156,7 @@ public class StatisticsService : IStatisticsService
         {
             const int DaysInWeek = 7;
             
-            // Встановлюємо початок тижня (неділя)
+            // Визначаємо початок тижня (неділя)
             var currentDate = dateInWeek?.Date ?? DateTime.UtcNow.Date;
             var weekStartDate = currentDate.AddDays(-(int)currentDate.DayOfWeek);
             var weekEndDate = weekStartDate.AddDays(DaysInWeek);
@@ -164,7 +164,7 @@ public class StatisticsService : IStatisticsService
             var weekStartDateUtc = DateTime.SpecifyKind(weekStartDate, DateTimeKind.Utc);
             var weekEndDateUtc = DateTime.SpecifyKind(weekEndDate, DateTimeKind.Utc);
 
-            // Отримуємо всі завершені дані за тиждень
+            // Отримуємо всі виконання за тиждень
             var todos = await _context.Tasks
                 .Where(t => t.UserId == userId 
                     && !t.IsPlan 
@@ -191,7 +191,7 @@ public class StatisticsService : IStatisticsService
                     && p.StartTime < weekEndDateUtc)
                 .ToListAsync();
 
-            // Будуємо дневну статистику
+            // Формуємо денну статистику
             var dailyStatsList = new List<DailyStatisticsViewModel>();
             var dayNames = new[] { "Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб" };
 
@@ -221,7 +221,7 @@ public class StatisticsService : IStatisticsService
                 dailyStatsList.Add(dailyStat);
             }
 
-            // Розраховуємо загальні та середні показники
+            // Агрегуємо тижневі підсумки
             var totalTodos = todos.Count;
             var totalPlans = plans.Count;
             var totalPomodoros = pomodoros.Count;
@@ -241,13 +241,13 @@ public class StatisticsService : IStatisticsService
                 AveragePomodoroSessionsPerDay = Math.Round((double)totalPomodoros / DaysInWeek, 1)
             };
 
-            _logger.LogInformation("Статистику за тиждень отримано для користувача {UserId}", userId);
-            return Result<WeeklyProgressViewModel>.SuccessResult(weeklyStats, "Статистику за тиждень успішно отримано");
+            _logger.LogInformation("Тижневу статистику отримано для користувача {UserId}", userId);
+            return Result<WeeklyProgressViewModel>.SuccessResult(weeklyStats, "Тижневу статистику успішно отримано");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Помилка при отриманні статистики за тиждень для користувача {UserId}", userId);
-            return Result<WeeklyProgressViewModel>.FailureResult("Помилка при отриманні статистики за тиждень");
+            _logger.LogError(ex, "Помилка при отриманні тижневої статистики для користувача {UserId}", userId);
+            return Result<WeeklyProgressViewModel>.FailureResult("Помилка при отриманні тижневої статистики");
         }
     }
 }

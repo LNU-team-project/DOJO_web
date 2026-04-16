@@ -1,5 +1,9 @@
 using DOJO2.Presentation.Controllers;
 using DOJO2.Infrastructure.Services;
+using DOJO2.Infrastructure.Results;
+using DOJO2.Application.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,13 +16,25 @@ public class HomeDashboardTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "src", "Presentation", "Views", "Home", "Dashboard.cshtml"));
 
     [Fact]
-    public void Dashboard_Action_ReturnsViewResult()
+    public async Task Dashboard_Action_ReturnsViewResult()
     {
         var statisticsServiceMock = new Mock<IStatisticsService>();
+        statisticsServiceMock
+            .Setup(s => s.GetTodayStatisticsAsync(It.IsAny<int>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(Result<StatisticsViewModel>.SuccessResult(new StatisticsViewModel(), "ok"));
+
         var loggerMock = new Mock<ILogger<HomeController>>();
         var controller = new HomeController(statisticsServiceMock.Object, loggerMock.Object);
 
-        var result = controller.Dashboard();
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            new[] { new Claim(ClaimTypes.NameIdentifier, "1") },
+            "TestAuth"));
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = user }
+        };
+
+        var result = await controller.Dashboard();
 
         Assert.IsType<ViewResult>(result);
     }

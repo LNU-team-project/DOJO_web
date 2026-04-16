@@ -1,7 +1,6 @@
 using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using src.Presentation.ViewModels;
 
 namespace DOJO2.Controllers;
 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DOJO2.Presentation.ViewModels;
+namespace DOJO2.Application.ViewModels;
 
 public class AdminUserListItemViewModel
 {

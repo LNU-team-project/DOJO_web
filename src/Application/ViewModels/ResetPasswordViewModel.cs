@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace src.Presentation.ViewModels
+namespace DOJO2.Application.ViewModels
 {
     public class ResetPasswordViewModel
     {

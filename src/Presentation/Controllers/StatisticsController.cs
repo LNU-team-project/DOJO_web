@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using DOJO2.Infrastructure.Services;
@@ -27,8 +27,8 @@ public class StatisticsController : ControllerBase
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("Не вдалося розпарсити userId з Claims");
-                return BadRequest(new { success = false, message = "Помилка аутентифікації" });
+                _logger.LogWarning("Не вдалося визначити userId у Claims");
+                return BadRequest(new { success = false, message = "Помилка авторизації" });
             }
 
             var result = await _statisticsService.GetDetailedStatisticsAsync(userId, startDate);
@@ -43,7 +43,7 @@ public class StatisticsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Необроблена помилка при отриманні детальної статистики");
+            _logger.LogError(ex, "Непередбачена помилка при отриманні детальної статистики");
             return StatusCode(500, new { success = false, message = "Внутрішня помилка сервера" });
         }
     }
@@ -56,8 +56,8 @@ public class StatisticsController : ControllerBase
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("Не вдалося розпарсити userId з Claims");
-                return BadRequest(new { success = false, message = "Помилка аутентифікації" });
+                _logger.LogWarning("Не вдалося визначити userId у Claims");
+                return BadRequest(new { success = false, message = "Помилка авторизації" });
             }
 
             var result = await _statisticsService.GetTodayStatisticsAsync(userId, DateTime.UtcNow);
@@ -72,7 +72,7 @@ public class StatisticsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Необроблена помилка при отриманні статистики за день");
+            _logger.LogError(ex, "Непередбачена помилка при отриманні статистики за день");
             return StatusCode(500, new { success = false, message = "Внутрішня помилка сервера" });
         }
     }
@@ -85,15 +85,15 @@ public class StatisticsController : ControllerBase
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("Не вдалося розпарсити userId з Claims");
-                return BadRequest(new { success = false, message = "Помилка аутентифікації" });
+                _logger.LogWarning("Не вдалося визначити userId у Claims");
+                return BadRequest(new { success = false, message = "Помилка авторизації" });
             }
 
             var result = await _statisticsService.GetWeeklyProgressAsync(userId, dateInWeek);
             
             if (!result.Success)
             {
-                _logger.LogError("Помилка при отриманні статистики за тиждень: {Message}", result.Message);
+                _logger.LogError("Помилка при отриманні тижневої статистики: {Message}", result.Message);
                 return BadRequest(new { success = false, message = result.Message });
             }
 
@@ -101,7 +101,7 @@ public class StatisticsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Необроблена помилка при отриманні статистики за тиждень");
+            _logger.LogError(ex, "Непередбачена помилка при отриманні тижневої статистики");
             return StatusCode(500, new { success = false, message = "Внутрішня помилка сервера" });
         }
     }

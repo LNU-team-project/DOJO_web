@@ -1,7 +1,7 @@
-﻿using DOJO2.Domain.Entities;
+using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
@@ -20,7 +20,7 @@ public interface ITodoService
 
 public class TodoService : ITodoService
 {
-    private const string TodoNotFoundMessage = "TODO завдання не знайдено";
+    private const string TodoNotFoundMessage = "TODO не знайдено";
 
     private static class PriorityLevels
     {
@@ -42,13 +42,13 @@ public class TodoService : ITodoService
     {
         if (model == null)
         {
-            _logger.LogWarning("Спроба створити TODO з null моделлю для користувача {UserId}", userId);
-            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожною");
+            _logger.LogWarning("Запит створення TODO має null модель для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожньою");
         }
 
         if (string.IsNullOrWhiteSpace(model.Title))
         {
-            _logger.LogWarning("Спроба створити TODO з порожною назвою для користувача {UserId}", userId);
+            _logger.LogWarning("Спроба створення TODO з порожнім заголовком для користувача {UserId}", userId);
             return Result<TodoItemViewModel>.FailureResult("Назва TODO не може бути порожною");
         }
 
@@ -72,11 +72,11 @@ public class TodoService : ITodoService
         _context.Tasks.Add(todo);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("TODO завдання створено: {TodoId} для користувача {UserId}", todo.Id, userId);
+        _logger.LogInformation("TODO успішно створено: {TodoId} для користувача {UserId}", todo.Id, userId);
 
         return Result<TodoItemViewModel>.SuccessResult(
             MapToViewModel(todo),
-            "TODO завдання успішно створено"
+            "TODO успішно створено"
         );
     }
 
@@ -96,7 +96,7 @@ public class TodoService : ITodoService
             CompletedTodos = completedTodos
         };
 
-        return Result<TodoListViewModel>.SuccessResult(result, "TODO завдання отримано");
+        return Result<TodoListViewModel>.SuccessResult(result, "TODO успішно завантажено");
     }
 
     public async Task<Result<bool>> MarkTodoAsCompletedAsync(int todoId, int userId)
@@ -111,8 +111,8 @@ public class TodoService : ITodoService
 
         if (todo.IsCompleted)
         {
-            _logger.LogWarning("TODO {TodoId} вже позначене як виконане", todoId);
-            return Result<bool>.FailureResult("TODO завдання вже позначене як виконане");
+            _logger.LogWarning("TODO {TodoId} вже позначено як виконаний", todoId);
+            return Result<bool>.FailureResult("TODO вже позначене як виконане");
         }
 
         todo.IsCompleted = true;
@@ -121,9 +121,9 @@ public class TodoService : ITodoService
         _context.Tasks.Update(todo);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("TODO {TodoId} позначене як виконане для користувача {UserId}", todoId, userId);
+        _logger.LogInformation("TODO {TodoId} позначено як виконаний для користувача {UserId}", todoId, userId);
 
-        return Result<bool>.SuccessResult(true, "TODO завдання позначено як виконане");
+        return Result<bool>.SuccessResult(true, "TODO успішно позначено як виконаний");
     }
 
     public async Task<Result<bool>> MarkTodoAsIncompleteAsync(int todoId, int userId)
@@ -138,8 +138,8 @@ public class TodoService : ITodoService
 
         if (!todo.IsCompleted)
         {
-            _logger.LogWarning("TODO {TodoId} вже позначене як невиконане", todoId);
-            return Result<bool>.FailureResult("TODO завдання вже позначене як невиконане");
+            _logger.LogWarning("TODO {TodoId} вже позначено як невиконаний", todoId);
+            return Result<bool>.FailureResult("TODO вже позначено як невиконаний");
         }
 
         todo.IsCompleted = false;
@@ -148,9 +148,9 @@ public class TodoService : ITodoService
         _context.Tasks.Update(todo);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("TODO {TodoId} позначене як невиконане для користувача {UserId}", todoId, userId);
+        _logger.LogInformation("TODO {TodoId} позначено як невиконаний для користувача {UserId}", todoId, userId);
 
-        return Result<bool>.SuccessResult(true, "TODO завдання позначено як невиконане");
+        return Result<bool>.SuccessResult(true, "TODO успішно позначено як невиконаний");
     }
 
     public async Task<Result<bool>> DeleteTodoAsync(int todoId, int userId)
@@ -168,20 +168,20 @@ public class TodoService : ITodoService
 
         _logger.LogInformation("TODO {TodoId} видалено для користувача {UserId}", todoId, userId);
 
-        return Result<bool>.SuccessResult(true, "TODO завдання видалено");
+        return Result<bool>.SuccessResult(true, "TODO успішно видалено");
     }
 
     public async Task<Result<TodoItemViewModel>> UpdateTodoAsync(int todoId, int userId, UpdateTodoViewModel? model)
     {
         if (model == null)
         {
-            _logger.LogWarning("Спроба оновити TODO з null моделлю для користувача {UserId}", userId);
-            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожною");
+            _logger.LogWarning("Запит оновлення TODO має null модель для користувача {UserId}", userId);
+            return Result<TodoItemViewModel>.FailureResult("Модель TODO не може бути порожньою");
         }
 
         if (string.IsNullOrWhiteSpace(model.Title))
         {
-            _logger.LogWarning("Спроба оновити TODO з порожною назвою для користувача {UserId}", userId);
+            _logger.LogWarning("Спроба оновлення TODO з порожнім заголовком для користувача {UserId}", userId);
             return Result<TodoItemViewModel>.FailureResult("Назва TODO не може бути порожною");
         }
 
@@ -207,11 +207,11 @@ public class TodoService : ITodoService
         _context.Tasks.Update(todo);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("TODO завдання оновлено: {TodoId} для користувача {UserId}", todo.Id, userId);
+        _logger.LogInformation("TODO успішно оновлено: {TodoId} для користувача {UserId}", todo.Id, userId);
 
         return Result<TodoItemViewModel>.SuccessResult(
             MapToViewModel(todo),
-            "TODO завдання успішно оновлено"
+            "TODO успішно оновлено"
         );
     }
 
@@ -271,10 +271,10 @@ public class TodoService : ITodoService
     {
         return priority switch
         {
-            PriorityLevels.Low => "Низька",
-            PriorityLevels.Medium => "Середня",
-            PriorityLevels.High => "Висока",
-            _ => "Невідома"
+            PriorityLevels.Low => "Низький",
+            PriorityLevels.Medium => "Середній",
+            PriorityLevels.High => "Високий",
+            _ => "Невідомо"
         };
     }
 }

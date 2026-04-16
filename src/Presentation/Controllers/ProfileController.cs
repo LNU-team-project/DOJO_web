@@ -1,5 +1,5 @@
 using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

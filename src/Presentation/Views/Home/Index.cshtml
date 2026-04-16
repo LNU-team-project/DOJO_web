@@ -1,5 +1,5 @@
-﻿﻿@{
-    ViewData["Title"] = "Вітаємо";
+@{
+    ViewData["Title"] = "Головна";
     var isAuth = User?.Identity?.IsAuthenticated ?? false;
     var userName = isAuth ? (User?.Identity?.Name ?? "") : string.Empty;
 }
@@ -10,14 +10,14 @@
             <div class="brand-mark" aria-hidden="true"></div>
             <h1 class="brand-title">DOJO</h1>
             <p class="brand-subtitle">
-                @(isAuth ? "Ви увійшли до свого акаунту" : "Ви ще не авторизовані")
+                @(isAuth ? "Ви увійшли до свого кабінету" : "Ви ще не авторизовані")
             </p>
         </div>
 
         @if (isAuth)
         {
             <div class="welcome-content">
-                <p class="welcome-text">Привіт, @userName!</p>
+                <p class="welcome-text">Вітаємо, @userName!</p>
                 <form asp-action="Logout" asp-controller="Account" method="post" class="welcome-actions" novalidate>
                     @Html.AntiForgeryToken()
                     <button type="submit" class="register-btn">Вийти з акаунту</button>
@@ -27,7 +27,7 @@
         else
         {
             <div class="welcome-content">
-                <p class="welcome-text">Щоб продовжити, увійдіть або створіть акаунт.</p>
+                <p class="welcome-text">Щоб почати, увійдіть або створіть акаунт.</p>
                 <div class="welcome-actions">
                     <a class="register-btn" href="/Account/Login">Увійти</a>
                     <a class="register-btn ghost" href="/Account/Register">Створити акаунт</a>

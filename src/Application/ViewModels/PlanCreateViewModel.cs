@@ -1,4 +1,4 @@
-namespace DOJO2.Presentation.ViewModels;
+namespace DOJO2.Application.ViewModels;
 
 public class PlanCreateViewModel
 {

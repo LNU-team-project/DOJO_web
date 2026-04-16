@@ -1,5 +1,5 @@
-﻿﻿﻿using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+﻿using DOJO2.Infrastructure.Services;
+using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DOJO2.Controllers
@@ -34,11 +34,11 @@ namespace DOJO2.Controllers
                 
                 if (result.Success)
                 {
-                    _logger.LogInformation("Адміністратор успішно увійшов: {Login}", model.Login);
+                    _logger.LogInformation("Успішний вхід адміністратора: {Login}", model.Login);
                     return RedirectToAction("LoginSuccess");
                 }
 
-                ModelState.AddModelError(string.Empty, result.Message ?? "Помилка при аутентифікації");
+                ModelState.AddModelError(string.Empty, result.Message ?? "Помилка авторизації");
             }
             return View(model);
         }
@@ -74,7 +74,7 @@ namespace DOJO2.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                TempData[ErrorMessageTempDataKey] = "Помилка валідації запиту";
                 return RedirectToAction(nameof(Users), new { search });
             }
 
@@ -97,7 +97,7 @@ namespace DOJO2.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                TempData[ErrorMessageTempDataKey] = "Помилка валідації запиту";
                 return RedirectToAction(nameof(Users), new { search });
             }
 
@@ -120,7 +120,7 @@ namespace DOJO2.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData[ErrorMessageTempDataKey] = "Невірні параметри запиту";
+                TempData[ErrorMessageTempDataKey] = "Помилка валідації запиту";
                 return RedirectToAction(nameof(Users), new { search });
             }
 

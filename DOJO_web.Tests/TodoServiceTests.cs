@@ -1,6 +1,6 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;

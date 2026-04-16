@@ -1,4 +1,4 @@
-п»їnamespace DOJO2.Presentation.ViewModels;
+namespace DOJO2.Application.ViewModels;
 
 public class StatisticsViewModel
 {
@@ -27,7 +27,7 @@ public class DailyStatisticsViewModel
 {
     public DateTime Date { get; set; }
     public int DayOfWeek { get; set; } // 0 = Sunday, 1 = Monday, etc.
-    public string? DayName { get; set; } // "РџРЅ", "Р’С‚"
+    public string? DayName { get; set; } // "Пн", "Вт"
     public int CompletedTodos { get; set; }
     public int CompletedPlans { get; set; }
     public int PomodoroSessions { get; set; }
@@ -40,13 +40,13 @@ public class WeeklyProgressViewModel
     public DateTime WeekEndDate { get; set; }
     public List<DailyStatisticsViewModel> DailyStats { get; set; } = new();
     
-    // Р—Р°РіР°Р»СЊРЅС– РїРѕРєР°Р·РЅРёРєРё Р·Р° С‚РёР¶РґРµРЅСЊ
+    // Загальні показники за тиждень
     public int TotalCompletedTodos { get; set; }
     public int TotalCompletedPlans { get; set; }
     public int TotalPomodoroSessions { get; set; }
     public int TotalPomodoroMinutes { get; set; }
     
-    // РЎРµСЂРµРґРЅС– РїРѕРєР°Р·РЅРёРєРё
+    // Середні показники
     public double AverageTodosPerDay { get; set; }
     public double AveragePlansPerDay { get; set; }
     public double AveragePomodoroSessionsPerDay { get; set; }

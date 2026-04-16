@@ -1,6 +1,6 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -10,7 +10,6 @@ namespace DOJO_web.Tests;
 public class HeroServiceTests
 {
     private const int TestUserId = 1;
-    private const int AnotherUserId = 2;
 
     private static AppDbContext CreateContext()
     {

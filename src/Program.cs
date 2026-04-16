@@ -76,7 +76,7 @@ try
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/Login";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true; // ��одовжуємо сесію під час активності
+        options.SlidingExpiration = true; // Продовжуємо сесію під час активності
         options.Cookie.IsEssential = true;
         options.Events.OnValidatePrincipal = async context =>
         {

@@ -4,7 +4,7 @@ using DOJO2.Controllers;
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Results;
 using DOJO2.Infrastructure.Services;
-using DOJO2.Presentation.ViewModels;
+using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
