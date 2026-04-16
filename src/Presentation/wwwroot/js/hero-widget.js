@@ -5,7 +5,7 @@
 
   if (!levelEl || !expInner || !expText) {
     // Якщо віджет відсутній на сторінці — створюємо заглушку модулю
-    window.HeroModule = {
+    globalThis.HeroModule = {
       async refresh() {
         return;
       },
@@ -20,10 +20,16 @@
   function applyStatus(data) {
     if (!data) return;
     levelEl.textContent = `Рівень ${data.level}`;
-    const percent = Math.max(0, Math.min(100, Number(data.progressPercent || 0)));
+    const percent = Math.max(
+      0,
+      Math.min(100, Number(data.progressPercent || 0)),
+    );
     expInner.style.width = `${percent}%`;
     // Використовуємо спеціальне поле для того, щоб точно показати скільки лишилось
-    const remaining = Number(data.expToLevelRemaining ?? (Number(data.expToNextLevel || 0) - Number(data.expPoints || 0)));
+    const remaining = Number(
+      data.expToLevelRemaining ??
+        Number(data.expToNextLevel || 0) - Number(data.expPoints || 0),
+    );
     expText.textContent = `Потрібно ${Math.max(0, remaining)} XP до наступного рівня`;
   }
 
@@ -36,7 +42,7 @@
       }
 
       const payload = await res.json();
-      if (!payload || !payload.success || !payload.data) {
+      if (!payload?.success || !payload?.data) {
         console.warn(MESSAGES.FETCH_ERROR);
         return;
       }
@@ -54,21 +60,21 @@
       applyStatus(data);
 
       // знаходимо img елемент свинки у віджеті
-      const img = document.querySelector('.hero-img img');
+      const img = document.querySelector(".hero-img img");
       if (!img) return;
 
-      const originalSrc = img.getAttribute('src');
-      const newSrc = '/images/piggy_new.svg';
+      const originalSrc = img.getAttribute("src");
+      const newSrc = "/images/piggy_new.svg";
 
       // замінюємо іконку
-      img.setAttribute('src', newSrc);
+      img.setAttribute("src", newSrc);
 
       // тимчасово зберігаємо оригінальний текст level badge
       const originalBadgeText = levelEl.textContent;
 
       // замінюємо текст бейджу та додаємо клас для анімації
-      levelEl.textContent = 'Новий рівень!';
-      levelEl.classList.add('level-up');
+      levelEl.textContent = "Новий рівень!";
+      levelEl.classList.add("level-up");
 
       // запуск конфетті ефекту
       spawnConfetti(20);
@@ -76,28 +82,29 @@
       // через 3 секунди повертаємо назад і оновимо статус
       setTimeout(async () => {
         levelEl.textContent = originalBadgeText;
-        levelEl.classList.remove('level-up');
-        img.setAttribute('src', originalSrc);
+        levelEl.classList.remove("level-up");
+        img.setAttribute("src", originalSrc);
         await refresh();
       }, 3000);
     } catch (err) {
-      console.error('Помилка при показі LevelUp анімації', err);
+      console.error("Помилка при показі LevelUp анімації", err);
     }
   }
 
   function spawnConfetti(count) {
-    const container = document.createElement('div');
-    container.className = 'confetti-container';
-    const widget = document.querySelector('.hero-widget');
+    const container = document.createElement("div");
+    container.className = "confetti-container";
+    const widget = document.querySelector(".hero-widget");
     if (!widget) return;
     widget.appendChild(container);
 
-    const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#B983FF'];
+    const colors = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#B983FF"];
 
     for (let i = 0; i < count; i++) {
-      const piece = document.createElement('div');
-      piece.className = 'confetti-piece';
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      piece.style.background =
+        colors[Math.floor(Math.random() * colors.length)];
       // random start position near top-center of widget
       const startX = 40 + Math.random() * 60; // percent
       piece.style.left = `${startX}%`;
@@ -111,12 +118,12 @@
 
     // remove container after animation
     setTimeout(() => {
-      if (container && container.parentNode) container.parentNode.removeChild(container);
+      container?.remove();
     }, 2200);
   }
 
   // Глобальна експозиція
-  window.HeroModule = {
+  globalThis.HeroModule = {
     refresh,
     showLevelUp,
     applyStatus,
