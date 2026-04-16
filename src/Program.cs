@@ -111,6 +111,7 @@ try
                 {
                     HttpOnly = true,
                     IsEssential = true,
+                    Secure = true,
                     SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddMinutes(5)
                 });
