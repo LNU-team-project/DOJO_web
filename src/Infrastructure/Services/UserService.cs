@@ -1,5 +1,5 @@
 using DOJO2.Domain.Entities;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -104,7 +104,7 @@ public class UserService : IUserService
         return Result<UserProfileViewModel>.SuccessResult(updatedProfile, "Профіль успішно оновлено");
     }
 
-    public async Task<Result<bool>> UpdateUserAvatarAsync(int userId, IFormFile? avatarFile)
+    public async Task<Result<bool>> UpdateUserAvatarAsync(int userId, FileUploadData avatarFile)
     {
         if (userId <= 0)
         {
@@ -112,7 +112,7 @@ public class UserService : IUserService
             return Result<bool>.FailureResult(InvalidUserIdMessage);
         }
 
-        if (avatarFile == null || avatarFile.Length == 0)
+        if (avatarFile.Length == 0 || avatarFile.Content.Length == 0)
         {
             _logger.LogWarning("Спроба завантажити порожний файл аватара для користувача {UserId}", userId);
             return Result<bool>.FailureResult("Виберіть файл аватара");
@@ -150,10 +150,7 @@ public class UserService : IUserService
         var filePath = Path.Combine(uploadDir, fileName);
         var avatarUrl = $"/{AvatarDirectory}/{fileName}";
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await avatarFile.CopyToAsync(stream);
-        }
+        await File.WriteAllBytesAsync(filePath, avatarFile.Content);
 
         user.AvatarUrl = avatarUrl;
         var updateResult = await _userManager.UpdateAsync(user);

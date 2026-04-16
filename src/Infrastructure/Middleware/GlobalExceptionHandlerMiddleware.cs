@@ -1,4 +1,4 @@
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using System.Text.Json;
 
 namespace DOJO2.Infrastructure.Middleware;

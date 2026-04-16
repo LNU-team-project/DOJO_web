@@ -1,6 +1,6 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Application.Interfaces;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;

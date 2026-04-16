@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 
 namespace DOJO2.Infrastructure.Services
 {

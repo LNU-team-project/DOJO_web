@@ -24,9 +24,3 @@ public class UpdateUserProfileViewModel
     [Phone(ErrorMessage = "Введіть корректний номер телефону")]
     public string? PhoneNumber { get; set; }
 }
-
-public class UpdateUserAvatarViewModel
-{
-    [Required(ErrorMessage = "Виберіть аватар")]
-    public IFormFile? Avatar { get; set; }
-}

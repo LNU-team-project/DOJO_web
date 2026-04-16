@@ -1,9 +1,8 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -189,7 +188,7 @@ public class PlanService : IPlanService
         return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan), "План оновлено");
     }
 
-    public async Task<Result<PlanAttachmentItemViewModel>> UploadPlanAttachmentAsync(int planId, int userId, IFormFile? file)
+    public async Task<Result<PlanAttachmentItemViewModel>> UploadPlanAttachmentAsync(int planId, int userId, FileUploadData? file)
     {
         var plan = await GetUserPlanAsync(planId, userId);
         if (plan == null)
@@ -197,7 +196,7 @@ public class PlanService : IPlanService
             return Result<PlanAttachmentItemViewModel>.FailureResult(PlanNotFoundMsg);
         }
 
-        if (file == null || file.Length <= 0)
+        if (file == null || file.Length <= 0 || file.Content.Length == 0)
         {
             return Result<PlanAttachmentItemViewModel>.FailureResult(InvalidFileMsg);
         }
@@ -217,10 +216,7 @@ public class PlanService : IPlanService
         var generatedFileName = $"{Guid.NewGuid():N}{extension}";
         var fullFilePath = Path.Combine(uploadRootPath, generatedFileName);
 
-        await using (var stream = new FileStream(fullFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
-        {
-            await file.CopyToAsync(stream);
-        }
+        await File.WriteAllBytesAsync(fullFilePath, file.Content);
 
         var attachment = new Attachment
         {

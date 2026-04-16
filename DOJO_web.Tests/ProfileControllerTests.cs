@@ -1,8 +1,7 @@
 using System.Security.Claims;
 using DOJO2.Controllers;
 using DOJO2.Application.Interfaces;
-using DOJO2.Infrastructure.Results;
-using DOJO2.Infrastructure.Services;
+using DOJO2.Application.Common;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -148,7 +147,7 @@ public class ProfileControllerTests
         var serviceResult = Result<bool>.SuccessResult(true, "Аватар оновлено");
 
         _userServiceMock
-            .Setup(s => s.UpdateUserAvatarAsync(ValidUserId, It.IsAny<IFormFile>()))
+            .Setup(s => s.UpdateUserAvatarAsync(ValidUserId, It.IsAny<FileUploadData>()))
             .ReturnsAsync(serviceResult);
 
         var controller = CreateControllerWithUserId(ValidUserId);

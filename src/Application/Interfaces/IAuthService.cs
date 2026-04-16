@@ -1,6 +1,6 @@
 using DOJO2.Application.ViewModels;
 using DOJO2.Domain.Entities;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 
 namespace DOJO2.Application.Interfaces;
 

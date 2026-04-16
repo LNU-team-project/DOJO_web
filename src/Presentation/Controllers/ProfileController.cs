@@ -1,5 +1,6 @@
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
+using DOJO2.Application.Common;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -76,9 +77,29 @@ public class ProfileController : BaseApiController
         }
 
         var userId = GetCurrentUserId() ?? 0;
-        var result = await _userService.UpdateUserAvatarAsync(userId, avatar);
+        var uploadData = await BuildUploadDataAsync(avatar);
+        var result = await _userService.UpdateUserAvatarAsync(userId, uploadData!);
 
         return ToActionResult(result);
+    }
+
+    private static async Task<FileUploadData?> BuildUploadDataAsync(IFormFile? file)
+    {
+        if (file == null)
+        {
+            return null;
+        }
+
+        await using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+
+        return new FileUploadData
+        {
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = ms.ToArray()
+        };
     }
 
     /// <summary>

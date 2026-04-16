@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using DOJO2.Controllers;
 using DOJO2.Application.Interfaces;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Http;

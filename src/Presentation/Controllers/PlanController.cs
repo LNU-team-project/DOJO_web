@@ -1,4 +1,5 @@
 using DOJO2.Application.Interfaces;
+using DOJO2.Application.Common;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -163,7 +164,8 @@ public class PlanController : BaseApiController
         }
 
         var userId = GetCurrentUserId() ?? 0;
-        var result = await _planService.UploadPlanAttachmentAsync(id, userId, file);
+        var uploadData = await BuildUploadDataAsync(file);
+        var result = await _planService.UploadPlanAttachmentAsync(id, userId, uploadData);
         return ToActionResult(result);
     }
 
@@ -179,5 +181,24 @@ public class PlanController : BaseApiController
         var userId = GetCurrentUserId() ?? 0;
         var result = await _planService.DeletePlanAttachmentAsync(id, attachmentId, userId);
         return ToActionResult(result);
+    }
+
+    private static async Task<FileUploadData?> BuildUploadDataAsync(IFormFile? file)
+    {
+        if (file == null)
+        {
+            return null;
+        }
+
+        await using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+
+        return new FileUploadData
+        {
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Length = file.Length,
+            Content = ms.ToArray()
+        };
     }
 }

@@ -1,5 +1,5 @@
 using DOJO2.Infrastructure.Data;
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using DOJO2.Domain.Entities;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;

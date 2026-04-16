@@ -1,4 +1,4 @@
-using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
