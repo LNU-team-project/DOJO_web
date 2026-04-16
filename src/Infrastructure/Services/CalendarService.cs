@@ -1,15 +1,11 @@
 using DOJO2.Infrastructure.Data;
+using DOJO2.Application.Interfaces;
 using DOJO2.Infrastructure.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 
 namespace DOJO2.Infrastructure.Services;
-
-public interface ICalendarService
-{
-    Task<Result<List<string>>> GetMarkedDatesAsync(int userId, DateOnly from, DateOnly to);
-}
 
 public class CalendarService : ICalendarService
 {

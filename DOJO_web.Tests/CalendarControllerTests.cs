@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using DOJO2.Application.Interfaces;
 using DOJO2.Controllers;
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;

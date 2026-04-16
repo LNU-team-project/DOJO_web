@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DOJO2.Models;
-using DOJO2.Infrastructure.Services;
+using DOJO2.Application.Interfaces;
 using System.Security.Claims;
 
 namespace DOJO2.Presentation.Controllers;

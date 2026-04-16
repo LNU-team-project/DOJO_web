@@ -1,20 +1,12 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
 using DOJO2.Domain.Entities;
+using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
-
-public interface IAdminService
-{
-    Task<Result<bool>> AuthenticateAdminAsync(string login, string password);
-    Task<Result<List<AdminUserListItemViewModel>>> GetUsersAsync(string? search);
-    Task<Result<bool>> BlockUserAsync(int userId);
-    Task<Result<bool>> UnblockUserAsync(int userId);
-    Task<Result<bool>> DeleteUserAsync(int userId);
-}
 
 public class AdminService : IAdminService
 {

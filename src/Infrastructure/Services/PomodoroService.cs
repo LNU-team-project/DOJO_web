@@ -1,16 +1,11 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
-
-public interface IPomodoroService
-{
-    Task<Result<PomodoroTodayStatsViewModel>> GetTodayStatsAsync(int userId, DateTime utcNow);
-    Task<Result<PomodoroTodayStatsViewModel>> CreateSessionAsync(int userId, PomodoroSessionCreateViewModel? model);
-}
 
 public class PomodoroService : IPomodoroService
 {

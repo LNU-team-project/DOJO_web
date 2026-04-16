@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using DOJO2.Infrastructure.Services;
+using DOJO2.Application.Interfaces;
 
 namespace DOJO2.Presentation.Controllers;
 

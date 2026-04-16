@@ -1,16 +1,11 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
-
-public interface IHeroService
-{
-    Task<Result<HeroStatusViewModel>> GetHeroStatusAsync(int userId);
-    Task<Result<HeroStatusViewModel>> AwardExpForTaskAsync(int taskId, int userId);
-}
 
 public class HeroService : IHeroService
 {

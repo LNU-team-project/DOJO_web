@@ -1,4 +1,5 @@
 using DOJO2.Domain.Entities;
+using DOJO2.Application.Interfaces;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Middleware;
 using DOJO2.Infrastructure.Services;

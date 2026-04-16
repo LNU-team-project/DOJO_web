@@ -1,18 +1,11 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Results;
+using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOJO2.Infrastructure.Services;
-
-public interface IUserService
-{
-    Task<Result<UserProfileViewModel>> GetUserProfileAsync(int userId);
-    Task<Result<UserProfileViewModel>> UpdateUserProfileAsync(int userId, UpdateUserProfileViewModel model);
-    Task<Result<bool>> UpdateUserAvatarAsync(int userId, IFormFile avatarFile);
-    Task<Result<bool>> DeleteUserAccountAsync(int userId);
-}
 
 public class UserService : IUserService
 {
