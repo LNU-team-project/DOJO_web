@@ -104,6 +104,57 @@
     return PRIORITY_LABELS[priority] || "Невідома";
   };
 
+  const refreshHeroStatus = async () => {
+    await globalThis.HeroModule?.refresh?.();
+  };
+
+  const updateHeroStatus = async (payload) => {
+    if (!payload?.success || !payload?.data) {
+      await refreshHeroStatus();
+      return;
+    }
+
+    const heroData = payload.data;
+    const heroModule = globalThis.HeroModule;
+
+    if (heroData.hasLeveledUp) {
+      heroModule?.showLevelUp?.(heroData);
+      return;
+    }
+
+    if (heroModule?.applyStatus) {
+      heroModule.applyStatus(heroData);
+      return;
+    }
+
+    await refreshHeroStatus();
+  };
+
+  const processTodoStatusResponse = async (response) => {
+    try {
+      const payload = await response.json();
+      await updateHeroStatus(payload);
+    } catch (error) {
+      console.warn("Не вдалося обробити відповідь героя", error);
+      await refreshHeroStatus();
+    }
+  };
+
+  const refreshStatistics = async () => {
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const refreshFn = globalThis.StatisticsModule?.refreshStatistics;
+      if (typeof refreshFn === "function") {
+        await refreshFn();
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
+    }
+  };
+
   const createTodoElement = (todo) => {
     const div = document.createElement("div");
     div.className = `todo-item ${todo.isCompleted ? "completed" : ""}`;
@@ -152,7 +203,7 @@
     descriptionBtn.className = "todo-item-description-btn";
     descriptionBtn.setAttribute("aria-label", "Показати опис");
     descriptionBtn.innerHTML = "👁️";
-    
+
     // Якщо опису немає - робимо кнопку неактивною та приховуємо опис за замовчуванням
     if (!todo.description || todo.description.trim() === "") {
       descriptionBtn.disabled = true;
@@ -180,7 +231,11 @@
       handleTodoStatusChange(todo.id, checkbox.checked),
     );
     descriptionBtn.addEventListener("click", () => {
-      if (descriptionSpan && (todo.description && todo.description.trim() !== "")) {
+      if (
+        descriptionSpan &&
+        todo.description &&
+        todo.description.trim() !== ""
+      ) {
         const isHidden = descriptionSpan.style.display === "none";
         descriptionSpan.style.display = isHidden ? "block" : "none";
         descriptionBtn.classList.toggle("active", isHidden);
@@ -256,7 +311,7 @@
       if (!response.ok) {
         const errorData = await response.json();
         showError(errorData.message || MESSAGES.UPDATE_ERROR);
-        loadTodos();
+        await loadTodos();
         return;
       }
 
@@ -265,40 +320,13 @@
         : MESSAGES.TASK_INCOMPLETE;
       showSuccess(message);
 
-      // Парсимо тіло відповіді: контролер повертає оновлений статус героя
-      try {
-        const payload = await response.json();
-        // Оновлюємо список завдань
-        await loadTodos();
-
-        if (payload && payload.success && payload.data) {
-          const data = payload.data;
-          if (data.hasLeveledUp) {
-            if (window.HeroModule && window.HeroModule.showLevelUp) {
-              window.HeroModule.showLevelUp(data);
-            }
-          } else {
-            if (window.HeroModule && window.HeroModule.applyStatus) {
-              window.HeroModule.applyStatus(data);
-            } else if (window.HeroModule && window.HeroModule.refresh) {
-              await window.HeroModule.refresh();
-            }
-          }
-        } else {
-          // якщо формат відповіді не той — просто оновимо віджет
-          if (window.HeroModule && window.HeroModule.refresh) {
-            await window.HeroModule.refresh();
-          }
-        }
-      } catch (err) {
-        console.warn('Не вдалося обробити відповідь героя', err);
-        await loadTodos();
-        if (window.HeroModule && window.HeroModule.refresh) await window.HeroModule.refresh();
-      }
+      await loadTodos();
+      await processTodoStatusResponse(response);
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при оновленні статусу TODO:", error);
       showError(MESSAGES.UPDATE_ERROR);
-      loadTodos();
+      await loadTodos();
     }
   };
 
@@ -323,12 +351,10 @@
       }
 
       showSuccess(MESSAGES.TASK_DELETED);
-      loadTodos();
-      
+      await loadTodos();
+
       // Оновлюємо статистику після видалення завдання
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
-        await window.StatisticsModule.refreshStatistics();
-      }
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при видаленні TODO:", error);
       showError(MESSAGES.DELETE_ERROR);
@@ -353,7 +379,8 @@
       submitBtn.textContent = "Оновити TODO";
       todoForm.dataset.editingTodoId = todo.id;
 
-      document.getElementById("todoModalTitle").textContent = "Редагувати завдання";
+      document.getElementById("todoModalTitle").textContent =
+        "Редагувати завдання";
       openModal(true);
     }
   };
@@ -436,7 +463,7 @@
 
       showSuccess(successMessage);
       closeModal();
-      
+
       // Скидаємо режим редагування
       delete todoForm.dataset.editingTodoId;
       const submitBtn = todoForm.querySelector('button[type="submit"]');
@@ -444,13 +471,11 @@
         submitBtn.textContent = "Додати TODO";
       }
       document.getElementById("todoModalTitle").textContent = "Додати ціль";
-      
-      loadTodos();
-      
+
+      await loadTodos();
+
       // Оновлюємо статистику після створення/оновлення завдання
-      if (window.StatisticsModule && window.StatisticsModule.refreshStatistics) {
-        await window.StatisticsModule.refreshStatistics();
-      }
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при створенні/оновленні TODO:", error);
       showError(MESSAGES.CREATE_ERROR);

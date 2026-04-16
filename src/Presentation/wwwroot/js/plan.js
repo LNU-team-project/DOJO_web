@@ -88,6 +88,57 @@
     console.log(MESSAGES.SUCCESS_PREFIX + message);
   };
 
+  const refreshHeroStatus = async () => {
+    await globalThis.HeroModule?.refresh?.();
+  };
+
+  const updateHeroStatus = async (payload) => {
+    if (!payload?.success || !payload?.data) {
+      await refreshHeroStatus();
+      return;
+    }
+
+    const heroData = payload.data;
+    const heroModule = globalThis.HeroModule;
+
+    if (heroData.hasLeveledUp) {
+      heroModule?.showLevelUp?.(heroData);
+      return;
+    }
+
+    if (heroModule?.applyStatus) {
+      heroModule.applyStatus(heroData);
+      return;
+    }
+
+    await refreshHeroStatus();
+  };
+
+  const processPlanStatusResponse = async (response) => {
+    try {
+      const payload = await response.json();
+      await updateHeroStatus(payload);
+    } catch (error) {
+      console.warn("Не вдалося обробити відповідь героя", error);
+      await refreshHeroStatus();
+    }
+  };
+
+  const refreshStatistics = async () => {
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const refreshFn = globalThis.StatisticsModule?.refreshStatistics;
+      if (typeof refreshFn === "function") {
+        await refreshFn();
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
+    }
+  };
+
   const buildDateFromInputs = () => {
     const dateInput = document.getElementById("planDate");
     const timeInput = document.getElementById("planTime");
@@ -180,12 +231,7 @@
       await loadPlans();
 
       // Оновлюємо статистику після створення плану
-      if (
-        window.StatisticsModule &&
-        window.StatisticsModule.refreshStatistics
-      ) {
-        await window.StatisticsModule.refreshStatistics();
-      }
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при створенні плану", error);
       showError(MESSAGES.CREATE_ERROR);
@@ -348,7 +394,7 @@
     });
   };
 
-    const handlePlanStatusChange = async (planId, isCompleted) => {
+  const handlePlanStatusChange = async (planId, isCompleted) => {
     const endpoint = isCompleted
       ? `/api/plan/complete/${planId}`
       : `/api/plan/incomplete/${planId}`;
@@ -363,43 +409,19 @@
         isCompleted ? "План позначено виконаним" : "План повернуто до активних",
       );
 
+      await processPlanStatusResponse(response);
+
+      // Завантажуємо плани та оновлюємо статистику в будь-якому випадку
       try {
-        const payload = await response.json();
-
-        if (payload && payload.success && payload.data) {
-          const data = payload.data;
-
-          if (data.hasLeveledUp) {
-            if (window.HeroModule && window.HeroModule.showLevelUp) {
-              window.HeroModule.showLevelUp(data);
-            }
-          } else {
-            if (window.HeroModule && window.HeroModule.applyStatus) {
-              window.HeroModule.applyStatus(data);
-            } else if (window.HeroModule && window.HeroModule.refresh) {
-              await window.HeroModule.refresh();
-            }
-          }
-        } else {
-          if (window.HeroModule && window.HeroModule.refresh) {
-            await window.HeroModule.refresh();
-          }
-        }
-      } catch (err) {
-        console.warn("Не вдалося обробити відповідь героя", err);
-        if (window.HeroModule && window.HeroModule.refresh) {
-          await window.HeroModule.refresh();
-        }
-      } finally {
         // Завантажуємо плани та оновлюємо статистику в будь-якому випадку
         await loadPlans();
 
-        if (
-          window.StatisticsModule &&
-          window.StatisticsModule.refreshStatistics
-        ) {
-          await window.StatisticsModule.refreshStatistics();
-        }
+        await refreshStatistics();
+      } catch (error) {
+        console.warn(
+          "Не вдалося оновити пов'язані віджети після зміни плану",
+          error,
+        );
       }
     } catch (error) {
       console.error("Помилка при оновленні плану", error);
@@ -423,12 +445,7 @@
       await loadPlans();
 
       // Оновлюємо статистику після видалення плану
-      if (
-        window.StatisticsModule &&
-        window.StatisticsModule.refreshStatistics
-      ) {
-        await window.StatisticsModule.refreshStatistics();
-      }
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при видаленні плану", error);
       showError("Не вдалося видалити план");
@@ -846,12 +863,7 @@
           await loadPlans();
 
           // Оновлюємо статистику після редагування плану
-          if (
-            window.StatisticsModule &&
-            window.StatisticsModule.refreshStatistics
-          ) {
-            await window.StatisticsModule.refreshStatistics();
-          }
+          await refreshStatistics();
         } catch (err) {
           console.error(err);
           showError("Не вдалося оновити план");
