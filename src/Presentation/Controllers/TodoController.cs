@@ -79,7 +79,7 @@ public class TodoController : BaseApiController
             return ToActionResult(result);
         }
 
-        // Після успішного виконання TODO — нарахувати XP та повернути оновлений статус героя
+        // Після успішного виконання туду — нарахувати XP та повернути оновлений статус героя
         var heroResult = await _heroService.AwardExpForTaskAsync(id, userId);
         return ToActionResult(heroResult);
     }

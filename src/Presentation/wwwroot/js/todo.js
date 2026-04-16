@@ -141,7 +141,18 @@
   };
 
   const refreshStatistics = async () => {
-    await globalThis.StatisticsModule?.refreshStatistics?.();
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const refreshFn = globalThis.StatisticsModule?.refreshStatistics;
+      if (typeof refreshFn === "function") {
+        await refreshFn();
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
+    }
   };
 
   const createTodoElement = (todo) => {
@@ -300,7 +311,7 @@
       if (!response.ok) {
         const errorData = await response.json();
         showError(errorData.message || MESSAGES.UPDATE_ERROR);
-        loadTodos();
+        await loadTodos();
         return;
       }
 
@@ -311,6 +322,7 @@
 
       await loadTodos();
       await processTodoStatusResponse(response);
+      await refreshStatistics();
     } catch (error) {
       console.error("Помилка при оновленні статусу TODO:", error);
       showError(MESSAGES.UPDATE_ERROR);
@@ -339,7 +351,7 @@
       }
 
       showSuccess(MESSAGES.TASK_DELETED);
-      loadTodos();
+      await loadTodos();
 
       // Оновлюємо статистику після видалення завдання
       await refreshStatistics();
@@ -460,7 +472,7 @@
       }
       document.getElementById("todoModalTitle").textContent = "Додати ціль";
 
-      loadTodos();
+      await loadTodos();
 
       // Оновлюємо статистику після створення/оновлення завдання
       await refreshStatistics();

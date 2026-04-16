@@ -125,7 +125,18 @@
   };
 
   const refreshStatistics = async () => {
-    await globalThis.StatisticsModule?.refreshStatistics?.();
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const refreshFn = globalThis.StatisticsModule?.refreshStatistics;
+      if (typeof refreshFn === "function") {
+        await refreshFn();
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
+    }
   };
 
   const buildDateFromInputs = () => {

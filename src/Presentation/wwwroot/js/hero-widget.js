@@ -99,20 +99,36 @@
     widget.appendChild(container);
 
     const colors = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#B983FF"];
+    let fallbackSeed = Date.now() % 2147483647;
+
+    const nextFallbackRandom = () => {
+      fallbackSeed = (fallbackSeed * 48271) % 2147483647;
+      return fallbackSeed / 2147483647;
+    };
+
+    const randomUnit = () => {
+      const cryptoProvider = globalThis.crypto;
+      if (cryptoProvider?.getRandomValues) {
+        const values = new Uint32Array(1);
+        cryptoProvider.getRandomValues(values);
+        return values[0] / 4294967296;
+      }
+
+      return nextFallbackRandom();
+    };
 
     for (let i = 0; i < count; i++) {
       const piece = document.createElement("div");
       piece.className = "confetti-piece";
-      piece.style.background =
-        colors[Math.floor(Math.random() * colors.length)];
+      piece.style.background = colors[Math.floor(randomUnit() * colors.length)];
       // random start position near top-center of widget
-      const startX = 40 + Math.random() * 60; // percent
+      const startX = 40 + randomUnit() * 60; // percent
       piece.style.left = `${startX}%`;
-      piece.style.top = `${10 + Math.random() * 20}px`;
-      const delay = Math.random() * 0.6;
+      piece.style.top = `${10 + randomUnit() * 20}px`;
+      const delay = randomUnit() * 0.6;
       piece.style.animation = `confetti-fall 1.6s cubic-bezier(.2,.8,.2,1) ${delay}s forwards`;
       // random rotate
-      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      piece.style.transform = `rotate(${randomUnit() * 360}deg)`;
       container.appendChild(piece);
     }
 
