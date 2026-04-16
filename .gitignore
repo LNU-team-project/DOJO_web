@@ -115,7 +115,7 @@ Logs/
 *.temp
 *.bak
 *.swp
-
+сд
 # ========================
 # Secrets / Configuration
 # ========================
@@ -124,6 +124,11 @@ Logs/
 .env.*.local
 appsettings.*.json
 !appsettings.Development.json
+!appsettings.Staging.json
+!appsettings.Production.json
+!src/appsettings.Development.json
+!src/appsettings.Staging.json
+!src/appsettings.Production.json
 secrets.json
 *.pfx
 *.p12
