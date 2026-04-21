@@ -1,6 +1,5 @@
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
-using DOJO2.Application.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -42,7 +41,12 @@ public class HeroServiceTests
         };
     }
 
-    private static DOJO2.Domain.Entities.AppUser CreateUser(int id, int exp = 0, int level = 1)
+    private static DOJO2.Domain.Entities.AppUser CreateUser(
+        int id,
+        int exp = 0,
+        int level = 1,
+        int streak = 0,
+        DateOnly? lastCompletionDate = null)
     {
         return new DOJO2.Domain.Entities.AppUser
         {
@@ -51,6 +55,8 @@ public class HeroServiceTests
             Email = $"u{id}@test",
             ExpPoints = exp,
             Level = level,
+            CurrentStreak = streak,
+            LastCompletionDate = lastCompletionDate,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -73,6 +79,8 @@ public class HeroServiceTests
         Assert.Equal(300, result.Data.ExpToNextLevel);
         Assert.Equal(0, result.Data.ProgressPercent);
         Assert.Equal(300, result.Data.ExpToLevelRemaining);
+        Assert.Equal(0, result.Data.CurrentStreak);
+        Assert.Equal("Почни серію сьогодні", result.Data.StreakText);
     }
 
     [Fact]
@@ -96,6 +104,8 @@ public class HeroServiceTests
         Assert.True(updatedTask!.XpAwarded);
         Assert.False(result.Data!.HasLeveledUp);
         Assert.Equal(250, result.Data.ExpToLevelRemaining);
+        Assert.Equal(1, result.Data.CurrentStreak);
+        Assert.Equal("1 день підряд", result.Data.StreakText);
     }
 
     [Fact]
@@ -118,6 +128,8 @@ public class HeroServiceTests
         Assert.True(updatedTask!.XpAwarded);
         Assert.False(result.Data!.HasLeveledUp);
         Assert.Equal(200, result.Data.ExpToLevelRemaining);
+        Assert.Equal(1, result.Data.CurrentStreak);
+        Assert.Equal("1 день підряд", result.Data.StreakText);
     }
 
     [Fact]
@@ -140,6 +152,72 @@ public class HeroServiceTests
 
         var updatedUser = await context.Users.FindAsync(TestUserId);
         Assert.Equal(50, updatedUser!.ExpPoints);
+    }
+
+    [Fact]
+    public async Task AwardExpForTask_IncrementsStreak_WhenLastCompletionWasYesterday()
+    {
+        using var context = CreateContext();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = CreateUser(TestUserId, streak: 2, lastCompletionDate: today.AddDays(-1));
+        context.Users.Add(user);
+        var todo = CreateTaskItem(TestUserId, "t1");
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var result = await service.AwardExpForTaskAsync(todo.Id, TestUserId);
+
+        Assert.True(result.Success);
+        var updatedUser = await context.Users.FindAsync(TestUserId);
+        Assert.Equal(3, updatedUser!.CurrentStreak);
+        Assert.Equal(today, updatedUser.LastCompletionDate);
+        Assert.Equal(3, result.Data!.CurrentStreak);
+        Assert.Equal("3 дні підряд", result.Data.StreakText);
+    }
+
+    [Fact]
+    public async Task AwardExpForTask_DoesNotIncrementStreak_WhenLastCompletionWasToday()
+    {
+        using var context = CreateContext();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = CreateUser(TestUserId, streak: 4, lastCompletionDate: today);
+        context.Users.Add(user);
+        var todo = CreateTaskItem(TestUserId, "t1");
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var result = await service.AwardExpForTaskAsync(todo.Id, TestUserId);
+
+        Assert.True(result.Success);
+        var updatedUser = await context.Users.FindAsync(TestUserId);
+        Assert.Equal(4, updatedUser!.CurrentStreak);
+        Assert.Equal(today, updatedUser.LastCompletionDate);
+        Assert.Equal(4, result.Data!.CurrentStreak);
+        Assert.Equal("4 дні підряд", result.Data.StreakText);
+    }
+
+    [Fact]
+    public async Task AwardExpForTask_ResetsStreak_WhenGapExceedsOneDay()
+    {
+        using var context = CreateContext();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = CreateUser(TestUserId, streak: 5, lastCompletionDate: today.AddDays(-3));
+        context.Users.Add(user);
+        var todo = CreateTaskItem(TestUserId, "t1");
+        context.Tasks.Add(todo);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var result = await service.AwardExpForTaskAsync(todo.Id, TestUserId);
+
+        Assert.True(result.Success);
+        var updatedUser = await context.Users.FindAsync(TestUserId);
+        Assert.Equal(1, updatedUser!.CurrentStreak);
+        Assert.Equal(today, updatedUser.LastCompletionDate);
+        Assert.Equal(1, result.Data!.CurrentStreak);
+        Assert.Equal("1 день підряд", result.Data.StreakText);
     }
 
     [Fact]
@@ -198,6 +276,27 @@ public class HeroServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("не знайдено", result.Message);
+    }
+
+    [Fact]
+    public async Task GetHeroStatus_ResetsStreak_WhenCompletionIsTooOld()
+    {
+        using var context = CreateContext();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = CreateUser(TestUserId, streak: 7, lastCompletionDate: today.AddDays(-4));
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var result = await service.GetHeroStatusAsync(TestUserId);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(0, result.Data!.CurrentStreak);
+        Assert.Equal("Почни серію сьогодні", result.Data.StreakText);
+
+        var updatedUser = await context.Users.FindAsync(TestUserId);
+        Assert.Equal(0, updatedUser!.CurrentStreak);
     }
 }
 

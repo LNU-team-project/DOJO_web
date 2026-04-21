@@ -59,20 +59,43 @@
   box-sizing: border-box;
 }
 
+.hero-streak {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 123, 150, 0.18);
+  box-shadow: 0 10px 24px rgba(255, 122, 144, 0.12);
+}
+
+.hero-streak-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a2839;
+}
+
+.hero-streak-value {
+  font-size: clamp(28px, 5vw, 38px);
+  line-height: 1;
+  font-weight: 800;
+  color: #4a1725;
+}
+
+
 .level-badge {
-  background: #ff9dc6;
+  background: #c63a68;
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  box-shadow: 0 6px 18px rgba(255,122,144,0.12);
-  transition: transform .25s ease, background .3s ease, color .3s ease;
-}
-
-.level-badge.level-up {
-  transform: scale(1.06);
-  box-shadow: 0 10px 26px rgba(255,90,120,0.18);
+  box-shadow: 0 6px 18px rgba(198,58,104,0.2);
 }
 
 .exp-bar {
@@ -94,7 +117,7 @@
 
 .exp-text {
   font-size: 13px;
-  color: #5a2839;
+  color: #432031;
   text-align: center;
 }
 
@@ -126,4 +149,5 @@
   .hero-widget { min-height: 220px; padding: 18px; }
   .hero-img { width: 120px; height: 150px; }
   .exp-bar { width: 80%; }
+  .hero-streak { padding: 10px 14px; }
 }
