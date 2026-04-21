@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DOJO2.Models;
 using DOJO2.Application.Interfaces;
-using DOJO2.Application.ViewModels;
 using System.Security.Claims;
 
 namespace DOJO2.Presentation.Controllers;
@@ -10,16 +9,11 @@ namespace DOJO2.Presentation.Controllers;
 public class HomeController : Controller
 {
     private readonly IStatisticsService _statisticsService;
-    private readonly INotificationService _notificationService;
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(
-        IStatisticsService statisticsService,
-        INotificationService notificationService,
-        ILogger<HomeController> logger)
+    public HomeController(IStatisticsService statisticsService, ILogger<HomeController> logger)
     {
         _statisticsService = statisticsService ?? throw new ArgumentNullException(nameof(statisticsService));
-        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -52,16 +46,6 @@ public class HomeController : Controller
             _logger.LogWarning("Помилка при отриманні статистики: {Message}", result.Message);
         }
 
-        var notificationsResult = await _notificationService.GetDashboardNotificationsAsync(userId, DateTime.UtcNow);
-        if (notificationsResult.Success)
-        {
-            ViewData["Notifications"] = notificationsResult.Data;
-        }
-        else
-        {
-            _logger.LogWarning("Помилка при отриманні сповіщень: {Message}", notificationsResult.Message);
-            ViewData["Notifications"] = Array.Empty<DashboardNotificationViewModel>();
-        }
 
         return View();
     }

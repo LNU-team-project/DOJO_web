@@ -23,13 +23,8 @@ public class HomeDashboardTests
             .Setup(s => s.GetTodayStatisticsAsync(It.IsAny<int>(), It.IsAny<DateTime>()))
             .ReturnsAsync(Result<StatisticsViewModel>.SuccessResult(new StatisticsViewModel(), "ok"));
 
-        var notificationServiceMock = new Mock<INotificationService>();
-        notificationServiceMock
-            .Setup(s => s.GetDashboardNotificationsAsync(It.IsAny<int>(), It.IsAny<DateTime>()))
-            .ReturnsAsync(Result<IReadOnlyList<DashboardNotificationViewModel>>.SuccessResult(Array.Empty<DashboardNotificationViewModel>(), "ok"));
-
         var loggerMock = new Mock<ILogger<HomeController>>();
-        var controller = new HomeController(statisticsServiceMock.Object, notificationServiceMock.Object, loggerMock.Object);
+        var controller = new HomeController(statisticsServiceMock.Object, loggerMock.Object);
 
         var user = new ClaimsPrincipal(new ClaimsIdentity(
             new[] { new Claim(ClaimTypes.NameIdentifier, "1") },
@@ -76,5 +71,14 @@ public class HomeDashboardTests
         var content = File.ReadAllText(DashboardViewPath);
 
         Assert.Contains("~/js/dashboard.js", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Dashboard_View_ContainsNotificationsEndpoint()
+    {
+        var content = File.ReadAllText(DashboardViewPath);
+
+        Assert.Contains("data-notifications-url", content, StringComparison.Ordinal);
+        Assert.Contains("~/api/notifications/dashboard", content, StringComparison.Ordinal);
     }
 }

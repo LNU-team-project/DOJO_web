@@ -10,16 +10,13 @@
   const board = root.querySelector(".dashboard-board");
   const prevButton = root.querySelector("[data-range-dir='prev']");
   const nextButton = root.querySelector("[data-range-dir='next']");
+  const notificationsUrl = root.dataset.notificationsUrl;
   const notificationsModal = document.getElementById("notificationsModal");
   const notificationsModalOverlay = document.getElementById("notificationsModalOverlay");
   const openNotificationsModalBtn = document.getElementById("openNotificationsModal");
   const closeNotificationsModalBtn = document.getElementById("closeNotificationsModal");
   const closeNotificationsModalFooterBtn = document.getElementById("closeNotificationsModalFooter");
-  const openNotificationSettingsBtn = document.getElementById("openNotificationSettingsBtn");
-  const notificationsSettingsModal = document.getElementById("notificationsSettingsModal");
-  const notificationsSettingsModalOverlay = document.getElementById("notificationsSettingsModalOverlay");
-  const closeNotificationsSettingsModalBtn = document.getElementById("closeNotificationsSettingsModal");
-  const closeNotificationsSettingsModalFooterBtn = document.getElementById("closeNotificationsSettingsModalFooter");
+  const notificationsList = root.querySelector("[data-notifications-list]") || root.querySelector(".notifications-modal-list");
 
   if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
     return;
@@ -135,6 +132,77 @@
     }
   };
 
+  const getSeverityClass = (notification) => {
+    return Number(notification?.severity) === 2
+      ? "notification-item-warning"
+      : "notification-item-info";
+  };
+
+  const renderNotifications = (notifications) => {
+    if (!notificationsList) {
+      return;
+    }
+
+    if (!Array.isArray(notifications) || notifications.length === 0) {
+      notificationsList.innerHTML = `
+        <li class="notification-item notification-item-info">
+          <div class="notification-item-badge">Інфо</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">Немає нових сповіщень</h3>
+            <p class="notification-item-description">Зараз у вас немає важливих оновлень.</p>
+          </div>
+        </li>`;
+      return;
+    }
+
+    notificationsList.innerHTML = notifications
+      .map((notification) => `
+        <li class="notification-item ${getSeverityClass(notification)}">
+          <div class="notification-item-badge">${notification.badge ?? "Інфо"}</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">${notification.title ?? "Сповіщення"}</h3>
+            <p class="notification-item-description">${notification.description ?? ""}</p>
+          </div>
+        </li>`)
+      .join("");
+  };
+
+  const loadNotifications = async () => {
+    if (!notificationsUrl) {
+      renderNotifications([]);
+      return;
+    }
+
+    if (notificationsList) {
+      notificationsList.innerHTML = `
+        <li class="notification-item notification-item-info">
+          <div class="notification-item-badge">Завантаження</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">Отримуємо сповіщення</h3>
+            <p class="notification-item-description">Зачекайте кілька секунд...</p>
+          </div>
+        </li>`;
+    }
+
+    try {
+      const response = await fetch(notificationsUrl, { credentials: "include" });
+      if (!response.ok) {
+        renderNotifications([]);
+        return;
+      }
+
+      const payload = await response.json();
+      if (!payload?.success) {
+        renderNotifications([]);
+        return;
+      }
+
+      renderNotifications(payload.data ?? []);
+    } catch {
+      renderNotifications([]);
+    }
+  };
+
   const toggleNotificationsModal = (isOpen) => {
     if (!notificationsModal) {
       return;
@@ -147,19 +215,6 @@
   const openNotificationsModal = () => toggleNotificationsModal(true);
 
   const closeNotificationsModal = () => toggleNotificationsModal(false);
-
-  const toggleNotificationsSettingsModal = (isOpen) => {
-    if (!notificationsSettingsModal) {
-      return;
-    }
-
-    notificationsSettingsModal.classList.toggle("show", isOpen);
-    notificationsSettingsModal.setAttribute("aria-hidden", String(!isOpen));
-  };
-
-  const openNotificationsSettingsModal = () => toggleNotificationsSettingsModal(true);
-
-  const closeNotificationsSettingsModal = () => toggleNotificationsSettingsModal(false);
 
   const bindNotificationModalControls = () => {
     if (!notificationsModal || !openNotificationsModalBtn) {
@@ -180,27 +235,7 @@
       closeNotificationsModalFooterBtn.addEventListener("click", closeNotificationsModal);
     }
 
-    if (openNotificationSettingsBtn) {
-      openNotificationSettingsBtn.addEventListener("click", openNotificationsSettingsModal);
-    }
-
-    if (notificationsSettingsModalOverlay) {
-      notificationsSettingsModalOverlay.addEventListener("click", closeNotificationsSettingsModal);
-    }
-
-    if (closeNotificationsSettingsModalBtn) {
-      closeNotificationsSettingsModalBtn.addEventListener("click", closeNotificationsSettingsModal);
-    }
-
-    if (closeNotificationsSettingsModalFooterBtn) {
-      closeNotificationsSettingsModalFooterBtn.addEventListener("click", closeNotificationsSettingsModal);
-    }
-
     globalThis.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && notificationsSettingsModal?.classList.contains("show")) {
-        closeNotificationsSettingsModal();
-        return;
-      }
 
       if (event.key === "Escape" && notificationsModal.classList.contains("show")) {
         closeNotificationsModal();
@@ -261,6 +296,7 @@
   });
 
   bindNotificationModalControls();
+  loadNotifications();
 
   render();
 })();
