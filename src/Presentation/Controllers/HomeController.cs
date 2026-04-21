@@ -46,6 +46,7 @@ public class HomeController : Controller
             _logger.LogWarning("Помилка при отриманні статистики: {Message}", result.Message);
         }
 
+
         return View();
     }
 

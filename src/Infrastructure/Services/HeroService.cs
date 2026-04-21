@@ -12,6 +12,9 @@ public class HeroService : IHeroService
     private const int ExpForPlan = 100;
     private const int ExpForTodo = 50;
     private const int ExpToNextLevel = 300;
+    private const string StreakSingular = "день підряд";
+    private const string StreakFew = "дні підряд";
+    private const string StreakMany = "днів підряд";
 
     private readonly AppDbContext _context;
     private readonly ILogger<HeroService> _logger;
@@ -31,6 +34,7 @@ public class HeroService : IHeroService
             return Result<HeroStatusViewModel>.FailureResult("Користувача не знайдено");
         }
 
+        await NormalizeStreakForReadAsync(user);
         var vm = MapToViewModel(user);
         return Result<HeroStatusViewModel>.SuccessResult(vm, "Статус героя завантажено");
     }
@@ -61,6 +65,7 @@ public class HeroService : IHeroService
         }
 
         user.ExpPoints += award;
+        ApplyCompletionStreak(user);
 
         // Відмічаємо, що XP за це завдання вже нараховано
         task.XpAwarded = true;
@@ -89,6 +94,58 @@ public class HeroService : IHeroService
         return Result<HeroStatusViewModel>.SuccessResult(vm, $"Нараховано {award} XP");
     }
 
+    private async Task NormalizeStreakForReadAsync(AppUser user)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var effectiveStreak = GetEffectiveStreak(user, today);
+
+        if (user.CurrentStreak == effectiveStreak)
+        {
+            return;
+        }
+
+        user.CurrentStreak = effectiveStreak;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
+    private static int GetEffectiveStreak(AppUser user, DateOnly today)
+    {
+        if (user.LastCompletionDate == null)
+        {
+            return 0;
+        }
+
+        var daysSinceLastCompletion = today.DayNumber - user.LastCompletionDate.Value.DayNumber;
+        if (daysSinceLastCompletion < 0)
+        {
+            return Math.Max(user.CurrentStreak, 0);
+        }
+
+        if (daysSinceLastCompletion > 1)
+        {
+            return 0;
+        }
+
+        return Math.Max(user.CurrentStreak, 1);
+    }
+
+    private static void ApplyCompletionStreak(AppUser user)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var newStreak = user.LastCompletionDate switch
+        {
+            null => 1,
+            var last when last.Value == today => Math.Max(user.CurrentStreak, 1),
+            var last when today.DayNumber - last.Value.DayNumber == 1 => Math.Max(user.CurrentStreak, 0) + 1,
+            _ => 1
+        };
+
+        user.CurrentStreak = newStreak;
+        user.LastCompletionDate = today;
+    }
+
     private static HeroStatusViewModel MapToViewModel(AppUser user)
     {
         var expPoints = user.ExpPoints;
@@ -96,6 +153,7 @@ public class HeroService : IHeroService
         var remainder = expPoints % ExpToNextLevel;
         var progressPercent = (int)Math.Round((remainder / (double)ExpToNextLevel) * 100);
         var remainingToNext = ExpToNextLevel - remainder;
+        var streakText = FormatStreakText(user.CurrentStreak);
 
         return new HeroStatusViewModel
         {
@@ -103,7 +161,30 @@ public class HeroService : IHeroService
             ExpPoints = user.ExpPoints,
             ExpToNextLevel = ExpToNextLevel,
             ProgressPercent = progressPercent,
+            CurrentStreak = user.CurrentStreak,
+            StreakText = streakText,
             ExpToLevelRemaining = remainingToNext
+        };
+    }
+
+    private static string FormatStreakText(int streak)
+    {
+        if (streak <= 0)
+        {
+            return "Почни серію сьогодні";
+        }
+
+        var lastTwoDigits = streak % 100;
+        if (lastTwoDigits is >= 11 and <= 14)
+        {
+            return $"{streak} {StreakMany}";
+        }
+
+        return (streak % 10) switch
+        {
+            1 => $"{streak} {StreakSingular}",
+            2 or 3 or 4 => $"{streak} {StreakFew}",
+            _ => $"{streak} {StreakMany}"
         };
     }
 }

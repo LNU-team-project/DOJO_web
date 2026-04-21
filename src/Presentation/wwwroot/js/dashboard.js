@@ -10,6 +10,13 @@
   const board = root.querySelector(".dashboard-board");
   const prevButton = root.querySelector("[data-range-dir='prev']");
   const nextButton = root.querySelector("[data-range-dir='next']");
+  const notificationsUrl = root.dataset.notificationsUrl;
+  const notificationsModal = document.getElementById("notificationsModal");
+  const notificationsModalOverlay = document.getElementById("notificationsModalOverlay");
+  const openNotificationsModalBtn = document.getElementById("openNotificationsModal");
+  const closeNotificationsModalBtn = document.getElementById("closeNotificationsModal");
+  const closeNotificationsModalFooterBtn = document.getElementById("closeNotificationsModalFooter");
+  const notificationsList = root.querySelector("[data-notifications-list]") || root.querySelector(".notifications-modal-list");
 
   if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
     return;
@@ -125,6 +132,117 @@
     }
   };
 
+  const getSeverityClass = (notification) => {
+    return Number(notification?.severity) === 2
+      ? "notification-item-warning"
+      : "notification-item-info";
+  };
+
+  const renderNotifications = (notifications) => {
+    if (!notificationsList) {
+      return;
+    }
+
+    if (!Array.isArray(notifications) || notifications.length === 0) {
+      notificationsList.innerHTML = `
+        <li class="notification-item notification-item-info">
+          <div class="notification-item-badge">Інфо</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">Немає нових сповіщень</h3>
+            <p class="notification-item-description">Зараз у вас немає важливих оновлень.</p>
+          </div>
+        </li>`;
+      return;
+    }
+
+    notificationsList.innerHTML = notifications
+      .map((notification) => `
+        <li class="notification-item ${getSeverityClass(notification)}">
+          <div class="notification-item-badge">${notification.badge ?? "Інфо"}</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">${notification.title ?? "Сповіщення"}</h3>
+            <p class="notification-item-description">${notification.description ?? ""}</p>
+          </div>
+        </li>`)
+      .join("");
+  };
+
+  const loadNotifications = async () => {
+    if (!notificationsUrl) {
+      renderNotifications([]);
+      return;
+    }
+
+    if (notificationsList) {
+      notificationsList.innerHTML = `
+        <li class="notification-item notification-item-info">
+          <div class="notification-item-badge">Завантаження</div>
+          <div class="notification-item-content">
+            <h3 class="notification-item-title">Отримуємо сповіщення</h3>
+            <p class="notification-item-description">Зачекайте кілька секунд...</p>
+          </div>
+        </li>`;
+    }
+
+    try {
+      const response = await fetch(notificationsUrl, { credentials: "include" });
+      if (!response.ok) {
+        renderNotifications([]);
+        return;
+      }
+
+      const payload = await response.json();
+      if (!payload?.success) {
+        renderNotifications([]);
+        return;
+      }
+
+      renderNotifications(payload.data ?? []);
+    } catch {
+      renderNotifications([]);
+    }
+  };
+
+  const toggleNotificationsModal = (isOpen) => {
+    if (!notificationsModal) {
+      return;
+    }
+
+    notificationsModal.classList.toggle("show", isOpen);
+    notificationsModal.setAttribute("aria-hidden", String(!isOpen));
+  };
+
+  const openNotificationsModal = () => toggleNotificationsModal(true);
+
+  const closeNotificationsModal = () => toggleNotificationsModal(false);
+
+  const bindNotificationModalControls = () => {
+    if (!notificationsModal || !openNotificationsModalBtn) {
+      return;
+    }
+
+    openNotificationsModalBtn.addEventListener("click", openNotificationsModal);
+
+    if (notificationsModalOverlay) {
+      notificationsModalOverlay.addEventListener("click", closeNotificationsModal);
+    }
+
+    if (closeNotificationsModalBtn) {
+      closeNotificationsModalBtn.addEventListener("click", closeNotificationsModal);
+    }
+
+    if (closeNotificationsModalFooterBtn) {
+      closeNotificationsModalFooterBtn.addEventListener("click", closeNotificationsModal);
+    }
+
+    globalThis.addEventListener("keydown", (event) => {
+
+      if (event.key === "Escape" && notificationsModal.classList.contains("show")) {
+        closeNotificationsModal();
+      }
+    });
+  };
+
   const render = () => {
     const dates = getWeekDates();
     renderRange(dates);
@@ -145,8 +263,7 @@
     const nowWeekStart = getWeekStartForDate(new Date());
     const targetWeekStart = getWeekStartForDate(date);
     const diffMs = targetWeekStart.getTime() - nowWeekStart.getTime();
-    const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
-    weekOffset = diffWeeks;
+    weekOffset = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
     render();
   };
 
@@ -177,6 +294,9 @@
     const target = new Date(parts[0], parts[1] - 1, parts[2]);
     setWeekByDate(target);
   });
+
+  bindNotificationModalControls();
+  loadNotifications();
 
   render();
 })();

@@ -137,6 +137,7 @@ try
     builder.Services.AddScoped<IPomodoroService, PomodoroService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+    builder.Services.AddScoped<INotificationService, NotificationService>();
 
     var app = builder.Build();
 

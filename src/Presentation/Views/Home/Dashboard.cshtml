@@ -2,7 +2,9 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="dashboard-page" data-dashboard-root>
+<div class="dashboard-page"
+     data-dashboard-root
+     data-notifications-url="@Url.Content("~/api/notifications/dashboard")">
     <header class="dashboard-header" aria-label="Dashboard navigation">
         <h1 class="dashboard-title">Dashboard</h1>
 
@@ -35,6 +37,15 @@
                     class="dashboard-todo-btn dashboard-plan-btn"
                     id="openPlanModal">
                 Додати план
+            </button>
+
+            <button type="button"
+                    class="dashboard-notification-btn"
+                    id="openNotificationsModal"
+                    aria-haspopup="dialog"
+                    aria-controls="notificationsModal">
+                <span class="dashboard-notification-icon" aria-hidden="true">🔔</span>
+                <span>Повідомлення</span>
             </button>
 
             <button type="button"
@@ -184,8 +195,12 @@
 
                     <div class="hero-center">
                         <div class="level-badge" id="heroLevel">Рівень 1</div>
+                        <div class="hero-streak" aria-live="polite">
+                            <span class="hero-streak-label">Поточна серія</span>
+                            <strong class="hero-streak-value" id="heroStreakValue">0</strong>
+                        </div>
                         <div class="exp-bar" aria-hidden="true">
-                            <div class="exp-bar-inner" id="heroExpInner" style="width:0%"></div>
+                            <div class="exp-bar-inner" id="heroExpInner" style="width:0"></div>
                         </div>
                         <div class="exp-text" id="heroExpText">Потрібно 300 XP до наступного рівня</div>
                     </div>
@@ -589,6 +604,42 @@
             <div class="statistics-loading">
                 <div class="statistics-spinner"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="notifications-modal" id="notificationsModal" aria-hidden="true" aria-modal="true" aria-labelledby="notificationsModalTitle">
+    <div class="notifications-modal-overlay" id="notificationsModalOverlay"></div>
+    <div class="notifications-modal-content">
+        <div class="notifications-modal-header">
+            <div>
+                <h2 id="notificationsModalTitle">Актуальні повідомлення</h2>
+            </div>
+            <button type="button" class="notifications-modal-close" id="closeNotificationsModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div class="notifications-modal-body">
+            <p class="notifications-modal-description">
+                Тут зібрані короткі оновлення, які допомагають швидко зорієнтуватися в поточній активності застосунку.
+            </p>
+
+            <ul class="notifications-modal-list" aria-live="polite" data-notifications-list>
+                <li class="notification-item notification-item-info">
+                    <div class="notification-item-badge">Інфо</div>
+                    <div class="notification-item-content">
+                        <h3 class="notification-item-title">Завантаження</h3>
+                        <p class="notification-item-description">Отримуємо актуальні повідомлення...</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="notifications-modal-footer">
+            <button type="button" class="notifications-modal-secondary-btn" id="closeNotificationsModalFooter">
+                Закрити
+            </button>
         </div>
     </div>
 </div>

@@ -2,13 +2,12 @@
   const levelEl = document.getElementById("heroLevel");
   const expInner = document.getElementById("heroExpInner");
   const expText = document.getElementById("heroExpText");
+  const streakValueEl = document.getElementById("heroStreakValue");
 
-  if (!levelEl || !expInner || !expText) {
+  if (!levelEl || !expInner || !expText || !streakValueEl) {
     // Якщо віджет відсутній на сторінці — створюємо заглушку модулю
     globalThis.HeroModule = {
-      async refresh() {
-        return;
-      },
+      async refresh() {},
     };
     return;
   }
@@ -20,6 +19,7 @@
   function applyStatus(data) {
     if (!data) return;
     levelEl.textContent = `Рівень ${data.level}`;
+    const streak = Math.max(0, Number(data.currentStreak || 0));
     const percent = Math.max(
       0,
       Math.min(100, Number(data.progressPercent || 0)),
@@ -30,8 +30,10 @@
       data.expToLevelRemaining ??
         Number(data.expToNextLevel || 0) - Number(data.expPoints || 0),
     );
+    streakValueEl.textContent = String(streak);
     expText.textContent = `Потрібно ${Math.max(0, remaining)} XP до наступного рівня`;
   }
+
 
   async function refresh() {
     try {

@@ -72,4 +72,13 @@ public class HomeDashboardTests
 
         Assert.Contains("~/js/dashboard.js", content, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Dashboard_View_ContainsNotificationsEndpoint()
+    {
+        var content = File.ReadAllText(DashboardViewPath);
+
+        Assert.Contains("data-notifications-url", content, StringComparison.Ordinal);
+        Assert.Contains("~/api/notifications/dashboard", content, StringComparison.Ordinal);
+    }
 }
