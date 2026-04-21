@@ -1,5 +1,36 @@
+@using DOJO2.Application.ViewModels
 @{
     ViewData["Title"] = "Dashboard";
+
+    var dashboardStatistics = ViewData["Statistics"] as StatisticsViewModel;
+    var dashboardNotifications = new List<(string Title, string Description, string Badge)>();
+
+    if (dashboardStatistics != null)
+    {
+        if (dashboardStatistics.CompletedTodos > 0)
+        {
+            dashboardNotifications.Add(("Завдання на сьогодні", $"Ви вже виконали {dashboardStatistics.CompletedTodos} завдань.", "Завдання"));
+        }
+
+        if (dashboardStatistics.CompletedPlans > 0)
+        {
+            dashboardNotifications.Add(("Плани на сьогодні", $"Сьогодні закрито {dashboardStatistics.CompletedPlans} планів.", "Плани"));
+        }
+
+        if (dashboardStatistics.CompletedPomodoroSessions > 0)
+        {
+            dashboardNotifications.Add(("Pomodoro", $"Проведено {dashboardStatistics.CompletedPomodoroSessions} фокус-сесій.", "Фокус"));
+        }
+
+        if (dashboardNotifications.Count == 0)
+        {
+            dashboardNotifications.Add(("Сьогодні ще тихо", "Нових сповіщень поки немає. Щойно з’явиться активність, вона буде тут.", "Порожньо"));
+        }
+    }
+    else
+    {
+        dashboardNotifications.Add(("Дані ще не завантажено", "Щойно статистика стане доступною, тут з’являться актуальні сповіщення.", "Інфо"));
+    }
 }
 
 <div class="dashboard-page" data-dashboard-root>
@@ -35,6 +66,15 @@
                     class="dashboard-todo-btn dashboard-plan-btn"
                     id="openPlanModal">
                 Додати план
+            </button>
+
+            <button type="button"
+                    class="dashboard-notification-btn"
+                    id="openNotificationsModal"
+                    aria-haspopup="dialog"
+                    aria-controls="notificationsModal">
+                <span class="dashboard-notification-icon" aria-hidden="true">🔔</span>
+                <span>Повідомлення</span>
             </button>
 
             <button type="button"
@@ -589,6 +629,94 @@
             <div class="statistics-loading">
                 <div class="statistics-spinner"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="notifications-modal" id="notificationsModal" aria-hidden="true" aria-modal="true" aria-labelledby="notificationsModalTitle">
+    <div class="notifications-modal-overlay" id="notificationsModalOverlay"></div>
+    <div class="notifications-modal-content">
+        <div class="notifications-modal-header">
+            <div>
+                <p class="notifications-modal-eyebrow">Актуальні сповіщення</p>
+                <h2 id="notificationsModalTitle">Повідомлення</h2>
+            </div>
+            <button type="button" class="notifications-modal-close" id="closeNotificationsModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div class="notifications-modal-body">
+            <p class="notifications-modal-description">
+                Тут зібрані короткі оновлення, які допомагають швидко зорієнтуватися в поточній активності застосунку.
+            </p>
+
+            <ul class="notifications-modal-list" aria-live="polite">
+                @foreach (var notification in dashboardNotifications)
+                {
+                    <li class="notification-item">
+                        <div class="notification-item-badge">@notification.Badge</div>
+                        <div class="notification-item-content">
+                            <h3 class="notification-item-title">@notification.Title</h3>
+                            <p class="notification-item-description">@notification.Description</p>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="notifications-modal-footer">
+            <button type="button"
+                    class="notifications-modal-settings-btn"
+                    id="openNotificationSettingsBtn"
+                    aria-haspopup="dialog"
+                    aria-controls="notificationsSettingsModal">
+                Налаштування
+            </button>
+            <button type="button" class="notifications-modal-secondary-btn" id="closeNotificationsModalFooter">
+                Закрити
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="profile-modal notifications-settings-modal" id="notificationsSettingsModal" aria-hidden="true" aria-modal="true" aria-labelledby="notificationsSettingsModalTitle">
+    <div class="profile-modal-overlay" id="notificationsSettingsModalOverlay"></div>
+    <div class="profile-modal-content notifications-settings-modal-content">
+        <div class="profile-modal-header">
+            <h2 id="notificationsSettingsModalTitle">Налаштування повідомлень</h2>
+            <button type="button" class="profile-modal-close" id="closeNotificationsSettingsModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div class="profile-modal-body">
+            <div class="profile-section">
+                <p class="notifications-modal-description" style="margin-bottom: 0;">
+                    Тут згодом з’являться перемикачі каналів, типів та частоти сповіщень. Зараз це окрема панель у тому ж форматі, що й налаштування профілю.
+                </p>
+
+                <div class="profile-info">
+                    <div class="profile-info-item">
+                        <label>Канали сповіщень</label>
+                        <p class="profile-value">Підготовка до реалізації</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Частота</label>
+                        <p class="profile-value">Підготовка до реалізації</p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Звуки та підказки</label>
+                        <p class="profile-value">Підготовка до реалізації</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-modal-footer">
+            <button type="button" class="profile-btn profile-btn-logout" id="closeNotificationsSettingsModalFooter">
+                Закрити
+            </button>
         </div>
     </div>
 </div>

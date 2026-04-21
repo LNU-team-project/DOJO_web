@@ -10,6 +10,16 @@
   const board = root.querySelector(".dashboard-board");
   const prevButton = root.querySelector("[data-range-dir='prev']");
   const nextButton = root.querySelector("[data-range-dir='next']");
+  const notificationsModal = document.getElementById("notificationsModal");
+  const notificationsModalOverlay = document.getElementById("notificationsModalOverlay");
+  const openNotificationsModalBtn = document.getElementById("openNotificationsModal");
+  const closeNotificationsModalBtn = document.getElementById("closeNotificationsModal");
+  const closeNotificationsModalFooterBtn = document.getElementById("closeNotificationsModalFooter");
+  const openNotificationSettingsBtn = document.getElementById("openNotificationSettingsBtn");
+  const notificationsSettingsModal = document.getElementById("notificationsSettingsModal");
+  const notificationsSettingsModalOverlay = document.getElementById("notificationsSettingsModalOverlay");
+  const closeNotificationsSettingsModalBtn = document.getElementById("closeNotificationsSettingsModal");
+  const closeNotificationsSettingsModalFooterBtn = document.getElementById("closeNotificationsSettingsModalFooter");
 
   if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
     return;
@@ -125,6 +135,79 @@
     }
   };
 
+  const toggleNotificationsModal = (isOpen) => {
+    if (!notificationsModal) {
+      return;
+    }
+
+    notificationsModal.classList.toggle("show", isOpen);
+    notificationsModal.setAttribute("aria-hidden", String(!isOpen));
+  };
+
+  const openNotificationsModal = () => toggleNotificationsModal(true);
+
+  const closeNotificationsModal = () => toggleNotificationsModal(false);
+
+  const toggleNotificationsSettingsModal = (isOpen) => {
+    if (!notificationsSettingsModal) {
+      return;
+    }
+
+    notificationsSettingsModal.classList.toggle("show", isOpen);
+    notificationsSettingsModal.setAttribute("aria-hidden", String(!isOpen));
+  };
+
+  const openNotificationsSettingsModal = () => toggleNotificationsSettingsModal(true);
+
+  const closeNotificationsSettingsModal = () => toggleNotificationsSettingsModal(false);
+
+  const bindNotificationModalControls = () => {
+    if (!notificationsModal || !openNotificationsModalBtn) {
+      return;
+    }
+
+    openNotificationsModalBtn.addEventListener("click", openNotificationsModal);
+
+    if (notificationsModalOverlay) {
+      notificationsModalOverlay.addEventListener("click", closeNotificationsModal);
+    }
+
+    if (closeNotificationsModalBtn) {
+      closeNotificationsModalBtn.addEventListener("click", closeNotificationsModal);
+    }
+
+    if (closeNotificationsModalFooterBtn) {
+      closeNotificationsModalFooterBtn.addEventListener("click", closeNotificationsModal);
+    }
+
+    if (openNotificationSettingsBtn) {
+      openNotificationSettingsBtn.addEventListener("click", openNotificationsSettingsModal);
+    }
+
+    if (notificationsSettingsModalOverlay) {
+      notificationsSettingsModalOverlay.addEventListener("click", closeNotificationsSettingsModal);
+    }
+
+    if (closeNotificationsSettingsModalBtn) {
+      closeNotificationsSettingsModalBtn.addEventListener("click", closeNotificationsSettingsModal);
+    }
+
+    if (closeNotificationsSettingsModalFooterBtn) {
+      closeNotificationsSettingsModalFooterBtn.addEventListener("click", closeNotificationsSettingsModal);
+    }
+
+    globalThis.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && notificationsSettingsModal?.classList.contains("show")) {
+        closeNotificationsSettingsModal();
+        return;
+      }
+
+      if (event.key === "Escape" && notificationsModal.classList.contains("show")) {
+        closeNotificationsModal();
+      }
+    });
+  };
+
   const render = () => {
     const dates = getWeekDates();
     renderRange(dates);
@@ -145,8 +228,7 @@
     const nowWeekStart = getWeekStartForDate(new Date());
     const targetWeekStart = getWeekStartForDate(date);
     const diffMs = targetWeekStart.getTime() - nowWeekStart.getTime();
-    const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
-    weekOffset = diffWeeks;
+    weekOffset = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
     render();
   };
 
@@ -177,6 +259,8 @@
     const target = new Date(parts[0], parts[1] - 1, parts[2]);
     setWeekByDate(target);
   });
+
+  bindNotificationModalControls();
 
   render();
 })();
