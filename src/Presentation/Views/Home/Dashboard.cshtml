@@ -45,7 +45,10 @@
                     aria-haspopup="dialog"
                     aria-controls="notificationsModal">
                 <span class="dashboard-notification-icon" aria-hidden="true">🔔</span>
-                <span>Повідомлення</span>
+            </button>
+
+            <button type="button" class="dashboard-leaderboard-btn" id="openLeaderboardBtn" aria-haspopup="dialog" aria-controls="leaderboardRoot">
+                <span class="leaderboard-icon" aria-hidden="true">🏆</span>
             </button>
 
             <button type="button"
@@ -644,6 +647,9 @@
     </div>
 </div>
 
+<!-- Leaderboard Modal -->
+@await Html.PartialAsync("_Leaderboard", new DOJO2.Application.ViewModels.LeaderboardViewModel())
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
@@ -653,4 +659,5 @@
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
     <script src="~/js/statistics.js" asp-append-version="true"></script>
     <script src="~/js/hero-widget.js" asp-append-version="true"></script>
+    <script src="~/js/leaderboard.js" asp-append-version="true"></script>
 }
