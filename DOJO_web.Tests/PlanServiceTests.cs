@@ -218,6 +218,35 @@ public class PlanServiceTests
     }
 
     [Fact]
+    // Нові тести
+    public async Task MarkPlanAsCompleted_AlsoCompletesAllSubTasks()
+    {
+        using var context = CreateContext();
+
+        var plan = new TaskItem { UserId = 1, Title = "План", IsPlan = true, IsCompleted = false };
+        context.Tasks.Add(plan);
+        await context.SaveChangesAsync();
+
+        var subTask1 = new TaskItem { UserId = 1, Title = "П1", ParentTaskId = plan.Id, IsCompleted = false };
+        var subTask2 = new TaskItem { UserId = 1, Title = "П2", ParentTaskId = plan.Id, IsCompleted = false };
+        context.Tasks.AddRange(subTask1, subTask2);
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+        var result = await service.MarkPlanAsCompletedAsync(plan.Id, 1);
+
+        Assert.True(result.Success);
+
+        var updatedSubTasks = await context.Tasks
+            .Where(t => t.ParentTaskId == plan.Id)
+            .ToListAsync();
+
+        Assert.NotEmpty(updatedSubTasks);
+        Assert.All(updatedSubTasks, t => Assert.True(t.IsCompleted));
+        Assert.All(updatedSubTasks, t => Assert.NotNull(t.CompletedAt));
+    }
+
+    [Fact]
     public async Task MarkPlanAsIncomplete_SetsFlags()
     {
         using var context = CreateContext();
@@ -355,6 +384,7 @@ public class PlanServiceTests
     }
 
     [Fact]
+    // Нові тести
     public async Task CreatePlanSubTaskAsync_ReturnsFailure_WhenPlanNotFound()
     {
         using var context = CreateContext();

@@ -358,7 +358,8 @@
       if (plan.hasSubTasks) {
         const subtaskMarker = document.createElement("span");
         subtaskMarker.className = "todo-item-subtask-marker";
-        subtaskMarker.textContent = `Підзадач: ${plan.subTaskCount || 0}`;
+        subtaskMarker.textContent = `⭐ ${plan.subTaskCount || 0}`;
+        subtaskMarker.title = "Цей план містить підзадачі";
         titleSpan.appendChild(subtaskMarker);
       }
 
@@ -1214,9 +1215,11 @@
     const badge = document.createElement("div");
     const priorityClass = plan.priority ? plan.priority : 2;
     badge.className = `plan-slot plan-priority-${priorityClass} ${plan.isCompleted ? "plan-completed" : ""}`;
-    badge.textContent = `${plan.title}${plan.hasSubTasks ? " • ○" : ""}`;
+    badge.textContent = `${plan.title}${plan.hasSubTasks ? " ⭐" : ""}`;
     badge.title = plan.description || "";
     badge.tabIndex = 0;
+    badge.setAttribute("role", "button");
+    badge.setAttribute("aria-label", `Відкрити план: ${plan.title}`);
     badge.dataset.planId = plan.id;
     if (plan.isCompleted) {
       badge.style.opacity = "0.6";

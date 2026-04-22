@@ -120,8 +120,26 @@ public class PlanService : IPlanService
             return Result<bool>.FailureResult("План вже виконаний");
         }
 
+        var completedAt = DateTime.UtcNow;
+
+        var activeSubTasks = await _context.Tasks
+            .Where(t => t.UserId == userId && t.ParentTaskId == planId && !t.IsCompleted)
+            .ToListAsync();
+
+        foreach (var subTask in activeSubTasks)
+        {
+            subTask.IsCompleted = true;
+            subTask.CompletedAt ??= completedAt;
+        }
+
         plan.IsCompleted = true;
-        plan.CompletedAt = DateTime.UtcNow;
+        plan.CompletedAt = completedAt;
+
+        if (activeSubTasks.Count > 0)
+        {
+            _context.Tasks.UpdateRange(activeSubTasks);
+        }
+
         _context.Tasks.Update(plan);
         await _context.SaveChangesAsync();
         return Result<bool>.SuccessResult(true, "План позначено виконаним");
