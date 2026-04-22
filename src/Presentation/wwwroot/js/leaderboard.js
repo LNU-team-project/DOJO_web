@@ -8,8 +8,8 @@
     const searchFilter = document.getElementById('leaderboardSearch');
     
     let isLoaded = false;
-    let allItems = [];
     let currentSort = 'xp';
+    const LIMIT = 50;
 
     if (!openBtn || !root) {
         console.error('Leaderboard elements not found');
@@ -20,82 +20,51 @@
     async function loadLeaderboardData() {
         try {
             console.log('Fetching leaderboard data...');
-            const response = await fetch('/Home/GetLeaderboard?limit=50');
+            const response = await fetch(`/Leaderboard/GetLeaderboard?limit=${LIMIT}`);
             if (response.ok) {
                 const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newList = doc.querySelector('.leaderboard-list');
-                if (newList && leaderboardList) {
-                    console.log('Leaderboard data loaded successfully');
-                    leaderboardList.innerHTML = newList.innerHTML;
-                    // Зберігаємо всі елементи для фільтрування
-                    allItems = Array.from(leaderboardList.querySelectorAll('.leaderboard-item'));
+                if (leaderboardList) {
+                    leaderboardList.innerHTML = html;
                 }
                 isLoaded = true;
             } else {
                 console.error('Failed to fetch leaderboard:', response.status);
             }
         } catch (err) {
-            console.error('Помилка при завантаженні лідерборду:', err);
+            console.error('Помилка при завантаженні лідерbordu:', err);
         }
     }
 
-    // Функція для сортування та фільтрування лідерборду
-    function sortAndFilterLeaderboard() {
-        const searchTerm = searchFilter.value.toLowerCase().trim();
-        
-        console.log(`Sorting by: ${currentSort}, search: ${searchTerm}`);
-        
-        // Фільтруємо за пошуком
-        const filtered = allItems.filter(item => {
-            const username = item.querySelector('.leaderboard-name')?.textContent.toLowerCase() || '';
-            return !searchTerm || username.includes(searchTerm);
-        });
-
-        // Сортуємо відповідно до вибору
-        const sorted = filtered.sort((a, b) => {
-            if (currentSort === 'xp') {
-                const xpA = parseInt(a.querySelector('.leaderboard-score')?.getAttribute('data-xp') || 0);
-                const xpB = parseInt(b.querySelector('.leaderboard-score')?.getAttribute('data-xp') || 0);
-                return xpB - xpA; // За спаданням
-            } else if (currentSort === 'pomodoro') {
-                const pomA = parseInt(a.querySelector('.leaderboard-pomodoro')?.getAttribute('data-pomodoro') || 0);
-                const pomB = parseInt(b.querySelector('.leaderboard-pomodoro')?.getAttribute('data-pomodoro') || 0);
-                return pomB - pomA; // За спаданням
-            } else if (currentSort === 'level') {
-                const levelA = parseInt(a.querySelector('.leaderboard-level')?.getAttribute('data-level') || 0);
-                const levelB = parseInt(b.querySelector('.leaderboard-level')?.getAttribute('data-level') || 0);
-                return levelB - levelA; // За спаданням
+    // Функція для запиту лідерборду з фільтруванням та сортуванням
+    async function fetchLeaderboardData(sortBy = 'xp', searchTerm = '') {
+        try {
+            console.log(`Fetching leaderboard: sort=${sortBy}, search=${searchTerm}`);
+            
+            let url = '/Leaderboard/GetFilteredAndSorted?limit=' + LIMIT;
+            if (searchTerm) {
+                url += '&searchTerm=' + encodeURIComponent(searchTerm);
             }
-            return 0;
-        });
+            if (sortBy) {
+                url += '&sortBy=' + encodeURIComponent(sortBy);
+            }
 
-        // Очищаємо список та додаємо відсортовані елементи
-        leaderboardList.innerHTML = '';
-        
-        if (sorted.length === 0 && allItems.length > 0) {
-            const emptyItem = document.createElement('li');
-            emptyItem.className = 'leaderboard-empty';
-            emptyItem.textContent = 'Користувачів не знайдено';
-            leaderboardList.appendChild(emptyItem);
-        } else {
-            // Додаємо відсортовані елементи з оновленим рангом
-            sorted.forEach((item, index) => {
-                const clonedItem = item.cloneNode(true);
-                // Оновлюємо ранг (номер позиції) на основі нового порядку
-                const rankElement = clonedItem.querySelector('.leaderboard-rank');
-                if (rankElement) {
-                    rankElement.textContent = index + 1;
+            const response = await fetch(url);
+            if (response.ok) {
+                const html = await response.text();
+                if (leaderboardList) {
+                    leaderboardList.innerHTML = html;
                 }
-                leaderboardList.appendChild(clonedItem);
-            });
+            } else {
+                console.error('Failed to fetch leaderboard:', response.status);
+            }
+        } catch (err) {
+            console.error('Помилка при отриманні даних лідерборду:', err);
         }
     }
 
     // Обробники подій для кнопок сортування
     sortButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             const newSort = this.getAttribute('data-sort');
             
             // Видаляємо активний клас з усіх кнопок
@@ -111,8 +80,9 @@
             // Оновлюємо поточне сортування
             currentSort = newSort;
             
-            // Сортуємо список
-            sortAndFilterLeaderboard();
+            // Отримуємо дані з сервера з новим сортуванням
+            const searchTerm = searchFilter ? searchFilter.value : '';
+            await fetchLeaderboardData(currentSort, searchTerm);
             
             console.log(`Sorting changed to: ${newSort}`);
         });
@@ -120,7 +90,10 @@
 
     // Обробник для пошуку
     if (searchFilter) {
-        searchFilter.addEventListener('input', sortAndFilterLeaderboard);
+        searchFilter.addEventListener('input', async function() {
+            const searchTerm = this.value;
+            await fetchLeaderboardData(currentSort, searchTerm);
+        });
     }
 
     // Відкрити лідерборд при натисканні кнопки
@@ -149,6 +122,4 @@
             root.classList.remove('show');
         });
     }
-
-    console.log('Leaderboard script initialized');
 })();

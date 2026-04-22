@@ -26,10 +26,8 @@ public class HomeDashboardTests
             .ReturnsAsync(Result<StatisticsViewModel>.SuccessResult(new StatisticsViewModel(), "ok"));
 
         var loggerMock = new Mock<ILogger<HomeController>>();
-        var userManagerMock = new Mock<UserManager<AppUser>>(
-            new Mock<IUserStore<AppUser>>().Object, null, null, null, null, null, null, null, null);
-        
-        var controller = new HomeController(statisticsServiceMock.Object, loggerMock.Object, userManagerMock.Object);
+
+        var controller = new HomeController(statisticsServiceMock.Object, loggerMock.Object);
 
         var user = new ClaimsPrincipal(new ClaimsIdentity(
             new[] { new Claim(ClaimTypes.NameIdentifier, "1") },
