@@ -1,0 +1,89 @@
+﻿@model DOJO2.Application.ViewModels.LeaderboardViewModel
+
+<div class="leaderboard-root" id="leaderboardRoot">
+    <div class="leaderboard-overlay" id="leaderboardOverlay"></div>
+    
+    <!-- Leaderboard card slides in from the right -->
+    <div class="leaderboard-card">
+        <div class="leaderboard-header">
+            <h3>Лідерборд</h3>
+            <button type="button" class="leaderboard-close" id="leaderboardCloseBtn" aria-label="Закрити лідерборд">×</button>
+        </div>
+
+        <!-- Leaderboard Filters -->
+        <div class="leaderboard-filters">
+            <!-- Sorting Buttons -->
+            <div class="leaderboard-filter-group">
+                <label class="leaderboard-filter-label">Сортування:</label>
+                <div class="leaderboard-sort-buttons">
+                    <button 
+                        type="button" 
+                        class="leaderboard-sort-btn leaderboard-sort-btn-active" 
+                        data-sort="xp"
+                        aria-pressed="true">
+                        По XP
+                    </button>
+                    <button 
+                        type="button" 
+                        class="leaderboard-sort-btn" 
+                        data-sort="pomodoro"
+                        aria-pressed="false">
+                        По Pomodoro
+                    </button>
+                    <button 
+                        type="button" 
+                        class="leaderboard-sort-btn" 
+                        data-sort="level"
+                        aria-pressed="false">
+                        По рівню
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="leaderboard-filter-group">
+                <input 
+                    type="text" 
+                    id="leaderboardSearch" 
+                    class="leaderboard-filter-search"
+                    placeholder="Пошук користувача..."
+                    aria-label="Пошук користувача"
+                />
+            </div>
+        </div>
+        
+        <!-- List of users sorted by score (ExpPoints) -->
+        <!-- Structure: Rank | Avatar | Username | Level | Score | Pomodoro Sessions -->
+        <ul class="leaderboard-list" id="leaderboardList">
+            @if (Model?.Entries != null && Model.Entries.Count > 0)
+            {
+                foreach (var e in Model.Entries)
+                {
+                    <li class="leaderboard-item">
+                        <!-- User rank (1st, 2nd, 3rd, etc.) -->
+                        <span class="leaderboard-rank">@e.Rank</span>
+                        
+                        <!-- User avatar image -->
+                        <img class="leaderboard-avatar" src="@(e.AvatarUrl ?? Url.Content("~/images/default-avatar.svg"))" alt="Аватар користувача @e.Username" />
+                        
+                        <!-- User display name -->
+                        <span class="leaderboard-name">@e.Username</span>
+                        
+                        <!-- User level -->
+                        <span class="leaderboard-level" data-level="@e.Level">Рівень @e.Level</span>
+                        
+                        <!-- User experience points score -->
+                        <span class="leaderboard-score" data-xp="@e.Score">@e.Score XP</span>
+                        
+                        <!-- Pomodoro sessions count -->
+                        <span class="leaderboard-pomodoro" data-pomodoro="@e.PomodoroSessions"> @e.PomodoroSessions</span>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="leaderboard-empty">Ще немає користувачів у лідербордом</li>
+            }
+        </ul>
+    </div>
+</div>

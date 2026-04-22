@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DOJO2.Models;
 using DOJO2.Application.Interfaces;
+using DOJO2.Application.ViewModels;
 using System.Security.Claims;
 
 namespace DOJO2.Presentation.Controllers;
@@ -45,7 +46,6 @@ public class HomeController : Controller
         {
             _logger.LogWarning("Помилка при отриманні статистики: {Message}", result.Message);
         }
-
 
         return View();
     }

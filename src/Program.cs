@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using DOJO2.Application.Services;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -138,6 +139,7 @@ try
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IStatisticsService, StatisticsService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
+    builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
     var app = builder.Build();
 

@@ -1,0 +1,33 @@
+﻿@model DOJO2.Application.ViewModels.LeaderboardViewModel
+
+<ul class="leaderboard-list">
+    @if (Model?.Entries != null && Model.Entries.Count > 0)
+    {
+        foreach (var e in Model.Entries)
+        {
+            <li class="leaderboard-item">
+                <!-- User rank (1st, 2nd, 3rd, etc.) -->
+                <span class="leaderboard-rank">@e.Rank</span>
+                
+                <!-- User avatar image -->
+                <img class="leaderboard-avatar" src="@(e.AvatarUrl ?? Url.Content("~/images/default-avatar.svg"))" alt="Аватар користувача @e.Username" />
+                
+                <!-- User display name -->
+                <span class="leaderboard-name">@e.Username</span>
+                
+                <!-- User level -->
+                <span class="leaderboard-level" data-level="@e.Level">Рівень @e.Level</span>
+                
+                <!-- User experience points score -->
+                <span class="leaderboard-score" data-xp="@e.Score">@e.Score XP</span>
+                
+                <!-- Pomodoro sessions count -->
+                <span class="leaderboard-pomodoro" data-pomodoro="@e.PomodoroSessions">@e.PomodoroSessions</span>
+            </li>
+        }
+    }
+    else
+    {
+        <li class="leaderboard-empty">Ще немає користувачів у лідербордом</li>
+    }
+</ul>
