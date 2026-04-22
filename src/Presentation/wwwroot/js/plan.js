@@ -15,6 +15,12 @@
     "uploadPlanAttachmentBtn",
   );
   const planAttachmentsList = document.getElementById("planAttachmentsList");
+  const detailSubTasksSummary = document.getElementById(
+    "detailSubTasksSummary",
+  );
+  const editPlanSubTasksList = document.getElementById("editPlanSubTasksList");
+  const newPlanSubTaskTitle = document.getElementById("newPlanSubTaskTitle");
+  const addPlanSubTaskBtn = document.getElementById("addPlanSubTaskBtn");
 
   if (
     !planModal ||
@@ -39,6 +45,11 @@
     ATTACHMENT_DELETE_ERROR: "Не вдалося видалити вкладення",
     PLAN_ATTACHMENTS_UPLOAD_ERROR:
       "План створено, але частину файлів не вдалося прикріпити",
+    SUBTASK_LOAD_ERROR: "Не вдалося завантажити підзадачі",
+    SUBTASK_CREATE_ERROR: "Не вдалося додати підзадачу",
+    SUBTASK_UPDATE_ERROR: "Не вдалося оновити підзадачу",
+    SUBTASK_DELETE_ERROR: "Не вдалося видалити підзадачу",
+    SUBTASK_STATUS_ERROR: "Не вдалося оновити статус підзадачі",
   };
 
   const PRIORITY_LABELS = {
@@ -49,6 +60,7 @@
 
   let currentWeekStartIso = null;
   let currentWeekEndIso = null;
+  let currentPlanSubTasks = [];
 
   const applyInitialWeekState = () => {
     if (globalThis.dashboardWeekState) {
@@ -342,6 +354,14 @@
       const titleSpan = document.createElement("div");
       titleSpan.className = "todo-item-title";
       titleSpan.textContent = plan.title;
+
+      if (plan.hasSubTasks) {
+        const subtaskMarker = document.createElement("span");
+        subtaskMarker.className = "todo-item-subtask-marker";
+        subtaskMarker.textContent = `Підзадач: ${plan.subTaskCount || 0}`;
+        titleSpan.appendChild(subtaskMarker);
+      }
+
       contentDiv.appendChild(titleSpan);
 
       if (plan.description) {
@@ -468,12 +488,21 @@
     if (!modal) return;
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
+    delete modal.dataset.currentPlanId;
     if (planAttachmentsList) {
       planAttachmentsList.innerHTML = "";
+    }
+    if (editPlanSubTasksList) {
+      editPlanSubTasksList.innerHTML = "";
     }
     if (planAttachmentInput) {
       planAttachmentInput.value = "";
     }
+    if (newPlanSubTaskTitle) {
+      newPlanSubTaskTitle.value = "";
+    }
+    currentPlanSubTasks = [];
+    updateSubTaskSummary(0);
     // reset view/edit states
     document.getElementById("planDetailsView").style.display = "block";
     document.getElementById("planEditForm").style.display = "none";
@@ -497,6 +526,276 @@
       console.error(err);
       showError("Не вдалося завантажити план");
       return null;
+    }
+  };
+
+  const getCurrentPlanIdFromModal = () => {
+    const modal = document.getElementById("planDetailsModal");
+    const rawId = modal?.dataset?.currentPlanId;
+    return rawId ? Number(rawId) : null;
+  };
+
+  const renderPlanSubTasks = (subTasks) => {
+    if (!editPlanSubTasksList) {
+      return;
+    }
+
+    editPlanSubTasksList.innerHTML = "";
+
+    if (!Array.isArray(subTasks) || subTasks.length === 0) {
+      editPlanSubTasksList.innerHTML =
+        '<p class="plan-subtasks-empty">Підзадач поки немає</p>';
+      return;
+    }
+
+    subTasks.forEach((subTask) => {
+      const row = document.createElement("div");
+      row.className = `plan-subtask-item ${subTask.isCompleted ? "is-completed" : ""}`;
+
+      const left = document.createElement("div");
+      left.className = "plan-subtask-left";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = Boolean(subTask.isCompleted);
+      checkbox.className = "plan-subtask-checkbox";
+      checkbox.setAttribute("aria-label", "Перемкнути статус підзадачі");
+      checkbox.addEventListener("change", async () => {
+        await togglePlanSubTaskStatus(subTask.id, checkbox.checked);
+      });
+
+      const title = document.createElement("span");
+      title.className = "plan-subtask-title";
+      title.textContent = subTask.title;
+
+      left.appendChild(checkbox);
+      left.appendChild(title);
+
+      const actions = document.createElement("div");
+      actions.className = "plan-subtask-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "plan-subtask-action";
+      editBtn.textContent = "Редагувати";
+      editBtn.addEventListener("click", async () => {
+        const nextTitle = prompt("Нова назва підзадачі", subTask.title);
+        if (nextTitle === null) {
+          return;
+        }
+        await updatePlanSubTask(subTask.id, nextTitle);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "plan-subtask-action is-danger";
+      deleteBtn.textContent = "Видалити";
+      deleteBtn.addEventListener("click", async () => {
+        await deletePlanSubTask(subTask.id);
+      });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+
+      row.appendChild(left);
+      row.appendChild(actions);
+      editPlanSubTasksList.appendChild(row);
+    });
+  };
+
+  const updateSubTaskSummary = (count) => {
+    if (!detailSubTasksSummary) {
+      return;
+    }
+
+    detailSubTasksSummary.textContent = String(count);
+  };
+
+  const loadPlanSubTasks = async (planId) => {
+    if (!planId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/plan/${planId}/subtasks`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.SUBTASK_LOAD_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.SUBTASK_LOAD_ERROR);
+        return;
+      }
+
+      currentPlanSubTasks = data.data || [];
+      updateSubTaskSummary(currentPlanSubTasks.length);
+      renderPlanSubTasks(currentPlanSubTasks);
+    } catch (error) {
+      console.error("Помилка завантаження підзадач", error);
+      showError(MESSAGES.SUBTASK_LOAD_ERROR);
+    }
+  };
+
+  const createPlanSubTask = async () => {
+    const planId = getCurrentPlanIdFromModal();
+    if (!planId || !newPlanSubTaskTitle) {
+      return;
+    }
+
+    const title = newPlanSubTaskTitle.value.trim();
+    if (!title) {
+      showError("Назва підзадачі не може бути порожньою");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/plan/${planId}/subtasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.SUBTASK_CREATE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.SUBTASK_CREATE_ERROR);
+        return;
+      }
+
+      newPlanSubTaskTitle.value = "";
+      await loadPlanSubTasks(planId);
+      await loadPlans();
+    } catch (error) {
+      console.error("Помилка створення підзадачі", error);
+      showError(MESSAGES.SUBTASK_CREATE_ERROR);
+    }
+  };
+
+  const updatePlanSubTask = async (subTaskId, nextTitle) => {
+    const planId = getCurrentPlanIdFromModal();
+    if (!planId) {
+      return;
+    }
+
+    const title = String(nextTitle || "").trim();
+    if (!title) {
+      showError("Назва підзадачі не може бути порожньою");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/plan/${planId}/subtasks/${subTaskId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.SUBTASK_UPDATE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.SUBTASK_UPDATE_ERROR);
+        return;
+      }
+
+      await loadPlanSubTasks(planId);
+      await loadPlans();
+    } catch (error) {
+      console.error("Помилка оновлення підзадачі", error);
+      showError(MESSAGES.SUBTASK_UPDATE_ERROR);
+    }
+  };
+
+  const togglePlanSubTaskStatus = async (subTaskId, isCompleted) => {
+    const planId = getCurrentPlanIdFromModal();
+    if (!planId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/plan/${planId}/subtasks/${subTaskId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isCompleted }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.SUBTASK_STATUS_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.SUBTASK_STATUS_ERROR);
+        return;
+      }
+
+      await loadPlanSubTasks(planId);
+      await loadPlans();
+    } catch (error) {
+      console.error("Помилка зміни статусу підзадачі", error);
+      showError(MESSAGES.SUBTASK_STATUS_ERROR);
+    }
+  };
+
+  const deletePlanSubTask = async (subTaskId) => {
+    const planId = getCurrentPlanIdFromModal();
+    if (!planId) {
+      return;
+    }
+
+    const hasConfirmed = confirm("Видалити підзадачу?");
+    if (!hasConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/plan/${planId}/subtasks/${subTaskId}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.SUBTASK_DELETE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.SUBTASK_DELETE_ERROR);
+        return;
+      }
+
+      await loadPlanSubTasks(planId);
+      await loadPlans();
+    } catch (error) {
+      console.error("Помилка видалення підзадачі", error);
+      showError(MESSAGES.SUBTASK_DELETE_ERROR);
     }
   };
 
@@ -689,6 +988,7 @@
     document.getElementById("detailStatus").textContent = plan.isCompleted
       ? "Виконано"
       : "Активний";
+    updateSubTaskSummary(plan.subTaskCount || 0);
 
     // Update priority badge with proper class and label
     const badge = document.getElementById("detailPriorityBadge");
@@ -728,6 +1028,7 @@
     }
 
     await loadPlanAttachments(planId);
+    await loadPlanSubTasks(planId);
   };
 
   const fillPlanEditForm = (plan) => {
@@ -795,6 +1096,23 @@
       });
     }
 
+    if (addPlanSubTaskBtn) {
+      addPlanSubTaskBtn.addEventListener("click", async () => {
+        await createPlanSubTask();
+      });
+    }
+
+    if (newPlanSubTaskTitle) {
+      newPlanSubTaskTitle.addEventListener("keydown", async (event) => {
+        if (event.key !== "Enter") {
+          return;
+        }
+
+        event.preventDefault();
+        await createPlanSubTask();
+      });
+    }
+
     document
       .getElementById("editPlanBtn")
       .addEventListener("click", async () => {
@@ -804,6 +1122,7 @@
         const plan = await loadPlanDetails(planId);
         if (!plan) return;
         fillPlanEditForm(plan);
+        await loadPlanSubTasks(planId);
         document.getElementById("planDetailsView").style.display = "none";
         document.getElementById("planEditForm").style.display = "block";
       });
@@ -895,7 +1214,7 @@
     const badge = document.createElement("div");
     const priorityClass = plan.priority ? plan.priority : 2;
     badge.className = `plan-slot plan-priority-${priorityClass} ${plan.isCompleted ? "plan-completed" : ""}`;
-    badge.textContent = plan.title;
+    badge.textContent = `${plan.title}${plan.hasSubTasks ? " • ○" : ""}`;
     badge.title = plan.description || "";
     badge.tabIndex = 0;
     badge.dataset.planId = plan.id;

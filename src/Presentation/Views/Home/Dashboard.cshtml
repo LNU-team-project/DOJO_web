@@ -395,6 +395,9 @@
                 <div class="plan-details-meta-row" style="margin-top:12px;">
                     <span><strong>Дата та час:</strong>&nbsp;<span id="detailDateTime">-</span></span>
                 </div>
+                <div class="plan-details-meta-row" style="margin-top:8px;">
+                    <span><strong>Підзадачі:</strong>&nbsp;<span id="detailSubTasksSummary">0</span></span>
+                </div>
             </div>
 
             <div class="plan-details-card">
@@ -444,6 +447,21 @@
                         <label class="priority-radio"><input type="radio" name="editPlanPriority" value="3" class="priority-input"> <span class="priority-label priority-high"><span class="priority-dot"></span> Висока</span></label>
                     </div>
                 </fieldset>
+            </div>
+
+            <div class="plan-subtasks-editor">
+                <label for="newPlanSubTaskTitle">Підзадачі</label>
+                <div class="plan-subtask-create-row">
+                    <input type="text"
+                           id="newPlanSubTaskTitle"
+                           class="form-control"
+                           maxlength="255"
+                           placeholder="Додайте нову підзадачу" />
+                    <button type="button" class="btn-secondary" id="addPlanSubTaskBtn">Додати</button>
+                </div>
+                <div id="editPlanSubTasksList" class="plan-subtasks-list">
+                    <p class="plan-subtasks-empty">Підзадач поки немає</p>
+                </div>
             </div>
 
             <div class="todo-modal-footer">

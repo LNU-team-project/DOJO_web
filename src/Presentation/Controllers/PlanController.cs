@@ -183,6 +183,81 @@ public class PlanController : BaseApiController
         return ToActionResult(result);
     }
 
+    [HttpGet("{id:int}/subtasks")]
+    public async Task<IActionResult> GetPlanSubTasks(int id)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.GetPlanSubTasksAsync(id, userId);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{id:int}/subtasks")]
+    public async Task<IActionResult> CreatePlanSubTask(int id, [FromBody] PlanSubTaskCreateViewModel? model)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.CreatePlanSubTaskAsync(id, userId, model);
+        return ToActionResult(result);
+    }
+
+    [HttpPut("{id:int}/subtasks/{subTaskId:int}")]
+    public async Task<IActionResult> UpdatePlanSubTask(int id, int subTaskId, [FromBody] PlanSubTaskCreateViewModel? model)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.UpdatePlanSubTaskAsync(id, subTaskId, userId, model);
+        return ToActionResult(result);
+    }
+
+    [HttpPut("{id:int}/subtasks/{subTaskId:int}/status")]
+    public async Task<IActionResult> TogglePlanSubTaskStatus(int id, int subTaskId, [FromBody] PlanSubTaskStatusViewModel? model)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        if (model == null)
+        {
+            return BadRequest(new { success = false, message = "Модель статусу не може бути порожньою" });
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.TogglePlanSubTaskStatusAsync(id, subTaskId, userId, model.IsCompleted);
+        return ToActionResult(result);
+    }
+
+    [HttpDelete("{id:int}/subtasks/{subTaskId:int}")]
+    public async Task<IActionResult> DeletePlanSubTask(int id, int subTaskId)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _planService.DeletePlanSubTaskAsync(id, subTaskId, userId);
+        return ToActionResult(result);
+    }
+
     private static async Task<FileUploadData?> BuildUploadDataAsync(IFormFile? file)
     {
         if (file == null)

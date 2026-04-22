@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.Services;
@@ -94,7 +95,14 @@ public class LeaderboardServiceTests
         var userSet = BuildMockDbSet(users);
         var userManagerMock = new Mock<UserManager<AppUser>>(
             new Mock<IUserStore<AppUser>>().Object,
-            null, null, null, null, null, null, null, null);
+            Mock.Of<IOptions<IdentityOptions>>(),
+            Mock.Of<IPasswordHasher<AppUser>>(),
+            Array.Empty<IUserValidator<AppUser>>(),
+            Array.Empty<IPasswordValidator<AppUser>>(),
+            Mock.Of<ILookupNormalizer>(),
+            new IdentityErrorDescriber(),
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<UserManager<AppUser>>>());
         
         userManagerMock.Setup(m => m.Users).Returns(userSet.Object);
         
