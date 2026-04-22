@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
 
     public DbSet<Goal> Goals => Set<Goal>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<ScheduleItem> Schedules => Set<ScheduleItem>();
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
@@ -135,6 +136,41 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.HasIndex(task => task.ParentTaskId);
             e.HasIndex(task => task.IsCompleted);
             e.HasIndex(task => task.IsPlan);
+        });
+
+        // ── ScheduleItem ─────────────────────────────────────
+        builder.Entity<ScheduleItem>(e =>
+        {
+            e.ToTable("schedules", tb =>
+            {
+                tb.HasCheckConstraint("chk_schedule_priority", "priority BETWEEN 1 AND 3");
+                tb.HasCheckConstraint("chk_schedule_interval", "recurrence_interval > 0");
+                tb.HasCheckConstraint("chk_schedule_week_mask", "weekly_days_mask BETWEEN 0 AND 127");
+            });
+
+            e.HasKey(schedule => schedule.Id);
+            e.Property(schedule => schedule.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(schedule => schedule.UserId).HasColumnName("user_id");
+            e.Property(schedule => schedule.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            e.Property(schedule => schedule.Description).HasColumnName("description");
+            e.Property(schedule => schedule.StartAt).HasColumnName("start_at");
+            e.Property(schedule => schedule.DurationMinutes).HasColumnName("duration_minutes").HasDefaultValue((short)60);
+            e.Property(schedule => schedule.Priority).HasColumnName("priority").HasDefaultValue((short)2);
+            e.Property(schedule => schedule.RecurrenceType).HasColumnName("recurrence_type").HasMaxLength(16).HasDefaultValue("none");
+            e.Property(schedule => schedule.RecurrenceInterval).HasColumnName("recurrence_interval").HasDefaultValue((short)1);
+            e.Property(schedule => schedule.WeeklyDaysMask).HasColumnName("weekly_days_mask").HasDefaultValue((short)0);
+            e.Property(schedule => schedule.RecurrenceEndDate).HasColumnName("recurrence_end_date");
+            e.Property(schedule => schedule.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            e.Property(schedule => schedule.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(schedule => schedule.User)
+                .WithMany()
+                .HasForeignKey(schedule => schedule.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(schedule => schedule.UserId);
+            e.HasIndex(schedule => schedule.StartAt);
+            e.HasIndex(schedule => schedule.IsActive);
         });
 
         // ── Pomodoro ──────────────────────────────────────────

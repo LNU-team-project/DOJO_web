@@ -134,6 +134,7 @@ try
     builder.Services.AddScoped<ITodoService, TodoService>();
     builder.Services.AddScoped<IHeroService, HeroService>();
     builder.Services.AddScoped<IPlanService, PlanService>();
+    builder.Services.AddScoped<IScheduleService, ScheduleService>();
     builder.Services.AddScoped<ICalendarService, CalendarService>();
     builder.Services.AddScoped<IPomodoroService, PomodoroService>();
     builder.Services.AddScoped<IUserService, UserService>();
