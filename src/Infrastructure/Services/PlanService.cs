@@ -19,10 +19,14 @@ public class PlanService : IPlanService
     }
 
     private const string PlanNotFoundMsg = "План не знайдено";
+    private const string SubTaskNotFoundMsg = "Підзадачу не знайдено";
+    private const string SubTaskTitleRequiredMsg = "Назва підзадачі не може бути порожньою";
+    private const string SubTaskTitleTooLongMsg = "Назва підзадачі не може перевищувати 255 символів";
     private const string InvalidFileMsg = "Оберіть файл для завантаження";
     private const string FileTooLargeMsg = "Розмір файлу не може перевищувати 10MB";
     private const string InvalidFileTypeMsg = "Недопустимий тип файлу";
     private const string AttachmentNotFoundMsg = "Вкладення не знайдено";
+    private const int MaxTaskTitleLength = 255;
     private const int MaxFileNameLength = 255;
     private const long MaxAttachmentSizeInBytes = 10 * 1024 * 1024;
     private const string PlanAttachmentDirectory = "uploads/plan-attachments";
@@ -52,9 +56,9 @@ public class PlanService : IPlanService
             return Result<PlanItemViewModel>.FailureResult("Назва плану не може бути порожньою");
         }
 
-        if (model.Title.Length > 255)
+        if (model.Title.Length > MaxTaskTitleLength)
         {
-            return Result<PlanItemViewModel>.FailureResult("Назва плану не може перевищувати 255 символів");
+            return Result<PlanItemViewModel>.FailureResult($"Назва плану не може перевищувати {MaxTaskTitleLength} символів");
         }
 
         if (model.ScheduledAt == null)
@@ -83,14 +87,21 @@ public class PlanService : IPlanService
     public async Task<Result<PlanListViewModel>> GetUserPlansAsync(int userId)
     {
         var plans = await _context.Tasks
-            .Where(t => t.UserId == userId && t.IsPlan)
+            .Where(t => t.UserId == userId && t.IsPlan && t.ParentTaskId == null)
             .OrderBy(t => t.ScheduledAt)
             .ToListAsync();
 
+        var planIds = plans.Select(p => p.Id).ToList();
+        var subTaskCounts = await _context.Tasks
+            .Where(t => t.ParentTaskId != null && planIds.Contains(t.ParentTaskId.Value))
+            .GroupBy(t => t.ParentTaskId!.Value)
+            .Select(g => new { PlanId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PlanId, x => x.Count);
+
         var vm = new PlanListViewModel
         {
-            IncompletePlans = plans.Where(p => !p.IsCompleted).Select(MapToViewModel).ToList(),
-            CompletedPlans = plans.Where(p => p.IsCompleted).OrderByDescending(p => p.CompletedAt).Select(MapToViewModel).ToList()
+            IncompletePlans = plans.Where(p => !p.IsCompleted).Select(p => MapToViewModel(p, subTaskCounts.GetValueOrDefault(p.Id, 0))).ToList(),
+            CompletedPlans = plans.Where(p => p.IsCompleted).OrderByDescending(p => p.CompletedAt).Select(p => MapToViewModel(p, subTaskCounts.GetValueOrDefault(p.Id, 0))).ToList()
         };
 
         return Result<PlanListViewModel>.SuccessResult(vm, "Плани отримано");
@@ -109,8 +120,26 @@ public class PlanService : IPlanService
             return Result<bool>.FailureResult("План вже виконаний");
         }
 
+        var completedAt = DateTime.UtcNow;
+
+        var activeSubTasks = await _context.Tasks
+            .Where(t => t.UserId == userId && t.ParentTaskId == planId && !t.IsCompleted)
+            .ToListAsync();
+
+        foreach (var subTask in activeSubTasks)
+        {
+            subTask.IsCompleted = true;
+            subTask.CompletedAt ??= completedAt;
+        }
+
         plan.IsCompleted = true;
-        plan.CompletedAt = DateTime.UtcNow;
+        plan.CompletedAt = completedAt;
+
+        if (activeSubTasks.Count > 0)
+        {
+            _context.Tasks.UpdateRange(activeSubTasks);
+        }
+
         _context.Tasks.Update(plan);
         await _context.SaveChangesAsync();
         return Result<bool>.SuccessResult(true, "План позначено виконаним");
@@ -155,7 +184,8 @@ public class PlanService : IPlanService
         if (plan == null)
             return Result<PlanItemViewModel>.FailureResult(PlanNotFoundMsg);
 
-        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan), "План отримано");
+        var subTaskCount = await _context.Tasks.CountAsync(t => t.ParentTaskId == plan.Id);
+        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan, subTaskCount), "План отримано");
     }
 
     public async Task<Result<PlanItemViewModel>> UpdatePlanAsync(int planId, int userId, PlanCreateViewModel? model)
@@ -170,8 +200,8 @@ public class PlanService : IPlanService
         if (string.IsNullOrWhiteSpace(model.Title))
             return Result<PlanItemViewModel>.FailureResult("Назва плану не може бути порожньою");
 
-        if (model.Title.Length > 255)
-            return Result<PlanItemViewModel>.FailureResult("Назва плану не може перевищувати 255 символів");
+        if (model.Title.Length > MaxTaskTitleLength)
+            return Result<PlanItemViewModel>.FailureResult($"Назва плану не може перевищувати {MaxTaskTitleLength} символів");
 
         if (model.ScheduledAt == null)
             return Result<PlanItemViewModel>.FailureResult("Оберіть дату та час плану");
@@ -185,7 +215,9 @@ public class PlanService : IPlanService
         _context.Tasks.Update(plan);
         await _context.SaveChangesAsync();
 
-        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan), "План оновлено");
+        var subTaskCount = await _context.Tasks.CountAsync(t => t.ParentTaskId == plan.Id);
+
+        return Result<PlanItemViewModel>.SuccessResult(MapToViewModel(plan, subTaskCount), "План оновлено");
     }
 
     public async Task<Result<PlanAttachmentItemViewModel>> UploadPlanAttachmentAsync(int planId, int userId, FileUploadData? file)
@@ -287,12 +319,168 @@ public class PlanService : IPlanService
         return Result<bool>.SuccessResult(true, "Вкладення видалено");
     }
 
-    private async Task<TaskItem?> GetUserPlanAsync(int planId, int userId)
+    public async Task<Result<List<PlanSubTaskItemViewModel>>> GetPlanSubTasksAsync(int planId, int userId)
     {
-        return await _context.Tasks.FirstOrDefaultAsync(p => p.Id == planId && p.UserId == userId && p.IsPlan);
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+        {
+            return Result<List<PlanSubTaskItemViewModel>>.FailureResult(PlanNotFoundMsg);
+        }
+
+        var subTasks = await _context.Tasks
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.ParentTaskId == planId)
+            .OrderBy(t => t.IsCompleted)
+            .ThenBy(t => t.CreatedAt)
+            .Select(t => new PlanSubTaskItemViewModel
+            {
+                Id = t.Id,
+                ParentPlanId = t.ParentTaskId ?? 0,
+                Title = t.Title,
+                IsCompleted = t.IsCompleted,
+                CreatedAt = t.CreatedAt
+            })
+            .ToListAsync();
+
+        return Result<List<PlanSubTaskItemViewModel>>.SuccessResult(subTasks, "Підзадачі завантажено");
     }
 
-    private static PlanItemViewModel MapToViewModel(TaskItem plan)
+    public async Task<Result<PlanSubTaskItemViewModel>> CreatePlanSubTaskAsync(int planId, int userId, PlanSubTaskCreateViewModel? model)
+    {
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+        {
+            return Result<PlanSubTaskItemViewModel>.FailureResult(PlanNotFoundMsg);
+        }
+
+        var validationResult = ValidateSubTaskModel(model);
+        if (validationResult != null)
+        {
+            return validationResult;
+        }
+
+        var subTask = new TaskItem
+        {
+            UserId = userId,
+            ParentTaskId = plan.Id,
+            IsPlan = false,
+            IsCompleted = false,
+            Title = model!.Title.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            Priority = plan.Priority
+        };
+
+        _context.Tasks.Add(subTask);
+        await _context.SaveChangesAsync();
+
+        return Result<PlanSubTaskItemViewModel>.SuccessResult(MapToSubTaskViewModel(subTask), "Підзадачу додано");
+    }
+
+    public async Task<Result<PlanSubTaskItemViewModel>> UpdatePlanSubTaskAsync(int planId, int subTaskId, int userId, PlanSubTaskCreateViewModel? model)
+    {
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+        {
+            return Result<PlanSubTaskItemViewModel>.FailureResult(PlanNotFoundMsg);
+        }
+
+        var validationResult = ValidateSubTaskModel(model);
+        if (validationResult != null)
+        {
+            return validationResult;
+        }
+
+        var subTask = await GetPlanSubTaskAsync(planId, subTaskId, userId);
+        if (subTask == null)
+        {
+            return Result<PlanSubTaskItemViewModel>.FailureResult(SubTaskNotFoundMsg);
+        }
+
+        subTask.Title = model!.Title.Trim();
+
+        _context.Tasks.Update(subTask);
+        await _context.SaveChangesAsync();
+
+        return Result<PlanSubTaskItemViewModel>.SuccessResult(MapToSubTaskViewModel(subTask), "Підзадачу оновлено");
+    }
+
+    public async Task<Result<bool>> TogglePlanSubTaskStatusAsync(int planId, int subTaskId, int userId, bool isCompleted)
+    {
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+        {
+            return Result<bool>.FailureResult(PlanNotFoundMsg);
+        }
+
+        var subTask = await GetPlanSubTaskAsync(planId, subTaskId, userId);
+        if (subTask == null)
+        {
+            return Result<bool>.FailureResult(SubTaskNotFoundMsg);
+        }
+
+        if (subTask.IsCompleted == isCompleted)
+        {
+            return Result<bool>.SuccessResult(true, "Статус підзадачі не змінився");
+        }
+
+        subTask.IsCompleted = isCompleted;
+        subTask.CompletedAt = isCompleted ? DateTime.UtcNow : null;
+
+        _context.Tasks.Update(subTask);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, isCompleted ? "Підзадачу виконано" : "Підзадачу повернуто в активні");
+    }
+
+    public async Task<Result<bool>> DeletePlanSubTaskAsync(int planId, int subTaskId, int userId)
+    {
+        var plan = await GetUserPlanAsync(planId, userId);
+        if (plan == null)
+        {
+            return Result<bool>.FailureResult(PlanNotFoundMsg);
+        }
+
+        var subTask = await GetPlanSubTaskAsync(planId, subTaskId, userId);
+        if (subTask == null)
+        {
+            return Result<bool>.FailureResult(SubTaskNotFoundMsg);
+        }
+
+        _context.Tasks.Remove(subTask);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, "Підзадачу видалено");
+    }
+
+    private async Task<TaskItem?> GetUserPlanAsync(int planId, int userId)
+    {
+        return await _context.Tasks.FirstOrDefaultAsync(p => p.Id == planId && p.UserId == userId && p.IsPlan && p.ParentTaskId == null);
+    }
+
+    private async Task<TaskItem?> GetPlanSubTaskAsync(int planId, int subTaskId, int userId)
+    {
+        return await _context.Tasks.FirstOrDefaultAsync(t =>
+            t.Id == subTaskId &&
+            t.UserId == userId &&
+            t.ParentTaskId == planId);
+    }
+
+    private static Result<PlanSubTaskItemViewModel>? ValidateSubTaskModel(PlanSubTaskCreateViewModel? model)
+    {
+        if (model == null || string.IsNullOrWhiteSpace(model.Title))
+        {
+            return Result<PlanSubTaskItemViewModel>.FailureResult(SubTaskTitleRequiredMsg);
+        }
+
+        if (model.Title.Length > MaxTaskTitleLength)
+        {
+            return Result<PlanSubTaskItemViewModel>.FailureResult(SubTaskTitleTooLongMsg);
+        }
+
+        return null;
+    }
+
+    private static PlanItemViewModel MapToViewModel(TaskItem plan, int subTaskCount = 0)
     {
         return new PlanItemViewModel
         {
@@ -302,7 +490,21 @@ public class PlanService : IPlanService
             ScheduledAt = plan.ScheduledAt,
             Priority = plan.Priority,
             IsCompleted = plan.IsCompleted,
-            PriorityLabel = GetPriorityLabel(plan.Priority)
+            PriorityLabel = GetPriorityLabel(plan.Priority),
+            HasSubTasks = subTaskCount > 0,
+            SubTaskCount = subTaskCount
+        };
+    }
+
+    private static PlanSubTaskItemViewModel MapToSubTaskViewModel(TaskItem subTask)
+    {
+        return new PlanSubTaskItemViewModel
+        {
+            Id = subTask.Id,
+            ParentPlanId = subTask.ParentTaskId ?? 0,
+            Title = subTask.Title,
+            IsCompleted = subTask.IsCompleted,
+            CreatedAt = subTask.CreatedAt
         };
     }
 

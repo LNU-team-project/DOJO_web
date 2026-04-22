@@ -17,6 +17,8 @@ public class PlanItemViewModel
     public short Priority { get; set; }
     public bool IsCompleted { get; set; }
     public string PriorityLabel { get; set; } = string.Empty;
+    public bool HasSubTasks { get; set; }
+    public int SubTaskCount { get; set; }
 }
 
 public class PlanListViewModel
@@ -31,4 +33,23 @@ public class PlanAttachmentItemViewModel
     public string FileName { get; set; } = string.Empty;
     public string FileUrl { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+}
+
+public class PlanSubTaskCreateViewModel
+{
+    public string Title { get; set; } = string.Empty;
+}
+
+public class PlanSubTaskItemViewModel
+{
+    public int Id { get; set; }
+    public int ParentPlanId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public bool IsCompleted { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class PlanSubTaskStatusViewModel
+{
+    public bool IsCompleted { get; set; }
 }

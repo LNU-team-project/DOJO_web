@@ -218,6 +218,35 @@ public class PlanServiceTests
     }
 
     [Fact]
+    // Нові тести
+    public async Task MarkPlanAsCompleted_AlsoCompletesAllSubTasks()
+    {
+        using var context = CreateContext();
+
+        var plan = new TaskItem { UserId = 1, Title = "План", IsPlan = true, IsCompleted = false };
+        context.Tasks.Add(plan);
+        await context.SaveChangesAsync();
+
+        var subTask1 = new TaskItem { UserId = 1, Title = "П1", ParentTaskId = plan.Id, IsCompleted = false };
+        var subTask2 = new TaskItem { UserId = 1, Title = "П2", ParentTaskId = plan.Id, IsCompleted = false };
+        context.Tasks.AddRange(subTask1, subTask2);
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+        var result = await service.MarkPlanAsCompletedAsync(plan.Id, 1);
+
+        Assert.True(result.Success);
+
+        var updatedSubTasks = await context.Tasks
+            .Where(t => t.ParentTaskId == plan.Id)
+            .ToListAsync();
+
+        Assert.NotEmpty(updatedSubTasks);
+        Assert.All(updatedSubTasks, t => Assert.True(t.IsCompleted));
+        Assert.All(updatedSubTasks, t => Assert.NotNull(t.CompletedAt));
+    }
+
+    [Fact]
     public async Task MarkPlanAsIncomplete_SetsFlags()
     {
         using var context = CreateContext();
@@ -352,5 +381,131 @@ public class PlanServiceTests
         Assert.Equal((short)3, updated.Priority);
         Assert.Equal(when, updated.ScheduledAt);
         contextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    // Нові тести
+    public async Task CreatePlanSubTaskAsync_ReturnsFailure_WhenPlanNotFound()
+    {
+        using var context = CreateContext();
+        var service = new PlanService(context);
+
+        var result = await service.CreatePlanSubTaskAsync(
+            100,
+            1,
+            new PlanSubTaskCreateViewModel { Title = "Підзадача" }
+        );
+
+        Assert.False(result.Success);
+        Assert.Contains("План не знайдено", result.Message);
+    }
+
+    [Fact]
+    public async Task CreatePlanSubTaskAsync_Succeeds_AndPersistsSubTask()
+    {
+        using var context = CreateContext();
+        var plan = new TaskItem
+        {
+            UserId = 1,
+            Title = "План",
+            IsPlan = true,
+            ScheduledAt = DateTime.UtcNow
+        };
+        context.Tasks.Add(plan);
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+        var result = await service.CreatePlanSubTaskAsync(
+            plan.Id,
+            1,
+            new PlanSubTaskCreateViewModel { Title = " Підзадача 1 " }
+        );
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal("Підзадача 1", result.Data!.Title);
+
+        var saved = await context.Tasks.FirstOrDefaultAsync(t => t.Id == result.Data.Id);
+        Assert.NotNull(saved);
+        Assert.Equal(plan.Id, saved!.ParentTaskId);
+        Assert.False(saved.IsPlan);
+        Assert.False(saved.IsCompleted);
+    }
+
+    [Fact]
+    public async Task GetPlanSubTasksAsync_ReturnsOnlyPlanSubTasks()
+    {
+        using var context = CreateContext();
+        var plan = new TaskItem { UserId = 1, Title = "План", IsPlan = true, ScheduledAt = DateTime.UtcNow };
+        var anotherPlan = new TaskItem { UserId = 1, Title = "Інший", IsPlan = true, ScheduledAt = DateTime.UtcNow };
+        context.Tasks.AddRange(plan, anotherPlan);
+        await context.SaveChangesAsync();
+
+        context.Tasks.AddRange(
+            new TaskItem { UserId = 1, Title = "s1", ParentTaskId = plan.Id, IsCompleted = false, CreatedAt = DateTime.UtcNow },
+            new TaskItem { UserId = 1, Title = "s2", ParentTaskId = plan.Id, IsCompleted = true, CreatedAt = DateTime.UtcNow },
+            new TaskItem { UserId = 1, Title = "skip", ParentTaskId = anotherPlan.Id, IsCompleted = false, CreatedAt = DateTime.UtcNow }
+        );
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+        var result = await service.GetPlanSubTasksAsync(plan.Id, 1);
+
+        Assert.True(result.Success);
+        Assert.Equal(2, result.Data!.Count);
+        Assert.All(result.Data, subTask => Assert.Equal(plan.Id, subTask.ParentPlanId));
+    }
+
+    [Fact]
+    public async Task UpdatePlanSubTaskAsync_UpdatesSubTaskTitle()
+    {
+        using var context = CreateContext();
+        var plan = new TaskItem { UserId = 1, Title = "План", IsPlan = true, ScheduledAt = DateTime.UtcNow };
+        context.Tasks.Add(plan);
+        await context.SaveChangesAsync();
+
+        var subTask = new TaskItem { UserId = 1, Title = "Стара", ParentTaskId = plan.Id, IsCompleted = false };
+        context.Tasks.Add(subTask);
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+        var result = await service.UpdatePlanSubTaskAsync(
+            plan.Id,
+            subTask.Id,
+            1,
+            new PlanSubTaskCreateViewModel { Title = " Нова назва " }
+        );
+
+        Assert.True(result.Success);
+        Assert.Equal("Нова назва", result.Data!.Title);
+
+        var updated = await context.Tasks.FindAsync(subTask.Id);
+        Assert.Equal("Нова назва", updated!.Title);
+    }
+
+    [Fact]
+    public async Task ToggleAndDeletePlanSubTaskAsync_UpdatesStatus_AndDeletes()
+    {
+        using var context = CreateContext();
+        var plan = new TaskItem { UserId = 1, Title = "План", IsPlan = true, ScheduledAt = DateTime.UtcNow };
+        context.Tasks.Add(plan);
+        await context.SaveChangesAsync();
+
+        var subTask = new TaskItem { UserId = 1, Title = "Підзадача", ParentTaskId = plan.Id, IsCompleted = false };
+        context.Tasks.Add(subTask);
+        await context.SaveChangesAsync();
+
+        var service = new PlanService(context);
+
+        var completeResult = await service.TogglePlanSubTaskStatusAsync(plan.Id, subTask.Id, 1, true);
+        Assert.True(completeResult.Success);
+        var completed = await context.Tasks.FindAsync(subTask.Id);
+        Assert.True(completed!.IsCompleted);
+        Assert.NotNull(completed.CompletedAt);
+
+        var deleteResult = await service.DeletePlanSubTaskAsync(plan.Id, subTask.Id, 1);
+        Assert.True(deleteResult.Success);
+        var deleted = await context.Tasks.FindAsync(subTask.Id);
+        Assert.Null(deleted);
     }
 }

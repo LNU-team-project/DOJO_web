@@ -15,4 +15,9 @@ public interface IPlanService
     Task<Result<PlanAttachmentItemViewModel>> UploadPlanAttachmentAsync(int planId, int userId, FileUploadData? file);
     Task<Result<List<PlanAttachmentItemViewModel>>> GetPlanAttachmentsAsync(int planId, int userId);
     Task<Result<bool>> DeletePlanAttachmentAsync(int planId, int attachmentId, int userId);
+    Task<Result<List<PlanSubTaskItemViewModel>>> GetPlanSubTasksAsync(int planId, int userId);
+    Task<Result<PlanSubTaskItemViewModel>> CreatePlanSubTaskAsync(int planId, int userId, PlanSubTaskCreateViewModel? model);
+    Task<Result<PlanSubTaskItemViewModel>> UpdatePlanSubTaskAsync(int planId, int subTaskId, int userId, PlanSubTaskCreateViewModel? model);
+    Task<Result<bool>> TogglePlanSubTaskStatusAsync(int planId, int subTaskId, int userId, bool isCompleted);
+    Task<Result<bool>> DeletePlanSubTaskAsync(int planId, int subTaskId, int userId);
 }
