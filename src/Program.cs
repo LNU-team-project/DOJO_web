@@ -52,6 +52,7 @@ try
     builder.Services.Configure<AdminUsersOptions>(builder.Configuration.GetSection(AdminUsersOptions.SectionName));
     builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
     builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection(EmailSenderOptions.SectionName));
+    // Кеш: TTL береться з секції Cache в appsettings*.json
     builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.SectionName));
 
     builder.Services.AddMemoryCache();

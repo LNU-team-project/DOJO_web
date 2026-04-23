@@ -107,6 +107,7 @@ public class AdminService : IAdminService
             })
             .ToListAsync();
 
+        // Тривалість життя кешу береться з Cache:AdminUsersSeconds
         var cacheSeconds = _cacheOptions.AdminUsersSeconds > 0 ? _cacheOptions.AdminUsersSeconds : 180;
         _cache.Set(cacheKey, users, TimeSpan.FromSeconds(cacheSeconds));
 

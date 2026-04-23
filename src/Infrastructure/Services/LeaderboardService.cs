@@ -168,6 +168,7 @@ public class LeaderboardService : ILeaderboardService
         _cache.Set(
             cacheKey,
             loadedResult,
+            // Тривалість життя кешу береться з Cache:LeaderboardSeconds
             TimeSpan.FromSeconds(_cacheOptions.LeaderboardSeconds));
 
         return loadedResult;
