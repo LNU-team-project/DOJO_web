@@ -29,12 +29,10 @@ public class NotificationService : INotificationService
 
         var today = DateOnly.FromDateTime(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
         var tomorrow = today.AddDays(1);
-        var tomorrowStartUtc = DateTime.SpecifyKind(tomorrow.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var dayAfterTomorrowStartUtc = tomorrowStartUtc.AddDays(1);
         var notifications = new List<DashboardNotificationViewModel>();
 
         AddStreakWarning(user, today, notifications);
-        await AddPlanDueTomorrowNotificationsAsync(userId, tomorrowStartUtc, dayAfterTomorrowStartUtc, notifications);
+        await AddPlanDueTomorrowNotificationsAsync(userId, tomorrow, notifications);
 
         if (notifications.Count == 0)
         {
@@ -58,17 +56,17 @@ public class NotificationService : INotificationService
 
     private async Task AddPlanDueTomorrowNotificationsAsync(
         int userId,
-        DateTime tomorrowStartUtc,
-        DateTime dayAfterTomorrowStartUtc,
+        DateOnly tomorrow,
         ICollection<DashboardNotificationViewModel> notifications)
     {
+        var tomorrowStartUtc = tomorrow.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
         var tasksDueTomorrow = await _context.Tasks.AsNoTracking()
             .Where(task => task.UserId == userId
                 && !task.IsCompleted
                 && task.IsPlan
                 && task.ScheduledAt.HasValue
-                && task.ScheduledAt.Value >= tomorrowStartUtc
-                && task.ScheduledAt.Value < dayAfterTomorrowStartUtc)
+                && task.ScheduledAt.Value.Date == tomorrowStartUtc.Date)
             .OrderBy(task => task.ScheduledAt)
             .ThenBy(task => task.Title)
             .ToListAsync();

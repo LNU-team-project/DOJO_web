@@ -97,10 +97,10 @@ public class NotificationServiceTests
         using var context = CreateContext();
         var utcNow = new DateTime(2026, 4, 21, 10, 0, 0, DateTimeKind.Utc);
         var tomorrow = DateOnly.FromDateTime(utcNow).AddDays(1);
-        var tomorrowStartUtc = tomorrow.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var tomorrowScheduledAt = tomorrow.ToDateTime(new TimeOnly(15, 30), DateTimeKind.Utc);
         var user = CreateUser(TestUserId);
         context.Users.Add(user);
-        context.Tasks.Add(CreateTask(TestUserId, "Підготувати звіт", scheduledAt: tomorrowStartUtc, isPlan: true));
+        context.Tasks.Add(CreateTask(TestUserId, "Підготувати звіт", scheduledAt: tomorrowScheduledAt, isPlan: true));
         await context.SaveChangesAsync();
 
         var service = CreateService(context);

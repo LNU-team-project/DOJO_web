@@ -16,7 +16,7 @@
   const openNotificationsModalBtn = document.getElementById("openNotificationsModal");
   const closeNotificationsModalBtn = document.getElementById("closeNotificationsModal");
   const closeNotificationsModalFooterBtn = document.getElementById("closeNotificationsModalFooter");
-  const notificationsList = root.querySelector("[data-notifications-list]") || root.querySelector(".notifications-modal-list");
+  let notificationsList = root.querySelector("[data-notifications-list]") || root.querySelector(".notifications-modal-list");
 
   if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
     return;
@@ -138,24 +138,43 @@
       : "notification-item-info";
   };
 
+  const getNotificationsList = () => {
+    if (notificationsList) {
+      return notificationsList;
+    }
+
+    notificationsList = root.querySelector("[data-notifications-list]") || document.querySelector(".notifications-modal-list");
+    return notificationsList;
+  };
+
+  const renderNotificationsState = (badge, title, description) => {
+    const list = getNotificationsList();
+    if (!list) {
+      return;
+    }
+
+    list.innerHTML = `
+      <li class="notification-item notification-item-info">
+        <div class="notification-item-badge">${badge}</div>
+        <div class="notification-item-content">
+          <h3 class="notification-item-title">${title}</h3>
+          <p class="notification-item-description">${description}</p>
+        </div>
+      </li>`;
+  };
+
   const renderNotifications = (notifications) => {
-    if (!notificationsList) {
+    const list = getNotificationsList();
+    if (!list) {
       return;
     }
 
     if (!Array.isArray(notifications) || notifications.length === 0) {
-      notificationsList.innerHTML = `
-        <li class="notification-item notification-item-info">
-          <div class="notification-item-badge">Інфо</div>
-          <div class="notification-item-content">
-            <h3 class="notification-item-title">Немає нових сповіщень</h3>
-            <p class="notification-item-description">Зараз у вас немає важливих оновлень.</p>
-          </div>
-        </li>`;
+      renderNotificationsState("Інфо", "Немає нових сповіщень", "Зараз у вас немає важливих оновлень.");
       return;
     }
 
-    notificationsList.innerHTML = notifications
+    list.innerHTML = notifications
       .map((notification) => `
         <li class="notification-item ${getSeverityClass(notification)}">
           <div class="notification-item-badge">${notification.badge ?? "Інфо"}</div>
@@ -173,16 +192,7 @@
       return;
     }
 
-    if (notificationsList) {
-      notificationsList.innerHTML = `
-        <li class="notification-item notification-item-info">
-          <div class="notification-item-badge">Завантаження</div>
-          <div class="notification-item-content">
-            <h3 class="notification-item-title">Отримуємо сповіщення</h3>
-            <p class="notification-item-description">Зачекайте кілька секунд...</p>
-          </div>
-        </li>`;
-    }
+    renderNotificationsState("Завантаження", "Отримуємо актуальні повідомлення...", "Зачекайте кілька секунд...");
 
     try {
       const response = await fetch(notificationsUrl, { credentials: "include" });
@@ -221,7 +231,10 @@
       return;
     }
 
-    openNotificationsModalBtn.addEventListener("click", openNotificationsModal);
+    openNotificationsModalBtn.addEventListener("click", () => {
+      openNotificationsModal();
+      void loadNotifications();
+    });
 
     if (notificationsModalOverlay) {
       notificationsModalOverlay.addEventListener("click", closeNotificationsModal);
@@ -296,7 +309,7 @@
   });
 
   bindNotificationModalControls();
-  loadNotifications();
+  void loadNotifications();
 
   render();
 })();
