@@ -17,6 +17,148 @@ public class ScheduleServiceTests
     }
 
     [Fact]
+    public async Task CreateScheduleAsync_WithNullModel_ReturnsFailure()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var result = await service.CreateScheduleAsync(1, null);
+
+        Assert.False(result.Success);
+        Assert.Equal("Модель розкладу не може бути порожньою", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithInvalidDuration_ReturnsFailure()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var result = await service.CreateScheduleAsync(2, new ScheduleCreateViewModel
+        {
+            Title = "Deep Work",
+            StartAt = new DateTime(2026, 4, 23, 9, 0, 0, DateTimeKind.Utc),
+            DurationMinutes = 4,
+            RecurrenceType = "daily",
+            RecurrenceInterval = 1
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("Тривалість має бути від 5 до 720 хвилин", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithInvalidRecurrenceType_ReturnsFailure()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var result = await service.CreateScheduleAsync(3, new ScheduleCreateViewModel
+        {
+            Title = "Training",
+            StartAt = new DateTime(2026, 4, 23, 7, 30, 0, DateTimeKind.Utc),
+            DurationMinutes = 45,
+            RecurrenceType = "yearly",
+            RecurrenceInterval = 1
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("Недопустимий тип повторення", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithInvalidRecurrenceInterval_ReturnsFailure()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var result = await service.CreateScheduleAsync(4, new ScheduleCreateViewModel
+        {
+            Title = "English",
+            StartAt = new DateTime(2026, 4, 23, 18, 0, 0, DateTimeKind.Utc),
+            DurationMinutes = 60,
+            RecurrenceType = "weekly",
+            RecurrenceInterval = 0
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("Інтервал повторення має бути від 1 до 30", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_DailySchedule_CreatesAndReturnsMappedData()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var startAt = new DateTime(2026, 4, 23, 10, 15, 0, DateTimeKind.Unspecified);
+        var result = await service.CreateScheduleAsync(5, new ScheduleCreateViewModel
+        {
+            Title = "  Daily Focus  ",
+            Description = "  Work on important task  ",
+            StartAt = startAt,
+            DurationMinutes = 50,
+            Priority = 3,
+            RecurrenceType = "DAILY",
+            RecurrenceInterval = 1
+        });
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal("Розклад створено", result.Message);
+        Assert.Equal("Daily Focus", result.Data!.Title);
+        Assert.Equal("Work on important task", result.Data.Description);
+        Assert.Equal(DateTimeKind.Utc, result.Data.StartAt.Kind);
+        Assert.Equal("daily", result.Data.RecurrenceType);
+        Assert.Equal("Висока", result.Data.PriorityLabel);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WeeklyWithoutDays_UsesStartDayAsWeeklyMask()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var startAt = new DateTime(2026, 4, 27, 8, 0, 0, DateTimeKind.Utc); // Monday
+        var result = await service.CreateScheduleAsync(6, new ScheduleCreateViewModel
+        {
+            Title = "Sprint Planning",
+            StartAt = startAt,
+            DurationMinutes = 60,
+            RecurrenceType = "weekly",
+            RecurrenceInterval = 1,
+            WeeklyDays = new List<int>()
+        });
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Single(result.Data!.WeeklyDays);
+        Assert.Equal((int)DayOfWeek.Monday, result.Data.WeeklyDays[0]);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WeeklyWithSelectedDays_PersistsAllSelectedDays()
+    {
+        using var context = CreateContext();
+        var service = new ScheduleService(context);
+
+        var result = await service.CreateScheduleAsync(7, new ScheduleCreateViewModel
+        {
+            Title = "Gym",
+            StartAt = new DateTime(2026, 4, 23, 19, 0, 0, DateTimeKind.Utc),
+            DurationMinutes = 90,
+            RecurrenceType = "weekly",
+            RecurrenceInterval = 1,
+            WeeklyDays = new List<int> { 1, 3, 5 }
+        });
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal("weekly", result.Data!.RecurrenceType);
+        Assert.Equal(new List<int> { 1, 3, 5 }, result.Data.WeeklyDays);
+    }
+
+    [Fact]
     public async Task GetSchedulesForRangeAsync_WithNoEndDate_ReturnsOccurrencesInFarFuture()
     {
         using var context = CreateContext();
