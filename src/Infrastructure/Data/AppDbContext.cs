@@ -9,11 +9,14 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
 {
     private const string CreatedAtColumnName = "created_at";
     private const string NowSqlExpression = "NOW()";
+    private const string UserIdColumnName = "user_id";
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Goal> Goals => Set<Goal>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<ScheduleItem> Schedules => Set<ScheduleItem>();
+    public DbSet<ScheduleOccurrenceExclusion> ScheduleExclusions => Set<ScheduleOccurrenceExclusion>();
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
@@ -61,7 +64,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(g => g.Id);
             e.Property(g => g.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(g => g.UserId).HasColumnName("user_id");
+            e.Property(g => g.UserId).HasColumnName(UserIdColumnName);
             e.Property(g => g.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
             e.Property(g => g.Description).HasColumnName("description");
             e.Property(g => g.Deadline).HasColumnName("deadline");
@@ -101,7 +104,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(task => task.Id);
             e.Property(task => task.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(task => task.UserId).HasColumnName("user_id");
+            e.Property(task => task.UserId).HasColumnName(UserIdColumnName);
             e.Property(task => task.GoalId).HasColumnName("goal_id");
             e.Property(task => task.ParentTaskId).HasColumnName("parent_task_id");
             e.Property(task => task.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
@@ -137,6 +140,69 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.HasIndex(task => task.IsPlan);
         });
 
+        // ── ScheduleItem ─────────────────────────────────────
+        builder.Entity<ScheduleItem>(e =>
+        {
+            e.ToTable("schedules", tb =>
+            {
+                tb.HasCheckConstraint("chk_schedule_priority", "priority BETWEEN 1 AND 3");
+                tb.HasCheckConstraint("chk_schedule_interval", "recurrence_interval > 0");
+                tb.HasCheckConstraint("chk_schedule_week_mask", "weekly_days_mask BETWEEN 0 AND 127");
+            });
+
+            e.HasKey(schedule => schedule.Id);
+            e.Property(schedule => schedule.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(schedule => schedule.UserId).HasColumnName(UserIdColumnName);
+            e.Property(schedule => schedule.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            e.Property(schedule => schedule.Description).HasColumnName("description");
+            e.Property(schedule => schedule.StartAt).HasColumnName("start_at");
+            e.Property(schedule => schedule.DurationMinutes).HasColumnName("duration_minutes").HasDefaultValue((short)60);
+            e.Property(schedule => schedule.Priority).HasColumnName("priority").HasDefaultValue((short)2);
+            e.Property(schedule => schedule.RecurrenceType).HasColumnName("recurrence_type").HasMaxLength(16).HasDefaultValue("none");
+            e.Property(schedule => schedule.RecurrenceInterval).HasColumnName("recurrence_interval").HasDefaultValue((short)1);
+            e.Property(schedule => schedule.WeeklyDaysMask).HasColumnName("weekly_days_mask").HasDefaultValue((short)0);
+            e.Property(schedule => schedule.RecurrenceEndDate).HasColumnName("recurrence_end_date");
+            e.Property(schedule => schedule.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            e.Property(schedule => schedule.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(schedule => schedule.User)
+                .WithMany()
+                .HasForeignKey(schedule => schedule.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(schedule => schedule.UserId);
+            e.HasIndex(schedule => schedule.StartAt);
+            e.HasIndex(schedule => schedule.IsActive);
+        });
+
+        // ── ScheduleOccurrenceExclusion ─────────────────────
+        builder.Entity<ScheduleOccurrenceExclusion>(e =>
+        {
+            e.ToTable("schedule_occurrence_exceptions");
+
+            e.HasKey(exception => exception.Id);
+            e.Property(exception => exception.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(exception => exception.ScheduleId).HasColumnName("schedule_id");
+            e.Property(exception => exception.UserId).HasColumnName(UserIdColumnName);
+            e.Property(exception => exception.OccurrenceAt).HasColumnName("occurrence_at");
+            e.Property(exception => exception.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(exception => exception.Schedule)
+                .WithMany()
+                .HasForeignKey(exception => exception.ScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(exception => exception.User)
+                .WithMany()
+                .HasForeignKey(exception => exception.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(exception => exception.ScheduleId);
+            e.HasIndex(exception => exception.UserId);
+            e.HasIndex(exception => exception.OccurrenceAt);
+            e.HasIndex(exception => new { exception.ScheduleId, exception.OccurrenceAt }).IsUnique();
+        });
+
         // ── Pomodoro ──────────────────────────────────────────
         builder.Entity<Pomodoro>(e =>
         {
@@ -148,7 +214,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(p => p.Id);
             e.Property(p => p.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(p => p.UserId).HasColumnName("user_id");
+            e.Property(p => p.UserId).HasColumnName(UserIdColumnName);
             e.Property(p => p.TaskId).HasColumnName("task_id");
             e.Property(p => p.StartTime).HasColumnName("start_time");
             e.Property(p => p.EndTime).HasColumnName("end_time");
