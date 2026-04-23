@@ -159,9 +159,16 @@ try
     // Глобальний обробник винятків
     app.UseGlobalExceptionHandler();
 
+    // Логування часу виконання запитів
+    app.UseRequestExecutionTimeLogging();
+
     app.UseRouting();
 
     app.UseAuthentication();
+
+    // Логування деталей запиту (включно з user id для авторизованих користувачів)
+    app.UseRequestDetailsLogging();
+
     app.UseAuthorization();
 
     app.UseStaticFiles();
