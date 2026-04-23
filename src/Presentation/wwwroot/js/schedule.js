@@ -119,7 +119,7 @@
     );
 
     const priorityInput = document.querySelector(
-      'input[name="planPriority"]:checked',
+      'input[name="schedulePriority"]:checked',
     );
     const priority = priorityInput
       ? Number.parseInt(priorityInput.value, 10)
@@ -202,7 +202,10 @@
     badge.textContent = `🔁 ${schedule.title}`;
     const priority =
       PRIORITY_LABELS[schedule.priority] || schedule.priorityLabel || "";
-    badge.title = `${priority}${schedule.description ? ` • ${schedule.description}` : ""}`;
+    const descriptionSuffix = schedule.description
+      ? ` • ${schedule.description}`
+      : "";
+    badge.title = `${priority}${descriptionSuffix}`;
 
     cell.appendChild(badge);
   };

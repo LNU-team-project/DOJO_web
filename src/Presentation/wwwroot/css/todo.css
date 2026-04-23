@@ -107,6 +107,20 @@
   color: var(--dojo-ink);
 }
 
+.form-group legend {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--dojo-ink);
+  padding: 0;
+}
+
+fieldset.form-group {
+  border: 0;
+  margin: 0 0 20px;
+  padding: 0;
+}
+
 .form-group input,
 .form-group textarea {
   padding: 12px 14px;
@@ -1087,10 +1101,76 @@
   .priority-radio {
     min-width: unset;
   }
+
+  .dashboard-plan-btn,
+  .dashboard-schedule-btn {
+    margin-left: 0;
+  }
 }
 
 .dashboard-plan-btn {
   margin-left: 12px;
+}
+
+.dashboard-schedule-btn {
+  margin-left: 12px;
+  background: linear-gradient(135deg, #3ec1c9 0%, #2a8f98 100%);
+  box-shadow: 0 14px 24px rgba(42, 143, 152, 0.3);
+}
+
+.dashboard-schedule-btn:hover {
+  box-shadow: 0 16px 28px rgba(42, 143, 152, 0.35);
+}
+
+.schedule-weekday-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-weekday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(62, 193, 201, 0.35);
+  background: rgba(62, 193, 201, 0.08);
+  color: #0d3135;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.schedule-weekday-chip input {
+  accent-color: #2a8f98;
+}
+
+.schedule-slot {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 12px;
+  color: #f5feff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(26, 98, 104, 0.24);
+  margin: 4px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 4px solid rgba(255, 255, 255, 0.55);
+}
+
+.schedule-priority-1 {
+  background: linear-gradient(135deg, #46c4cb 0%, #2e8f96 100%);
+}
+
+.schedule-priority-2 {
+  background: linear-gradient(135deg, #1fa7b0 0%, #157881 100%);
+}
+
+.schedule-priority-3 {
+  background: linear-gradient(135deg, #0f7e86 0%, #0a5b61 100%);
 }
 
 .plan-slot {

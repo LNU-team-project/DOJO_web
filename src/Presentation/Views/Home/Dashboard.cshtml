@@ -419,6 +419,35 @@
             </div>
 
             <div class="form-row">
+                <fieldset class="form-group">
+                    <legend>Складність *</legend>
+                    <div class="priority-options">
+                        <label class="priority-radio">
+                            <input type="radio" name="schedulePriority" value="1" class="priority-input">
+                            <span class="priority-label priority-low">
+                                <span class="priority-dot"></span>
+                                Низька
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="schedulePriority" value="2" class="priority-input" checked>
+                            <span class="priority-label priority-medium">
+                                <span class="priority-dot"></span>
+                                Середня
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="schedulePriority" value="3" class="priority-input">
+                            <span class="priority-label priority-high">
+                                <span class="priority-dot"></span>
+                                Висока
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label for="scheduleRecurrenceInterval">Інтервал</label>
                     <input type="number" id="scheduleRecurrenceInterval" class="form-control" min="1" max="30" value="1" />
@@ -429,18 +458,18 @@
                 </div>
             </div>
 
-            <div class="form-group" id="scheduleWeeklyDaysGroup" style="display:none;">
-                <label>Дні тижня (для щотижневого повторення)</label>
+            <fieldset class="form-group" id="scheduleWeeklyDaysGroup" style="display:none;">
+                <legend>Дні тижня (для щотижневого повторення)</legend>
                 <div class="schedule-weekday-options">
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="1"> Пн</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="2"> Вт</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="3"> Ср</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="4"> Чт</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="5"> Пт</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="6"> Сб</label>
-                    <label class="schedule-weekday-chip"><input type="checkbox" value="0"> Нд</label>
+                    <label class="schedule-weekday-chip" for="scheduleDayMon"><input type="checkbox" id="scheduleDayMon" value="1"> Пн</label>
+                    <label class="schedule-weekday-chip" for="scheduleDayTue"><input type="checkbox" id="scheduleDayTue" value="2"> Вт</label>
+                    <label class="schedule-weekday-chip" for="scheduleDayWed"><input type="checkbox" id="scheduleDayWed" value="3"> Ср</label>
+                    <label class="schedule-weekday-chip" for="scheduleDayThu"><input type="checkbox" id="scheduleDayThu" value="4"> Чт</label>
+                    <label class="schedule-weekday-chip" for="scheduleDayFri"><input type="checkbox" id="scheduleDayFri" value="5"> Пт</label>
+                    <label class="schedule-weekday-chip" for="scheduleDaySat"><input type="checkbox" id="scheduleDaySat" value="6"> Сб</label>
+                    <label class="schedule-weekday-chip" for="scheduleDaySun"><input type="checkbox" id="scheduleDaySun" value="0"> Нд</label>
                 </div>
-            </div>
+            </fieldset>
 
             <div class="todo-modal-footer">
                 <button type="button" class="btn-secondary" id="cancelScheduleBtn">Скасувати</button>

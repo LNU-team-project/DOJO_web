@@ -10,6 +10,10 @@ namespace DOJO2.Infrastructure.Services;
 public class ScheduleService : IScheduleService
 {
     private const int WeeklySundayMask = 1;
+    private const string RecurrenceNone = "none";
+    private const string RecurrenceDaily = "daily";
+    private const string RecurrenceWeekly = "weekly";
+    private const string RecurrenceMonthly = "monthly";
 
     public ScheduleService(IAppDbContext context)
     {
@@ -57,7 +61,7 @@ public class ScheduleService : IScheduleService
         }
 
         var weeklyMask = BuildWeeklyMask(model.WeeklyDays);
-        if (recurrenceType == "weekly" && weeklyMask == 0)
+        if (recurrenceType == RecurrenceWeekly && weeklyMask == 0)
         {
             weeklyMask = DayToMask(model.StartAt.Value.DayOfWeek);
         }
@@ -121,9 +125,9 @@ public class ScheduleService : IScheduleService
     private static List<ScheduleOccurrenceViewModel> BuildOccurrencesForRange(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd)
     {
         var results = new List<ScheduleOccurrenceViewModel>();
-        var recurrenceType = NormalizeRecurrenceType(schedule.RecurrenceType) ?? "none";
+        var recurrenceType = NormalizeRecurrenceType(schedule.RecurrenceType) ?? RecurrenceNone;
 
-        if (recurrenceType == "none")
+        if (recurrenceType == RecurrenceNone)
         {
             if (schedule.StartAt >= rangeStart && schedule.StartAt <= rangeEnd && IsBeforeEndDate(schedule, schedule.StartAt))
             {
@@ -133,19 +137,19 @@ public class ScheduleService : IScheduleService
             return results;
         }
 
-        if (recurrenceType == "daily")
+        if (recurrenceType == RecurrenceDaily)
         {
             AddDailyOccurrences(schedule, rangeStart, rangeEnd, results);
             return results;
         }
 
-        if (recurrenceType == "weekly")
+        if (recurrenceType == RecurrenceWeekly)
         {
             AddWeeklyOccurrences(schedule, rangeStart, rangeEnd, results);
             return results;
         }
 
-        if (recurrenceType == "monthly")
+        if (recurrenceType == RecurrenceMonthly)
         {
             AddMonthlyOccurrences(schedule, rangeStart, rangeEnd, results);
             return results;
@@ -206,19 +210,7 @@ public class ScheduleService : IScheduleService
 
         for (var day = weekStart; day <= finalDate; day = day.AddDays(1))
         {
-            if (day < schedule.StartAt.Date)
-            {
-                continue;
-            }
-
-            var dayMask = DayToMask(day.DayOfWeek);
-            if ((mask & dayMask) == 0)
-            {
-                continue;
-            }
-
-            var weeksFromAnchor = (int)((day - anchorWeekStart).TotalDays / 7);
-            if (weeksFromAnchor < 0 || weeksFromAnchor % interval != 0)
+            if (!ShouldIncludeWeeklyDay(schedule, day, mask, anchorWeekStart, interval))
             {
                 continue;
             }
@@ -227,18 +219,35 @@ public class ScheduleService : IScheduleService
                 .AddHours(schedule.StartAt.Hour)
                 .AddMinutes(schedule.StartAt.Minute);
 
-            if (occurrence < rangeStart || occurrence > rangeEnd)
-            {
-                continue;
-            }
-
-            if (!IsBeforeEndDate(schedule, occurrence))
+            if (occurrence < rangeStart || occurrence > rangeEnd || !IsBeforeEndDate(schedule, occurrence))
             {
                 continue;
             }
 
             target.Add(MapToOccurrenceViewModel(schedule, occurrence));
         }
+    }
+
+    private static bool ShouldIncludeWeeklyDay(
+        ScheduleItem schedule,
+        DateTime day,
+        short mask,
+        DateTime anchorWeekStart,
+        int interval)
+    {
+        if (day < schedule.StartAt.Date)
+        {
+            return false;
+        }
+
+        var dayMask = DayToMask(day.DayOfWeek);
+        if ((mask & dayMask) == 0)
+        {
+            return false;
+        }
+
+        var weeksFromAnchor = (int)((day - anchorWeekStart).TotalDays / 7);
+        return weeksFromAnchor >= 0 && weeksFromAnchor % interval == 0;
     }
 
     private static void AddMonthlyOccurrences(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd, List<ScheduleOccurrenceViewModel> target)
@@ -296,10 +305,10 @@ public class ScheduleService : IScheduleService
         var value = recurrenceType?.Trim().ToLowerInvariant();
         return value switch
         {
-            "none" => "none",
-            "daily" => "daily",
-            "weekly" => "weekly",
-            "monthly" => "monthly",
+            RecurrenceNone => RecurrenceNone,
+            RecurrenceDaily => RecurrenceDaily,
+            RecurrenceWeekly => RecurrenceWeekly,
+            RecurrenceMonthly => RecurrenceMonthly,
             _ => null
         };
     }

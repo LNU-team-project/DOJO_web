@@ -9,6 +9,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
 {
     private const string CreatedAtColumnName = "created_at";
     private const string NowSqlExpression = "NOW()";
+    private const string UserIdColumnName = "user_id";
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -62,7 +63,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(g => g.Id);
             e.Property(g => g.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(g => g.UserId).HasColumnName("user_id");
+            e.Property(g => g.UserId).HasColumnName(UserIdColumnName);
             e.Property(g => g.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
             e.Property(g => g.Description).HasColumnName("description");
             e.Property(g => g.Deadline).HasColumnName("deadline");
@@ -102,7 +103,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(task => task.Id);
             e.Property(task => task.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(task => task.UserId).HasColumnName("user_id");
+            e.Property(task => task.UserId).HasColumnName(UserIdColumnName);
             e.Property(task => task.GoalId).HasColumnName("goal_id");
             e.Property(task => task.ParentTaskId).HasColumnName("parent_task_id");
             e.Property(task => task.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
@@ -150,7 +151,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
 
             e.HasKey(schedule => schedule.Id);
             e.Property(schedule => schedule.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(schedule => schedule.UserId).HasColumnName("user_id");
+            e.Property(schedule => schedule.UserId).HasColumnName(UserIdColumnName);
             e.Property(schedule => schedule.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
             e.Property(schedule => schedule.Description).HasColumnName("description");
             e.Property(schedule => schedule.StartAt).HasColumnName("start_at");
@@ -184,7 +185,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             });
             e.HasKey(p => p.Id);
             e.Property(p => p.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-            e.Property(p => p.UserId).HasColumnName("user_id");
+            e.Property(p => p.UserId).HasColumnName(UserIdColumnName);
             e.Property(p => p.TaskId).HasColumnName("task_id");
             e.Property(p => p.StartTime).HasColumnName("start_time");
             e.Property(p => p.EndTime).HasColumnName("end_time");
