@@ -263,10 +263,16 @@
     renderTimeGrid();
     syncGridViewport();
     syncHeaderWithGrid();
+
+    const weekStartBoundary = new Date(dates[0]);
+    weekStartBoundary.setHours(0, 0, 0, 0);
+    const weekEndBoundary = new Date(dates.at(-1));
+    weekEndBoundary.setHours(23, 59, 59, 999);
+
     const detail = {
       dates,
-      weekStartIso: dates[0].toISOString(),
-      weekEndIso: dates.at(-1).toISOString(),
+      weekStartIso: weekStartBoundary.toISOString(),
+      weekEndIso: weekEndBoundary.toISOString(),
     };
     globalThis.dashboardWeekState = detail;
     globalThis.dispatchEvent(new CustomEvent("dashboard:week-changed", { detail }));

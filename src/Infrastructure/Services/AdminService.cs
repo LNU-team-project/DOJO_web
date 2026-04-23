@@ -5,27 +5,37 @@ using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace DOJO2.Infrastructure.Services;
 
 public class AdminService : IAdminService
 {
+    private const string AdminUsersCacheKeyPrefix = "admin-users";
+    private const string AdminUsersCacheVersionKey = "admin-users-cache-version";
+
     private readonly AppDbContext _context;
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<AdminService> _logger;
     private readonly AdminUsersOptions _adminUsersOptions;
+    private readonly IMemoryCache _cache;
+    private readonly CacheOptions _cacheOptions;
 
     public AdminService(
         AppDbContext context,
         UserManager<AppUser> userManager,
         ILogger<AdminService> logger,
-        IOptions<AdminUsersOptions> adminUsersOptions)
+        IOptions<AdminUsersOptions> adminUsersOptions,
+        IMemoryCache cache,
+        IOptions<CacheOptions> cacheOptions)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _adminUsersOptions = (adminUsersOptions ?? throw new ArgumentNullException(nameof(adminUsersOptions))).Value;
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _cacheOptions = (cacheOptions ?? throw new ArgumentNullException(nameof(cacheOptions))).Value;
     }
 
     public async Task<Result<bool>> AuthenticateAdminAsync(string login, string password)
@@ -59,10 +69,18 @@ public class AdminService : IAdminService
 
     public async Task<Result<List<AdminUserListItemViewModel>>> GetUsersAsync(string? search)
     {
-        var normalizedSearch = search?.Trim();
+        var normalizedSearch = search?.Trim() ?? string.Empty;
         var nowUtc = DateTimeOffset.UtcNow;
         var minSearchLength = _adminUsersOptions.MinSearchLength >= 0 ? _adminUsersOptions.MinSearchLength : 0;
         var maxUsersForAdminPage = _adminUsersOptions.MaxUsersForAdminPage > 0 ? _adminUsersOptions.MaxUsersForAdminPage : 200;
+        var cacheVersion = GetOrCreateAdminUsersCacheVersion();
+        var cacheKey = BuildAdminUsersCacheKey(normalizedSearch, maxUsersForAdminPage, minSearchLength, cacheVersion);
+
+        if (_cache.TryGetValue(cacheKey, out List<AdminUserListItemViewModel>? cachedUsers) && cachedUsers is not null)
+        {
+            _logger.LogInformation("Повернуто кешований список користувачів для адмін-сторінки. Кількість: {Count}", cachedUsers.Count);
+            return Result<List<AdminUserListItemViewModel>>.SuccessResult(cachedUsers, "Користувачів успішно завантажено (cache)");
+        }
 
         var query = _context.Users.AsNoTracking();
 
@@ -89,6 +107,9 @@ public class AdminService : IAdminService
             })
             .ToListAsync();
 
+        var cacheSeconds = _cacheOptions.AdminUsersSeconds > 0 ? _cacheOptions.AdminUsersSeconds : 180;
+        _cache.Set(cacheKey, users, TimeSpan.FromSeconds(cacheSeconds));
+
         _logger.LogInformation("Адміністратор отримав список користувачів. Кількість: {Count}", users.Count);
         return Result<List<AdminUserListItemViewModel>>.SuccessResult(users, "Користувачів успішно завантажено");
     }
@@ -112,6 +133,7 @@ public class AdminService : IAdminService
         user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(lockoutYears);
 
         await _context.SaveChangesAsync();
+        InvalidateAdminUsersCache();
         _logger.LogInformation("Користувача заблоковано. UserId: {UserId}", userId);
 
         return Result<bool>.SuccessResult(true, "Користувача успішно заблоковано");
@@ -135,6 +157,7 @@ public class AdminService : IAdminService
         user.LockoutEnd = null;
 
         await _context.SaveChangesAsync();
+        InvalidateAdminUsersCache();
         _logger.LogInformation("Користувача розблоковано. UserId: {UserId}", userId);
 
         return Result<bool>.SuccessResult(true, "Користувача успішно розблоковано");
@@ -162,8 +185,32 @@ public class AdminService : IAdminService
             return Result<bool>.FailureResult("Не вдалося видалити користувача", errors);
         }
 
+        InvalidateAdminUsersCache();
         _logger.LogInformation("Адміністратор видалив користувача. UserId: {UserId}", userId);
         return Result<bool>.SuccessResult(true, "Користувача успішно видалено");
+    }
+
+    private string GetOrCreateAdminUsersCacheVersion()
+    {
+        if (_cache.TryGetValue(AdminUsersCacheVersionKey, out string? version) && !string.IsNullOrWhiteSpace(version))
+        {
+            return version;
+        }
+
+        var newVersion = Guid.NewGuid().ToString("N");
+        _cache.Set(AdminUsersCacheVersionKey, newVersion);
+        return newVersion;
+    }
+
+    private void InvalidateAdminUsersCache()
+    {
+        var newVersion = Guid.NewGuid().ToString("N");
+        _cache.Set(AdminUsersCacheVersionKey, newVersion);
+    }
+
+    private static string BuildAdminUsersCacheKey(string normalizedSearch, int maxUsersForAdminPage, int minSearchLength, string version)
+    {
+        return $"{AdminUsersCacheKeyPrefix}:{version}:{normalizedSearch}:{maxUsersForAdminPage}:{minSearchLength}";
     }
 }
 
