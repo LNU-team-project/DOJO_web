@@ -43,4 +43,18 @@ public class ScheduleController : BaseApiController
         var result = await _scheduleService.GetSchedulesForRangeAsync(userId, weekStart, weekEnd);
         return ToActionResult(result);
     }
+
+    [HttpPost("delete")]
+    public async Task<IActionResult> DeleteOccurrence([FromBody] ScheduleDeleteViewModel? model)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _scheduleService.DeleteScheduleOccurrenceAsync(userId, model);
+        return ToActionResult(result);
+    }
 }

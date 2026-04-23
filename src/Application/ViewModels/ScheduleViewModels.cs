@@ -38,4 +38,14 @@ public class ScheduleOccurrenceViewModel
     public short Priority { get; set; }
     public string PriorityLabel { get; set; } = string.Empty;
     public string RecurrenceType { get; set; } = "none";
+    public short RecurrenceInterval { get; set; }
+    public DateOnly? RecurrenceEndDate { get; set; }
+    public List<int> WeeklyDays { get; set; } = new();
+}
+
+public class ScheduleDeleteViewModel
+{
+    public int ScheduleId { get; set; }
+    public DateTime? OccurrenceAt { get; set; }
+    public string DeleteMode { get; set; } = "single";
 }

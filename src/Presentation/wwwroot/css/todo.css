@@ -141,6 +141,12 @@ fieldset.form-group {
   min-height: 80px;
 }
 
+.form-help {
+  margin-top: 6px;
+  color: var(--dojo-muted);
+  font-size: 0.85rem;
+}
+
 .form-group select {
   padding: 12px 14px;
   border: 2px solid var(--dojo-border);
@@ -1159,6 +1165,7 @@ fieldset.form-group {
   text-overflow: ellipsis;
   white-space: nowrap;
   border-left: 4px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
 }
 
 .schedule-priority-1 {

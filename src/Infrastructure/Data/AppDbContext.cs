@@ -16,6 +16,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
     public DbSet<Goal> Goals => Set<Goal>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<ScheduleItem> Schedules => Set<ScheduleItem>();
+    public DbSet<ScheduleOccurrenceExclusion> ScheduleExclusions => Set<ScheduleOccurrenceExclusion>();
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
@@ -172,6 +173,34 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.HasIndex(schedule => schedule.UserId);
             e.HasIndex(schedule => schedule.StartAt);
             e.HasIndex(schedule => schedule.IsActive);
+        });
+
+        // ── ScheduleOccurrenceExclusion ─────────────────────
+        builder.Entity<ScheduleOccurrenceExclusion>(e =>
+        {
+            e.ToTable("schedule_occurrence_exceptions");
+
+            e.HasKey(exception => exception.Id);
+            e.Property(exception => exception.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(exception => exception.ScheduleId).HasColumnName("schedule_id");
+            e.Property(exception => exception.UserId).HasColumnName(UserIdColumnName);
+            e.Property(exception => exception.OccurrenceAt).HasColumnName("occurrence_at");
+            e.Property(exception => exception.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(exception => exception.Schedule)
+                .WithMany()
+                .HasForeignKey(exception => exception.ScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(exception => exception.User)
+                .WithMany()
+                .HasForeignKey(exception => exception.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(exception => exception.ScheduleId);
+            e.HasIndex(exception => exception.UserId);
+            e.HasIndex(exception => exception.OccurrenceAt);
+            e.HasIndex(exception => new { exception.ScheduleId, exception.OccurrenceAt }).IsUnique();
         });
 
         // ── Pomodoro ──────────────────────────────────────────

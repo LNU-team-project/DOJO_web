@@ -4,6 +4,19 @@
   const closeScheduleModalBtn = document.getElementById("closeScheduleModal");
   const cancelScheduleBtn = document.getElementById("cancelScheduleBtn");
   const scheduleForm = document.getElementById("scheduleForm");
+  const scheduleDetailsModal = document.getElementById("scheduleDetailsModal");
+  const closeScheduleDetailsModalBtn = document.getElementById(
+    "closeScheduleDetailsModal",
+  );
+  const closeScheduleDetailsBtn = document.getElementById(
+    "closeScheduleDetailsBtn",
+  );
+  const deleteScheduleOccurrenceBtn = document.getElementById(
+    "deleteScheduleOccurrenceBtn",
+  );
+  const deleteScheduleFutureBtn = document.getElementById(
+    "deleteScheduleFutureBtn",
+  );
   const recurrenceTypeInput = document.getElementById("scheduleRecurrenceType");
   const weeklyDaysGroup = document.getElementById("scheduleWeeklyDaysGroup");
   const timeGrid = document.querySelector("[data-time-grid]");
@@ -12,6 +25,9 @@
     !scheduleModal ||
     !openScheduleModalBtn ||
     !scheduleForm ||
+    !scheduleDetailsModal ||
+    !deleteScheduleOccurrenceBtn ||
+    !deleteScheduleFutureBtn ||
     !recurrenceTypeInput ||
     !weeklyDaysGroup ||
     !timeGrid
@@ -23,6 +39,7 @@
     ERROR_PREFIX: "❌ Помилка: ",
     CREATE_ERROR: "Не вдалося створити розклад",
     LOAD_ERROR: "Не вдалося завантажити розклад",
+    DELETE_ERROR: "Не вдалося видалити подію розкладу",
     REQUIRED_DATE: "Оберіть дату і час розкладу",
     REQUIRED_TITLE: "Назва розкладу не може бути порожньою",
   };
@@ -33,8 +50,26 @@
     3: "Висока",
   };
 
+  const RECURRENCE_LABELS = {
+    none: "Без повторення",
+    daily: "Щодня",
+    weekly: "Щотижня",
+    monthly: "Щомісяця",
+  };
+
+  const WEEKDAY_LABELS = {
+    0: "Нд",
+    1: "Пн",
+    2: "Вт",
+    3: "Ср",
+    4: "Чт",
+    5: "Пт",
+    6: "Сб",
+  };
+
   let currentWeekStartIso = null;
   let currentWeekEndIso = null;
+  let selectedOccurrence = null;
 
   const showError = (message) => {
     const errorDiv = document.createElement("div");
@@ -58,9 +93,122 @@
     scheduleModal.setAttribute("aria-hidden", "true");
   };
 
+  const openDetailsModal = (schedule) => {
+    selectedOccurrence = schedule;
+
+    const titleEl = document.getElementById("scheduleDetailTitle");
+    const recurrenceEl = document.getElementById("scheduleDetailRecurrence");
+    const priorityBadgeEl = document.getElementById(
+      "scheduleDetailPriorityBadge",
+    );
+    const descriptionEl = document.getElementById("scheduleDetailDescription");
+    const dateTimeEl = document.getElementById("scheduleDetailDateTime");
+    const endDateEl = document.getElementById("scheduleDetailEndDate");
+
+    if (titleEl) {
+      titleEl.textContent = schedule.title || "-";
+    }
+
+    if (recurrenceEl) {
+      recurrenceEl.textContent = buildRecurrenceText(schedule);
+    }
+
+    if (priorityBadgeEl) {
+      const priority = Number.parseInt(String(schedule.priority || 2), 10);
+      priorityBadgeEl.className = `plan-priority-badge plan-priority-${priority}`;
+      priorityBadgeEl.textContent =
+        PRIORITY_LABELS[priority] || schedule.priorityLabel || "Середня";
+    }
+
+    if (descriptionEl) {
+      descriptionEl.textContent = schedule.description || "Опис не вказано";
+    }
+
+    if (dateTimeEl) {
+      dateTimeEl.textContent = formatDateTime(schedule.occurrenceAt);
+    }
+
+    if (endDateEl) {
+      endDateEl.textContent = schedule.recurrenceEndDate
+        ? formatDate(schedule.recurrenceEndDate)
+        : "Без обмежень";
+    }
+
+    const isRecurring =
+      schedule.recurrenceType && schedule.recurrenceType !== "none";
+    deleteScheduleOccurrenceBtn.textContent = isRecurring
+      ? "Видалити тільки цей раз"
+      : "Видалити подію";
+    deleteScheduleFutureBtn.style.display = isRecurring
+      ? "inline-flex"
+      : "none";
+
+    scheduleDetailsModal.style.display = "flex";
+    scheduleDetailsModal.setAttribute("aria-hidden", "false");
+  };
+
+  const closeDetailsModal = () => {
+    scheduleDetailsModal.style.display = "none";
+    scheduleDetailsModal.setAttribute("aria-hidden", "true");
+    selectedOccurrence = null;
+  };
+
   const updateRecurrenceControls = () => {
     const isWeekly = recurrenceTypeInput.value === "weekly";
     weeklyDaysGroup.style.display = isWeekly ? "block" : "none";
+  };
+
+  const formatDateTime = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "-";
+    }
+
+    return date.toLocaleString("uk-UA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDate = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString("uk-UA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
+  const buildRecurrenceText = (schedule) => {
+    const type = schedule.recurrenceType || "none";
+    if (type === "none") {
+      return RECURRENCE_LABELS.none;
+    }
+
+    const base = RECURRENCE_LABELS[type] || type;
+    const interval = Number.parseInt(
+      String(schedule.recurrenceInterval || 1),
+      10,
+    );
+    const intervalText = interval > 1 ? `, інтервал ${interval}` : "";
+
+    if (type !== "weekly" || !Array.isArray(schedule.weeklyDays)) {
+      return `${base}${intervalText}`;
+    }
+
+    const days = schedule.weeklyDays
+      .map((day) => WEEKDAY_LABELS[day])
+      .filter(Boolean)
+      .join(", ");
+
+    return days ? `${base}${intervalText}: ${days}` : `${base}${intervalText}`;
   };
 
   const clearScheduleMarkers = () => {
@@ -206,8 +354,62 @@
       ? ` • ${schedule.description}`
       : "";
     badge.title = `${priority}${descriptionSuffix}`;
+    badge.setAttribute("role", "button");
+    badge.setAttribute("tabindex", "0");
+    badge.addEventListener("click", () => openDetailsModal(schedule));
+    badge.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetailsModal(schedule);
+      }
+    });
 
     cell.appendChild(badge);
+  };
+
+  const deleteSelectedOccurrence = async (deleteMode) => {
+    if (!selectedOccurrence?.scheduleId || !selectedOccurrence?.occurrenceAt) {
+      return;
+    }
+
+    const confirmationText =
+      deleteMode === "future"
+        ? "Видалити цю подію і всі наступні повтори?"
+        : "Видалити тільки цю подію?";
+
+    if (!globalThis.confirm(confirmationText)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/schedule/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleId: selectedOccurrence.scheduleId,
+          occurrenceAt: selectedOccurrence.occurrenceAt,
+          deleteMode,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.DELETE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.DELETE_ERROR);
+        return;
+      }
+
+      closeDetailsModal();
+      await loadSchedulesForWeek();
+    } catch (error) {
+      console.error("Помилка видалення події розкладу", error);
+      showError(MESSAGES.DELETE_ERROR);
+    }
   };
 
   const loadSchedulesForWeek = async () => {
@@ -255,10 +457,24 @@
   openScheduleModalBtn.addEventListener("click", openModal);
   closeScheduleModalBtn?.addEventListener("click", closeModal);
   cancelScheduleBtn?.addEventListener("click", closeModal);
+  closeScheduleDetailsModalBtn?.addEventListener("click", closeDetailsModal);
+  closeScheduleDetailsBtn?.addEventListener("click", closeDetailsModal);
+  deleteScheduleOccurrenceBtn.addEventListener("click", () =>
+    deleteSelectedOccurrence("single"),
+  );
+  deleteScheduleFutureBtn.addEventListener("click", () =>
+    deleteSelectedOccurrence("future"),
+  );
 
   scheduleModal.addEventListener("click", (event) => {
     if (event.target === scheduleModal) {
       closeModal();
+    }
+  });
+
+  scheduleDetailsModal.addEventListener("click", (event) => {
+    if (event.target === scheduleDetailsModal) {
+      closeDetailsModal();
     }
   });
 

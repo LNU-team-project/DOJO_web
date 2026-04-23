@@ -14,6 +14,8 @@ public class ScheduleService : IScheduleService
     private const string RecurrenceDaily = "daily";
     private const string RecurrenceWeekly = "weekly";
     private const string RecurrenceMonthly = "monthly";
+    private const string DeleteModeSingle = "single";
+    private const string DeleteModeFuture = "future";
 
     public ScheduleService(IAppDbContext context)
     {
@@ -107,11 +109,27 @@ public class ScheduleService : IScheduleService
             .Where(s => s.UserId == userId && s.IsActive)
             .ToListAsync();
 
+        var scheduleIds = schedules.Select(schedule => schedule.Id).ToList();
+        var deletedOccurrences = await _context.ScheduleExclusions
+            .AsNoTracking()
+            .Where(exception => exception.UserId == userId
+                                && scheduleIds.Contains(exception.ScheduleId)
+                                && exception.OccurrenceAt >= start
+                                && exception.OccurrenceAt <= end)
+            .ToListAsync();
+
+        var deletedLookup = deletedOccurrences
+            .GroupBy(exception => exception.ScheduleId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(exception => NormalizeToMinute(exception.OccurrenceAt)).ToHashSet());
+
         var occurrences = new List<ScheduleOccurrenceViewModel>();
 
         foreach (var schedule in schedules)
         {
-            occurrences.AddRange(BuildOccurrencesForRange(schedule, start, end));
+            deletedLookup.TryGetValue(schedule.Id, out var deletedForSchedule);
+            occurrences.AddRange(BuildOccurrencesForRange(schedule, start, end, deletedForSchedule));
         }
 
         var ordered = occurrences
@@ -122,14 +140,67 @@ public class ScheduleService : IScheduleService
         return Result<List<ScheduleOccurrenceViewModel>>.SuccessResult(ordered, "Розклад завантажено");
     }
 
-    private static List<ScheduleOccurrenceViewModel> BuildOccurrencesForRange(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd)
+    public async Task<Result<bool>> DeleteScheduleOccurrenceAsync(int userId, ScheduleDeleteViewModel? model)
+    {
+        if (model == null)
+        {
+            return Result<bool>.FailureResult("Модель видалення не може бути порожньою");
+        }
+
+        if (model.ScheduleId <= 0)
+        {
+            return Result<bool>.FailureResult("Некоректний ідентифікатор розкладу");
+        }
+
+        if (model.OccurrenceAt == null)
+        {
+            return Result<bool>.FailureResult("Час події не вказано");
+        }
+
+        var deleteMode = NormalizeDeleteMode(model.DeleteMode);
+        if (deleteMode == null)
+        {
+            return Result<bool>.FailureResult("Недопустимий режим видалення");
+        }
+
+        var occurrenceAt = NormalizeToMinute(DateTime.SpecifyKind(model.OccurrenceAt.Value, DateTimeKind.Utc));
+
+        var schedule = await _context.Schedules
+            .FirstOrDefaultAsync(item => item.Id == model.ScheduleId && item.UserId == userId && item.IsActive);
+
+        if (schedule == null)
+        {
+            return Result<bool>.FailureResult("Подію розкладу не знайдено");
+        }
+
+        if (!DoesOccurrenceBelongToSchedule(schedule, occurrenceAt))
+        {
+            return Result<bool>.FailureResult("Вказана подія не належить до цього розкладу");
+        }
+
+        if (deleteMode == DeleteModeSingle)
+        {
+            return await DeleteSingleOccurrenceAsync(schedule, userId, occurrenceAt);
+        }
+
+        return await DeleteFutureOccurrencesAsync(schedule, occurrenceAt);
+    }
+
+    private static List<ScheduleOccurrenceViewModel> BuildOccurrencesForRange(
+        ScheduleItem schedule,
+        DateTime rangeStart,
+        DateTime rangeEnd,
+        HashSet<DateTime>? deletedOccurrences = null)
     {
         var results = new List<ScheduleOccurrenceViewModel>();
         var recurrenceType = NormalizeRecurrenceType(schedule.RecurrenceType) ?? RecurrenceNone;
 
         if (recurrenceType == RecurrenceNone)
         {
-            if (schedule.StartAt >= rangeStart && schedule.StartAt <= rangeEnd && IsBeforeEndDate(schedule, schedule.StartAt))
+            if (schedule.StartAt >= rangeStart
+                && schedule.StartAt <= rangeEnd
+                && IsBeforeEndDate(schedule, schedule.StartAt)
+                && !IsDeletedOccurrence(deletedOccurrences, schedule.StartAt))
             {
                 results.Add(MapToOccurrenceViewModel(schedule, schedule.StartAt));
             }
@@ -139,26 +210,31 @@ public class ScheduleService : IScheduleService
 
         if (recurrenceType == RecurrenceDaily)
         {
-            AddDailyOccurrences(schedule, rangeStart, rangeEnd, results);
+            AddDailyOccurrences(schedule, rangeStart, rangeEnd, results, deletedOccurrences);
             return results;
         }
 
         if (recurrenceType == RecurrenceWeekly)
         {
-            AddWeeklyOccurrences(schedule, rangeStart, rangeEnd, results);
+            AddWeeklyOccurrences(schedule, rangeStart, rangeEnd, results, deletedOccurrences);
             return results;
         }
 
         if (recurrenceType == RecurrenceMonthly)
         {
-            AddMonthlyOccurrences(schedule, rangeStart, rangeEnd, results);
+            AddMonthlyOccurrences(schedule, rangeStart, rangeEnd, results, deletedOccurrences);
             return results;
         }
 
         return results;
     }
 
-    private static void AddDailyOccurrences(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd, List<ScheduleOccurrenceViewModel> target)
+    private static void AddDailyOccurrences(
+        ScheduleItem schedule,
+        DateTime rangeStart,
+        DateTime rangeEnd,
+        List<ScheduleOccurrenceViewModel> target,
+        HashSet<DateTime>? deletedOccurrences)
     {
         var current = schedule.StartAt;
         var step = Math.Max(schedule.RecurrenceInterval, (short)1);
@@ -181,12 +257,21 @@ public class ScheduleService : IScheduleService
                 break;
             }
 
-            target.Add(MapToOccurrenceViewModel(schedule, current));
+            if (!IsDeletedOccurrence(deletedOccurrences, current))
+            {
+                target.Add(MapToOccurrenceViewModel(schedule, current));
+            }
+
             current = current.AddDays(step);
         }
     }
 
-    private static void AddWeeklyOccurrences(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd, List<ScheduleOccurrenceViewModel> target)
+    private static void AddWeeklyOccurrences(
+        ScheduleItem schedule,
+        DateTime rangeStart,
+        DateTime rangeEnd,
+        List<ScheduleOccurrenceViewModel> target,
+        HashSet<DateTime>? deletedOccurrences)
     {
         var mask = schedule.WeeklyDaysMask;
         if (mask == 0)
@@ -224,7 +309,10 @@ public class ScheduleService : IScheduleService
                 continue;
             }
 
-            target.Add(MapToOccurrenceViewModel(schedule, occurrence));
+            if (!IsDeletedOccurrence(deletedOccurrences, occurrence))
+            {
+                target.Add(MapToOccurrenceViewModel(schedule, occurrence));
+            }
         }
     }
 
@@ -250,7 +338,12 @@ public class ScheduleService : IScheduleService
         return weeksFromAnchor >= 0 && weeksFromAnchor % interval == 0;
     }
 
-    private static void AddMonthlyOccurrences(ScheduleItem schedule, DateTime rangeStart, DateTime rangeEnd, List<ScheduleOccurrenceViewModel> target)
+    private static void AddMonthlyOccurrences(
+        ScheduleItem schedule,
+        DateTime rangeStart,
+        DateTime rangeEnd,
+        List<ScheduleOccurrenceViewModel> target,
+        HashSet<DateTime>? deletedOccurrences)
     {
         var interval = Math.Max(schedule.RecurrenceInterval, (short)1);
         var anchor = new DateTime(schedule.StartAt.Year, schedule.StartAt.Month, 1, schedule.StartAt.Hour, schedule.StartAt.Minute, 0, DateTimeKind.Utc);
@@ -280,7 +373,11 @@ public class ScheduleService : IScheduleService
                     0,
                     DateTimeKind.Utc);
 
-                if (occurrence >= schedule.StartAt && occurrence >= rangeStart && occurrence <= rangeEnd && IsBeforeEndDate(schedule, occurrence))
+                if (occurrence >= schedule.StartAt
+                    && occurrence >= rangeStart
+                    && occurrence <= rangeEnd
+                    && IsBeforeEndDate(schedule, occurrence)
+                    && !IsDeletedOccurrence(deletedOccurrences, occurrence))
                 {
                     target.Add(MapToOccurrenceViewModel(schedule, occurrence));
                 }
@@ -288,6 +385,88 @@ public class ScheduleService : IScheduleService
 
             currentMonth = currentMonth.AddMonths(interval);
         }
+    }
+
+    private async Task<Result<bool>> DeleteSingleOccurrenceAsync(ScheduleItem schedule, int userId, DateTime occurrenceAt)
+    {
+        if (NormalizeRecurrenceType(schedule.RecurrenceType) == RecurrenceNone)
+        {
+            schedule.IsActive = false;
+            await _context.SaveChangesAsync();
+            return Result<bool>.SuccessResult(true, "Подію видалено");
+        }
+
+        var exists = await _context.ScheduleExclusions.AnyAsync(exception =>
+            exception.ScheduleId == schedule.Id && exception.OccurrenceAt == occurrenceAt);
+
+        if (!exists)
+        {
+            _context.ScheduleExclusions.Add(new ScheduleOccurrenceExclusion
+            {
+                ScheduleId = schedule.Id,
+                UserId = userId,
+                OccurrenceAt = occurrenceAt,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+        }
+
+        return Result<bool>.SuccessResult(true, "Подію видалено тільки на цей раз");
+    }
+
+    private async Task<Result<bool>> DeleteFutureOccurrencesAsync(ScheduleItem schedule, DateTime occurrenceAt)
+    {
+        if (NormalizeRecurrenceType(schedule.RecurrenceType) == RecurrenceNone)
+        {
+            schedule.IsActive = false;
+            await _context.SaveChangesAsync();
+            return Result<bool>.SuccessResult(true, "Подію видалено");
+        }
+
+        var firstDate = DateOnly.FromDateTime(schedule.StartAt.Date);
+        var cutoffDate = DateOnly.FromDateTime(occurrenceAt.Date.AddDays(-1));
+
+        if (cutoffDate < firstDate)
+        {
+            schedule.IsActive = false;
+        }
+        else if (schedule.RecurrenceEndDate == null || schedule.RecurrenceEndDate > cutoffDate)
+        {
+            schedule.RecurrenceEndDate = cutoffDate;
+        }
+
+        await _context.SaveChangesAsync();
+        return Result<bool>.SuccessResult(true, "Видалено вибрану подію і всі наступні");
+    }
+
+    private static bool DoesOccurrenceBelongToSchedule(ScheduleItem schedule, DateTime occurrenceAt)
+    {
+        var occurrenceRangeStart = occurrenceAt.AddMinutes(-1);
+        var occurrenceRangeEnd = occurrenceAt.AddMinutes(1);
+        return BuildOccurrencesForRange(schedule, occurrenceRangeStart, occurrenceRangeEnd)
+            .Any(occurrence => NormalizeToMinute(occurrence.OccurrenceAt) == occurrenceAt);
+    }
+
+    private static bool IsDeletedOccurrence(HashSet<DateTime>? deletedOccurrences, DateTime occurrence)
+    {
+        return deletedOccurrences != null && deletedOccurrences.Contains(NormalizeToMinute(occurrence));
+    }
+
+    private static string? NormalizeDeleteMode(string? deleteMode)
+    {
+        var value = deleteMode?.Trim().ToLowerInvariant();
+        return value switch
+        {
+            DeleteModeSingle => DeleteModeSingle,
+            DeleteModeFuture => DeleteModeFuture,
+            _ => null
+        };
+    }
+
+    private static DateTime NormalizeToMinute(DateTime value)
+    {
+        var utcValue = value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        return new DateTime(utcValue.Year, utcValue.Month, utcValue.Day, utcValue.Hour, utcValue.Minute, 0, DateTimeKind.Utc);
     }
 
     private static bool IsBeforeEndDate(ScheduleItem schedule, DateTime occurrence)
@@ -404,7 +583,10 @@ public class ScheduleService : IScheduleService
             DurationMinutes = schedule.DurationMinutes,
             Priority = schedule.Priority,
             PriorityLabel = GetPriorityLabel(schedule.Priority),
-            RecurrenceType = schedule.RecurrenceType
+            RecurrenceType = schedule.RecurrenceType,
+            RecurrenceInterval = schedule.RecurrenceInterval,
+            RecurrenceEndDate = schedule.RecurrenceEndDate,
+            WeeklyDays = DecodeWeeklyDays(schedule.WeeklyDaysMask)
         };
     }
 }

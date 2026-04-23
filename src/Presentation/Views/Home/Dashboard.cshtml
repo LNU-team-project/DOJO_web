@@ -455,6 +455,7 @@
                 <div class="form-group">
                     <label for="scheduleRecurrenceEndDate">Повторювати до</label>
                     <input type="date" id="scheduleRecurrenceEndDate" class="form-control" />
+                    <small class="form-help">Можна не вказувати, тоді подія буде повторюватися без кінцевої дати.</small>
                 </div>
             </div>
 
@@ -476,6 +477,45 @@
                 <button type="submit" class="btn-primary">Додати розклад</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="todo-modal" id="scheduleDetailsModal" aria-hidden="true" aria-labelledby="scheduleDetailsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="scheduleDetailsModalTitle">Перегляд розкладу</h2>
+            <button type="button" class="todo-modal-close" id="closeScheduleDetailsModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <div class="plan-details" id="scheduleDetailsView">
+            <div class="plan-details-header">
+                <div>
+                    <h3 id="scheduleDetailTitle" class="plan-details-title">-</h3>
+                    <div class="plan-details-meta">
+                        <span id="scheduleDetailRecurrence" class="plan-status" style="color:var(--dojo-muted); font-weight:600;">-</span>
+                    </div>
+                </div>
+                <div class="plan-details-meta">
+                    <div id="scheduleDetailPriorityBadge" class="plan-priority-badge plan-priority-2">Середня</div>
+                </div>
+            </div>
+
+            <div class="plan-details-card">
+                <p id="scheduleDetailDescription" class="plan-details-desc">-</p>
+                <div class="plan-details-meta-row" style="margin-top:12px;">
+                    <span><strong>Дата та час:</strong>&nbsp;<span id="scheduleDetailDateTime">-</span></span>
+                </div>
+                <div class="plan-details-meta-row" style="margin-top:8px;">
+                    <span><strong>Кінець повторення:</strong>&nbsp;<span id="scheduleDetailEndDate">Без обмежень</span></span>
+                </div>
+            </div>
+
+            <div class="plan-details-actions">
+                <button type="button" class="btn-secondary" id="closeScheduleDetailsBtn">Закрити</button>
+                <button type="button" class="btn-secondary" id="deleteScheduleOccurrenceBtn">Видалити тільки цей раз</button>
+                <button type="button" class="btn-primary" id="deleteScheduleFutureBtn">Видалити цей і всі наступні</button>
+            </div>
+        </div>
     </div>
 </div>
 
