@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using DOJO2.Application.Common;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.Services;
 using DOJO2.Domain.Entities;
@@ -107,7 +109,36 @@ public class LeaderboardServiceTests
         userManagerMock.Setup(m => m.Users).Returns(userSet.Object);
         
         var logger = new Mock<ILogger<LeaderboardService>>();
-        return new LeaderboardService(userManagerMock.Object, logger.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var cacheOptions = Options.Create(new CacheOptions { LeaderboardSeconds = 120 });
+        return new LeaderboardService(userManagerMock.Object, logger.Object, cache, cacheOptions);
+    }
+
+    [Fact]
+    public async Task GetLeaderboardAsync_ReturnsCachedData_OnSubsequentCall()
+    {
+        var users = new List<AppUser>
+        {
+            new()
+            {
+                Id = 1,
+                UserName = "user1",
+                ExpPoints = 1000,
+                Level = 5,
+                Pomodoros = new List<Pomodoro>(),
+                AvatarUrl = null
+            }
+        };
+
+        var service = BuildService(users);
+
+        var firstResult = await service.GetLeaderboardAsync(limit: 10);
+
+        users[0].ExpPoints = 1500;
+        var secondResult = await service.GetLeaderboardAsync(limit: 10);
+
+        Assert.Equal(1000, firstResult.Entries[0].Score);
+        Assert.Equal(1000, secondResult.Entries[0].Score);
     }
 
     [Fact]

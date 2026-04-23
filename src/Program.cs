@@ -52,6 +52,9 @@ try
     builder.Services.Configure<AdminUsersOptions>(builder.Configuration.GetSection(AdminUsersOptions.SectionName));
     builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
     builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection(EmailSenderOptions.SectionName));
+    builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.SectionName));
+
+    builder.Services.AddMemoryCache();
     
     // Підключення до PostgreSQL через EF Core
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -159,9 +162,16 @@ try
     // Глобальний обробник винятків
     app.UseGlobalExceptionHandler();
 
+    // Логування часу виконання запитів
+    app.UseRequestExecutionTimeLogging();
+
     app.UseRouting();
 
     app.UseAuthentication();
+
+    // Логування деталей запиту (включно з user id для авторизованих користувачів)
+    app.UseRequestDetailsLogging();
+
     app.UseAuthorization();
 
     app.UseStaticFiles();
