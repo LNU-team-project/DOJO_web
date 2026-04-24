@@ -1,26 +1,145 @@
+using System.Linq.Expressions;
+using System.Threading;
 using DOJO2.Application.ViewModels;
 using DOJO2.Domain.Entities;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using Moq;
 
 namespace DOJO_web.Tests;
 
 public class ScheduleServiceTests
 {
-    private static AppDbContext CreateContext()
+    private sealed class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
+        private readonly IQueryProvider _inner;
+
+        public TestAsyncQueryProvider(IQueryProvider inner)
+        {
+            _inner = inner;
+        }
+
+        public IQueryable CreateQuery(Expression expression) => new TestAsyncEnumerable<TEntity>(expression);
+
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression) => new TestAsyncEnumerable<TElement>(expression);
+
+        public object? Execute(Expression expression) => _inner.Execute(expression);
+
+        public TResult Execute<TResult>(Expression expression) => _inner.Execute<TResult>(expression);
+
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+        {
+            if (typeof(TResult).IsGenericType && typeof(TResult).GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                var resultType = typeof(TResult).GetGenericArguments()[0];
+                var executeResult = _inner.Execute(expression);
+                var fromResult = typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(resultType);
+                return (TResult)fromResult.Invoke(null, new[] { executeResult })!;
+            }
+
+            return Execute<TResult>(expression);
+        }
+    }
+
+    private sealed class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+    {
+        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
+        {
+        }
+
+        public TestAsyncEnumerable(Expression expression) : base(expression)
+        {
+        }
+
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+
+        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    }
+
+    private sealed class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> _inner;
+
+        public TestAsyncEnumerator(IEnumerator<T> inner)
+        {
+            _inner = inner;
+        }
+
+        public T Current => _inner.Current;
+
+        public ValueTask DisposeAsync()
+        {
+            _inner.Dispose();
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<bool> MoveNextAsync() => new(_inner.MoveNext());
+    }
+
+    private static Mock<DbSet<T>> BuildMockDbSet<T>(IList<T> source) where T : class
+    {
+        var queryable = source.AsQueryable();
+        var dbSet = new Mock<DbSet<T>>();
+        dbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
+        dbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        dbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        dbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+        dbSet.As<IAsyncEnumerable<T>>()
+            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(() => new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+
+        return dbSet;
+    }
+
+    private static ScheduleService BuildService(
+        out Mock<IAppDbContext> contextMock,
+        List<ScheduleItem>? schedules = null,
+        List<ScheduleOccurrenceExclusion>? exclusions = null)
+    {
+        var scheduleStore = schedules ?? new List<ScheduleItem>();
+        var exclusionStore = exclusions ?? new List<ScheduleOccurrenceExclusion>();
+
+        var schedulesDbSet = BuildMockDbSet(scheduleStore);
+        var exclusionsDbSet = BuildMockDbSet(exclusionStore);
+
+        var nextScheduleId = scheduleStore.Any() ? scheduleStore.Max(item => item.Id) + 1 : 1;
+        var nextExclusionId = exclusionStore.Any() ? exclusionStore.Max(item => item.Id) + 1 : 1;
+
+        schedulesDbSet.Setup(db => db.Add(It.IsAny<ScheduleItem>())).Callback<ScheduleItem>(item =>
+        {
+            if (item.Id <= 0)
+            {
+                item.Id = nextScheduleId++;
+            }
+
+            scheduleStore.Add(item);
+        });
+
+        exclusionsDbSet.Setup(db => db.Add(It.IsAny<ScheduleOccurrenceExclusion>())).Callback<ScheduleOccurrenceExclusion>(item =>
+        {
+            if (item.Id <= 0)
+            {
+                item.Id = nextExclusionId++;
+            }
+
+            exclusionStore.Add(item);
+        });
+
+        contextMock = new Mock<IAppDbContext>(MockBehavior.Strict);
+        contextMock.Setup(context => context.Schedules).Returns(schedulesDbSet.Object);
+        contextMock.Setup(context => context.ScheduleExclusions).Returns(exclusionsDbSet.Object);
+        contextMock.Setup(context => context.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        return new ScheduleService(contextMock.Object);
     }
 
     [Fact]
     public async Task CreateScheduleAsync_WithNullModel_ReturnsFailure()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var result = await service.CreateScheduleAsync(1, null);
 
@@ -31,8 +150,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_WithInvalidDuration_ReturnsFailure()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var result = await service.CreateScheduleAsync(2, new ScheduleCreateViewModel
         {
@@ -50,8 +168,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_WithInvalidRecurrenceType_ReturnsFailure()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var result = await service.CreateScheduleAsync(3, new ScheduleCreateViewModel
         {
@@ -69,8 +186,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_WithInvalidRecurrenceInterval_ReturnsFailure()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var result = await service.CreateScheduleAsync(4, new ScheduleCreateViewModel
         {
@@ -88,8 +204,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_DailySchedule_CreatesAndReturnsMappedData()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var startAt = new DateTime(2026, 4, 23, 10, 15, 0, DateTimeKind.Unspecified);
         var result = await service.CreateScheduleAsync(5, new ScheduleCreateViewModel
@@ -116,8 +231,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_WeeklyWithoutDays_UsesStartDayAsWeeklyMask()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var startAt = new DateTime(2026, 4, 27, 8, 0, 0, DateTimeKind.Utc); // Monday
         var result = await service.CreateScheduleAsync(6, new ScheduleCreateViewModel
@@ -139,8 +253,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task CreateScheduleAsync_WeeklyWithSelectedDays_PersistsAllSelectedDays()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var result = await service.CreateScheduleAsync(7, new ScheduleCreateViewModel
         {
@@ -161,8 +274,7 @@ public class ScheduleServiceTests
     [Fact]
     public async Task GetSchedulesForRangeAsync_WithNoEndDate_ReturnsOccurrencesInFarFuture()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var startAt = new DateTime(2026, 1, 1, 9, 0, 0, DateTimeKind.Utc);
         var createResult = await service.CreateScheduleAsync(7, new ScheduleCreateViewModel
@@ -192,8 +304,7 @@ public class ScheduleServiceTests
     // Нові тести
     public async Task DeleteScheduleOccurrenceAsync_SingleMode_DeletesOnlyOneOccurrence()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var startAt = new DateTime(2026, 4, 20, 10, 0, 0, DateTimeKind.Utc);
         var createResult = await service.CreateScheduleAsync(11, new ScheduleCreateViewModel
@@ -231,8 +342,7 @@ public class ScheduleServiceTests
     // Нові тести
     public async Task DeleteScheduleOccurrenceAsync_FutureMode_DeletesSelectedAndNextOccurrences()
     {
-        using var context = CreateContext();
-        var service = new ScheduleService(context);
+        var service = BuildService(out _);
 
         var startAt = new DateTime(2026, 4, 20, 8, 30, 0, DateTimeKind.Utc);
         var createResult = await service.CreateScheduleAsync(15, new ScheduleCreateViewModel
