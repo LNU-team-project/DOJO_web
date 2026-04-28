@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
     public DbSet<Pomodoro> Pomodoros => Set<Pomodoro>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
+    public DbSet<Friend> Friends => Set<Friend>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -252,6 +253,31 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(a => a.TaskId);
+        });
+
+        // ── Friend ─────────────────────────────────────────────
+        builder.Entity<Friend>(e =>
+        {
+            e.ToTable("friends");
+            e.HasKey(f => f.Id);
+            e.Property(f => f.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(f => f.UserId).HasColumnName(UserIdColumnName);
+            e.Property(f => f.FriendUserId).HasColumnName("friend_user_id");
+            e.Property(f => f.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(f => f.User)
+                .WithMany(u => u.Friends)
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(f => f.FriendUser)
+                .WithMany()
+                .HasForeignKey(f => f.FriendUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(f => new { f.UserId, f.FriendUserId }).IsUnique();
+            e.HasIndex(f => f.UserId);
+            e.HasIndex(f => f.FriendUserId);
         });
     }
 }

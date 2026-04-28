@@ -15,4 +15,5 @@ public class AppUser : IdentityUser<int>
     public ICollection<Goal> Goals { get; set; } = new List<Goal>();
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     public ICollection<Pomodoro> Pomodoros { get; set; } = new List<Pomodoro>();
+    public ICollection<Friend> Friends { get; set; } = new List<Friend>();
 }
