@@ -5,7 +5,6 @@
   const friendsList = document.getElementById("friendsList");
   const friendsAddForm = document.getElementById("friendsAddForm");
   const friendUserNameInput = document.getElementById("friendUserName");
-  const friendUserIdInput = document.getElementById("friendUserId");
 
   if (
     !friendsModal ||
@@ -20,7 +19,7 @@
     LOAD_ERROR: "Не вдалося завантажити список друзів",
     ADD_ERROR: "Не вдалося додати друга",
     REMOVE_ERROR: "Не вдалося видалити друга",
-    EMPTY_INPUT: "Вкажіть ім'я або ID користувача",
+    EMPTY_INPUT: "Вкажіть ім'я користувача",
   };
 
   const showError = (message) => {
@@ -45,32 +44,23 @@
 
   const renderEmptyState = () => {
     friendsList.innerHTML =
-      '<p class="todo-empty-message">Поки немає друзів</p>';
+      '<li class="leaderboard-empty">Поки немає друзів</li>';
   };
 
   const renderFriendItem = (friend) => {
-    const item = document.createElement("div");
-    item.className = "friends-list-item";
+    const item = document.createElement("li");
+    item.className = "leaderboard-item friends-list-item";
 
     const avatar = document.createElement("img");
-    avatar.className = "friends-avatar";
+    avatar.className = "leaderboard-avatar friends-avatar";
     avatar.alt = "Аватар друга";
     avatar.src =
       friend.avatarUrl ||
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-    const info = document.createElement("div");
-    info.className = "friends-info";
-
-    const name = document.createElement("div");
-    name.className = "friends-name";
+    const name = document.createElement("span");
+    name.className = "leaderboard-name friends-name";
     name.textContent = friend.friendUserName || "Користувач";
-
-    const meta = document.createElement("div");
-    meta.className = "friends-meta";
-    meta.textContent = `ID: ${friend.friendUserId}`;
-
-    info.append(name, meta);
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -80,7 +70,7 @@
       await removeFriend(friend.friendUserId);
     });
 
-    item.append(avatar, info, removeBtn);
+    item.append(avatar, name, removeBtn);
     return item;
   };
 
@@ -138,7 +128,6 @@
       }
 
       if (friendUserNameInput) friendUserNameInput.value = "";
-      if (friendUserIdInput) friendUserIdInput.value = "";
       await loadFriends();
     } catch (error) {
       console.error("Помилка додавання друга", error);
@@ -174,16 +163,13 @@
   friendsAddForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const friendUserName = friendUserNameInput?.value.trim() || "";
-    const friendUserId = Number.parseInt(friendUserIdInput?.value || "0", 10);
 
-    if (!friendUserName && friendUserId <= 0) {
+    if (!friendUserName) {
       showError(MESSAGES.EMPTY_INPUT);
       return;
     }
 
-    const payload = friendUserName ? { friendUserName } : { friendUserId };
-
-    void addFriend(payload);
+    void addFriend({ friendUserName });
   });
 
   openFriendsModalBtn.addEventListener("click", openModal);

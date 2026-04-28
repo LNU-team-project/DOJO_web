@@ -800,19 +800,14 @@
                     <label for="friendUserName">Ім'я користувача</label>
                     <input type="text" id="friendUserName" class="form-control" maxlength="256" placeholder="Введіть username друга" />
                 </div>
-                <div class="form-group">
-                    <label for="friendUserId">або ID користувача</label>
-                    <input type="number" id="friendUserId" class="form-control" min="1" placeholder="Наприклад, 12" />
-                </div>
-                <p class="form-help">Достатньо заповнити одне поле.</p>
                 <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
                     <button type="submit" class="btn-primary">Додати друга</button>
                 </div>
             </form>
 
-            <div class="friends-list" id="friendsList" aria-live="polite">
-                <p class="todo-empty-message">Поки немає друзів</p>
-            </div>
+            <ul class="leaderboard-list friends-list" id="friendsList" aria-live="polite">
+                <li class="leaderboard-empty">Поки немає друзів</li>
+            </ul>
         </div>
     </div>
 </div>
