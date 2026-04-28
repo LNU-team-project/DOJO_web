@@ -1124,8 +1124,21 @@ fieldset.form-group {
   box-shadow: 0 14px 24px rgba(42, 143, 152, 0.3);
 }
 
+.dashboard-friends-btn {
+  margin-left: 12px;
+  padding: 8px 16px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #8f6bd7 0%, #6e4bb8 100%);
+  box-shadow: 0 10px 18px rgba(111, 75, 184, 0.25);
+}
+
 .dashboard-schedule-btn:hover {
   box-shadow: 0 16px 28px rgba(42, 143, 152, 0.35);
+}
+
+.dashboard-friends-btn:hover {
+  box-shadow: 0 12px 22px rgba(111, 75, 184, 0.3);
 }
 
 .schedule-weekday-options {
@@ -1523,6 +1536,51 @@ fieldset.form-group {
 .plan-slot.plan-priority-1 {
   box-shadow: 0 4px 10px rgba(108, 197, 138, 0.18);
   border-left: 4px solid #6cc58a;
+}
+
+.friends-modal .todo-modal-content {
+  max-width: 520px;
+}
+
+.friends-modal-body {
+  display: grid;
+  gap: 18px;
+}
+
+.friends-list.leaderboard-list {
+  padding: 8px 12px 16px;
+  gap: 12px;
+  max-height: 320px;
+}
+
+.friends-list-item.leaderboard-item {
+  background: rgba(111, 75, 184, 0.08);
+  border: 1px solid rgba(111, 75, 184, 0.16);
+}
+
+.friends-list-item.leaderboard-item:hover {
+  background-color: rgba(111, 75, 184, 0.14);
+  box-shadow: 0 4px 12px rgba(111, 75, 184, 0.18);
+}
+
+.friends-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(111, 75, 184, 0.2);
+  background: #fff;
+}
+
+.friends-name {
+  font-weight: 700;
+  color: #2a1f3c;
+}
+
+.friends-remove-btn {
+  min-width: 110px;
+  border-radius: 999px;
+}
 }
 .plan-slot.plan-priority-2 {
   box-shadow: 0 4px 10px rgba(255, 190, 59, 0.18);

@@ -1,7 +1,9 @@
+using System.Linq;
 using DOJO2.Domain.Entities;
 using DOJO2.Application.Common;
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.ViewModels;
+using DOJO2.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,7 @@ public class UserService : IUserService
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<UserService> _logger;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly IAppDbContext _context;
     private const string AvatarDirectory = "uploads/avatars";
     private const long MaxAvatarSize = 5 * 1024 * 1024; // 5MB
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
@@ -21,11 +24,116 @@ public class UserService : IUserService
     public UserService(
         UserManager<AppUser> userManager,
         ILogger<UserService> logger,
-        IWebHostEnvironment webHostEnvironment)
+        IWebHostEnvironment webHostEnvironment,
+        IAppDbContext context)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _webHostEnvironment = webHostEnvironment ?? throw new ArgumentNullException(nameof(webHostEnvironment));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+    }
+
+    public async Task<Result<List<FriendViewModel>>> GetFriendsAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            _logger.LogWarning("GetFriendsAsync called with invalid userId: {UserId}", userId);
+            return Result<List<FriendViewModel>>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var friends = await _context.Friends
+            .Where(f => f.UserId == userId)
+            .Select(f => new FriendViewModel
+            {
+                Id = f.Id,
+                FriendUserId = f.FriendUserId,
+                FriendUserName = f.FriendUser != null ? f.FriendUser.UserName ?? string.Empty : string.Empty,
+                AvatarUrl = f.FriendUser != null ? f.FriendUser.AvatarUrl : null,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+
+        return Result<List<FriendViewModel>>.SuccessResult(friends, "Друзі успішно завантажені");
+    }
+
+    public async Task<Result<bool>> AddFriendAsync(int userId, int friendUserId)
+    {
+        if (userId <= 0 || friendUserId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        if (userId == friendUserId)
+        {
+            return Result<bool>.FailureResult("Неможливо додати себе в друзі");
+        }
+
+        var friendUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == friendUserId);
+        if (friendUser == null)
+        {
+            return Result<bool>.FailureResult("Користувача для додавання не знайдено");
+        }
+
+        var exists = await _context.Friends.AnyAsync(f => f.UserId == userId && f.FriendUserId == friendUserId);
+        if (exists)
+        {
+            return Result<bool>.FailureResult("Цей користувач уже в списку друзів");
+        }
+
+        var entry = new Friend
+        {
+            UserId = userId,
+            FriendUserId = friendUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.Friends.AddAsync(entry);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, "Додано до друзів");
+    }
+
+    public async Task<Result<bool>> AddFriendByUserNameAsync(int userId, string friendUserName)
+    {
+        if (userId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        if (string.IsNullOrWhiteSpace(friendUserName))
+        {
+            return Result<bool>.FailureResult("Ім'я користувача не може бути порожнім");
+        }
+
+        var normalizedName = friendUserName.Trim().ToUpperInvariant();
+        var friendUser = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedName);
+
+        if (friendUser == null)
+        {
+            return Result<bool>.FailureResult("Користувача для додавання не знайдено");
+        }
+
+        return await AddFriendAsync(userId, friendUser.Id);
+    }
+
+    public async Task<Result<bool>> RemoveFriendAsync(int userId, int friendUserId)
+    {
+        if (userId <= 0 || friendUserId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var entry = await _context.Friends.FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendUserId);
+        if (entry == null)
+        {
+            return Result<bool>.FailureResult("Запис не знайдено");
+        }
+
+        _context.Friends.Remove(entry);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, "Видалено з друзів");
     }
 
     public async Task<Result<UserProfileViewModel>> GetUserProfileAsync(int userId)

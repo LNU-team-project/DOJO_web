@@ -43,6 +43,13 @@
                     id="openScheduleModal">
                 Додати розклад
             </button>
+            <button type="button"
+                    class="dashboard-todo-btn dashboard-friends-btn"
+                    id="openFriendsModal"
+                    aria-haspopup="dialog"
+                    aria-controls="friendsModal">
+                Друзі
+            </button>
 
             <button type="button"
                     class="dashboard-notification-btn"
@@ -780,6 +787,31 @@
     </div>
 </div>
 
+<div class="todo-modal friends-modal" id="friendsModal" aria-hidden="true" aria-labelledby="friendsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="friendsModalTitle">Мої друзі</h2>
+            <button type="button" class="todo-modal-close" id="closeFriendsModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <div class="friends-modal-body">
+            <form id="friendsAddForm" class="todo-form" novalidate>
+                <div class="form-group">
+                    <label for="friendUserName">Ім'я користувача</label>
+                    <input type="text" id="friendUserName" class="form-control" maxlength="256" placeholder="Введіть username друга" />
+                </div>
+                <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
+                    <button type="submit" class="btn-primary">Додати друга</button>
+                </div>
+            </form>
+
+            <ul class="leaderboard-list friends-list" id="friendsList" aria-live="polite">
+                <li class="leaderboard-empty">Поки немає друзів</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <div class="notifications-modal" id="notificationsModal" aria-hidden="true" aria-modal="true" aria-labelledby="notificationsModalTitle">
     <div class="notifications-modal-overlay" id="notificationsModalOverlay"></div>
     <div class="notifications-modal-content">
@@ -824,6 +856,7 @@
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
     <script src="~/js/schedule.js" asp-append-version="true"></script>
+    <script src="~/js/friends.js" asp-append-version="true"></script>
     <script src="~/js/profile.js" asp-append-version="true"></script>
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
