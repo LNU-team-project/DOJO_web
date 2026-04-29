@@ -228,10 +228,15 @@
         </li>`;
       })
       .join("");
+
+    list.querySelectorAll("[data-notification-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        void handleNotificationActionButtonClick(button);
+      });
+    });
   };
 
-  const handleNotificationActionClick = async (event) => {
-    const button = event.target.closest("[data-notification-action]");
+  const handleNotificationActionButtonClick = async (button) => {
     if (!button || !notificationsModal?.classList.contains("show")) {
       return;
     }
@@ -352,12 +357,6 @@
         "click",
         closeNotificationsModal,
       );
-    }
-
-    if (notificationsList) {
-      notificationsList.addEventListener("click", (event) => {
-        void handleNotificationActionClick(event);
-      });
     }
 
     globalThis.addEventListener("keydown", (event) => {
