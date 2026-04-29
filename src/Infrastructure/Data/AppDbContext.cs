@@ -21,6 +21,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<Friend> Friends => Set<Friend>();
+    public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -253,6 +254,30 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(a => a.TaskId);
+        });
+
+        // ── FriendRequest ─────────────────────────────────────
+        builder.Entity<FriendRequest>(e =>
+        {
+            e.ToTable("friend_requests");
+            e.HasKey(fr => fr.Id);
+            e.Property(fr => fr.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(fr => fr.RequesterUserId).HasColumnName("requester_user_id");
+            e.Property(fr => fr.ReceiverUserId).HasColumnName("receiver_user_id");
+            e.Property(fr => fr.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(fr => fr.RequesterUser)
+                .WithMany()
+                .HasForeignKey(fr => fr.RequesterUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(fr => fr.ReceiverUser)
+                .WithMany()
+                .HasForeignKey(fr => fr.ReceiverUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(fr => new { fr.RequesterUserId, fr.ReceiverUserId }).IsUnique();
+            e.HasIndex(fr => fr.ReceiverUserId);
         });
 
         // ── Friend ─────────────────────────────────────────────

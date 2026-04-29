@@ -12,5 +12,13 @@ public class DashboardNotificationViewModel
     public string Badge { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public List<NotificationActionViewModel> Actions { get; set; } = new();
+}
+
+public class NotificationActionViewModel
+{
+    public string Label { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public int RequestId { get; set; }
 }
 

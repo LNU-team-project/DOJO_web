@@ -42,19 +42,59 @@ public class FriendsController : BaseApiController
         var userId = GetCurrentUserId() ?? 0;
         Result<bool> result;
 
-        if (request.FriendUserId > 0)
+        if (!string.IsNullOrWhiteSpace(request.FriendUserName))
         {
-            result = await _userService.AddFriendAsync(userId, request.FriendUserId);
-        }
-        else if (!string.IsNullOrWhiteSpace(request.FriendUserName))
-        {
-            result = await _userService.AddFriendByUserNameAsync(userId, request.FriendUserName);
+            result = await _userService.SendFriendRequestAsync(userId, request.FriendUserName);
         }
         else
         {
-            return BadRequest(new { success = false, message = "Вкажіть ID або ім'я користувача" });
+            return BadRequest(new { success = false, message = "Вкажіть ім'я користувача" });
         }
 
+        return ToActionResult(result);
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchUsers([FromQuery] string? query, [FromQuery] int limit = 5)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.SearchUsersAsync(userId, query ?? string.Empty, limit);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("requests")]
+    public async Task<IActionResult> GetIncomingRequests()
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.GetIncomingFriendRequestsAsync(userId);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("requests/{requestId}/accept")]
+    public async Task<IActionResult> AcceptRequest(int requestId)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.AcceptFriendRequestAsync(userId, requestId);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("requests/{requestId}/decline")]
+    public async Task<IActionResult> DeclineRequest(int requestId)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null) return authError;
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.DeclineFriendRequestAsync(userId, requestId);
         return ToActionResult(result);
     }
 

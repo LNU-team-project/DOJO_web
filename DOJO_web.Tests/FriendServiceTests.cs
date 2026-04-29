@@ -142,7 +142,34 @@ public class FriendServiceTests
         var result = await service.AddFriendByUserNameAsync(1, "Friend");
 
         Assert.True(result.Success);
+        Assert.NotNull(await context.FriendRequests.FirstOrDefaultAsync(fr => fr.RequesterUserId == 1 && fr.ReceiverUserId == 5));
+        Assert.Null(await context.Friends.FirstOrDefaultAsync(f => f.UserId == 1 && f.FriendUserId == 5));
+    }
+
+    [Fact]
+    public async Task AcceptFriendRequestAsync_CreatesMutualFriendship()
+    {
+        using var context = CreateContext();
+        context.Users.Add(BuildUser(5, "Friend", "friend5@example.com"));
+        context.Users.Add(BuildUser(1, "Owner", "owner@example.com"));
+        context.FriendRequests.Add(new FriendRequest
+        {
+            Id = 10,
+            RequesterUserId = 5,
+            ReceiverUserId = 1,
+            CreatedAt = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var userManager = BuildUserManager(context);
+        var service = BuildService(context, userManager);
+
+        var result = await service.AcceptFriendRequestAsync(1, 10);
+
+        Assert.True(result.Success);
         Assert.NotNull(await context.Friends.FirstOrDefaultAsync(f => f.UserId == 1 && f.FriendUserId == 5));
+        Assert.NotNull(await context.Friends.FirstOrDefaultAsync(f => f.UserId == 5 && f.FriendUserId == 1));
+        Assert.Null(await context.FriendRequests.FirstOrDefaultAsync(fr => fr.Id == 10));
     }
 
     [Fact]

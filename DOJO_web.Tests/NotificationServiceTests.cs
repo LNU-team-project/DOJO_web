@@ -33,6 +33,8 @@ public class NotificationServiceTests
             Id = id,
             UserName = $"user{id}",
             Email = $"u{id}@test.com",
+            NormalizedUserName = $"USER{id}",
+            NormalizedEmail = $"U{ id }@TEST.COM",
             ExpPoints = 0,
             Level = 1,
             CurrentStreak = streak,
@@ -148,6 +150,29 @@ public class NotificationServiceTests
         Assert.Single(result.Data!);
         Assert.Equal(NotificationSeverity.Info, result.Data![0].Severity);
         Assert.Equal("Наразі все спокійно", result.Data![0].Title);
+    }
+
+    [Fact]
+    public async Task GetDashboardNotifications_ReturnsFriendRequestNotification()
+    {
+        using var context = CreateContext();
+        var user = CreateUser(TestUserId);
+        var requester = CreateUser(2);
+        context.Users.AddRange(user, requester);
+        context.FriendRequests.Add(new FriendRequest
+        {
+            RequesterUserId = requester.Id,
+            ReceiverUserId = user.Id,
+            CreatedAt = new DateTime(2026, 4, 21, 8, 0, 0, DateTimeKind.Utc)
+        });
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var result = await service.GetDashboardNotificationsAsync(TestUserId, DateTime.UtcNow);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Contains(result.Data!, n => n.Title == "Новий запит у друзі" && n.Actions.Count == 2);
     }
 }
 

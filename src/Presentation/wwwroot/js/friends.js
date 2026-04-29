@@ -5,6 +5,8 @@
   const friendsList = document.getElementById("friendsList");
   const friendsAddForm = document.getElementById("friendsAddForm");
   const friendUserNameInput = document.getElementById("friendUserName");
+  const friendSuggestions = document.getElementById("friendSuggestions");
+  const friendRequestsList = document.getElementById("friendRequestsList");
 
   if (
     !friendsModal ||
@@ -22,24 +24,15 @@
     EMPTY_INPUT: "Вкажіть ім'я користувача",
   };
 
+  let suggestionTimeoutId = null;
+
   const showError = (message) => {
     const errorDiv = document.createElement("div");
     errorDiv.className = "alert alert-error";
     errorDiv.setAttribute("role", "alert");
     errorDiv.textContent = `❌ Помилка: ${message}`;
     document.body.insertBefore(errorDiv, document.body.firstChild);
-    setTimeout(() => errorDiv.remove(), 5000);
-  };
-
-  const openModal = () => {
-    friendsModal.style.display = "flex";
-    friendsModal.setAttribute("aria-hidden", "false");
-    loadFriends();
-  };
-
-  const closeModal = () => {
-    friendsModal.style.display = "none";
-    friendsModal.setAttribute("aria-hidden", "true");
+    globalThis.setTimeout(() => errorDiv.remove(), 5000);
   };
 
   const renderEmptyState = () => {
@@ -47,48 +40,28 @@
       '<li class="leaderboard-empty">Поки немає друзів</li>';
   };
 
-  const renderFriendItem = (friend) => {
-    const item = document.createElement("li");
-    item.className = "leaderboard-item friends-list-item";
-
-    const avatar = document.createElement("img");
-    avatar.className = "leaderboard-avatar friends-avatar";
-    avatar.alt = "Аватар друга";
-    avatar.src =
-      friend.avatarUrl ||
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-
-    const name = document.createElement("span");
-    name.className = "leaderboard-name friends-name";
-    name.textContent = friend.friendUserName || "Користувач";
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "btn-secondary friends-remove-btn";
-    removeBtn.textContent = "Видалити";
-    removeBtn.addEventListener("click", async () => {
-      await removeFriend(friend.friendUserId);
-    });
-
-    item.append(avatar, name, removeBtn);
-    return item;
+  const renderRequestsEmptyState = () => {
+    if (friendRequestsList) {
+      friendRequestsList.innerHTML =
+        '<li class="leaderboard-empty">Немає нових запитів</li>';
+    }
   };
 
-  const renderFriends = (friends) => {
-    if (!Array.isArray(friends) || friends.length === 0) {
-      renderEmptyState();
+  const renderSuggestionsEmptyState = () => {
+    if (!friendSuggestions) {
       return;
     }
 
-    friendsList.innerHTML = "";
-    friends.forEach((friend) => {
-      friendsList.appendChild(renderFriendItem(friend));
-    });
+    friendSuggestions.innerHTML = "";
+    friendSuggestions.classList.remove("show");
   };
 
   const loadFriends = async () => {
     try {
-      const response = await fetch("/api/friends", { method: "GET" });
+      const response = await fetch("/api/friends", {
+        method: "GET",
+        credentials: "include",
+      });
       if (!response.ok) {
         showError(MESSAGES.LOAD_ERROR);
         return;
@@ -100,19 +73,124 @@
         return;
       }
 
-      renderFriends(data.data || []);
+      const friends = Array.isArray(data.data) ? data.data : [];
+      if (friends.length === 0) {
+        renderEmptyState();
+        return;
+      }
+
+      friendsList.innerHTML = "";
+      friends.forEach((friend) => {
+        const item = document.createElement("li");
+        item.className = "leaderboard-item friends-list-item";
+
+        const avatar = document.createElement("img");
+        avatar.className = "leaderboard-avatar friends-avatar";
+        avatar.alt = "Аватар друга";
+        avatar.src =
+          friend.avatarUrl ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
+        const name = document.createElement("span");
+        name.className = "leaderboard-name friends-name";
+        name.textContent = friend.friendUserName || "Користувач";
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "btn-secondary friends-remove-btn";
+        removeBtn.textContent = "Видалити";
+        removeBtn.addEventListener("click", async () => {
+          await removeFriend(friend.friendUserId);
+        });
+
+        item.append(avatar, name, removeBtn);
+        friendsList.appendChild(item);
+      });
     } catch (error) {
       console.error("Помилка завантаження друзів", error);
       showError(MESSAGES.LOAD_ERROR);
     }
   };
 
-  const addFriend = async (payload) => {
+  const loadRequests = async () => {
+    if (!friendRequestsList) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/friends/requests", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        renderRequestsEmptyState();
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        renderRequestsEmptyState();
+        return;
+      }
+
+      const requests = Array.isArray(data.data) ? data.data : [];
+      if (requests.length === 0) {
+        renderRequestsEmptyState();
+        return;
+      }
+
+      friendRequestsList.innerHTML = "";
+      requests.forEach((request) => {
+        const item = document.createElement("li");
+        item.className = "leaderboard-item friends-request-item";
+
+        const avatar = document.createElement("img");
+        avatar.className = "leaderboard-avatar friends-avatar";
+        avatar.alt = "Аватар користувача";
+        avatar.src =
+          request.avatarUrl ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
+        const name = document.createElement("span");
+        name.className = "leaderboard-name friends-name";
+        name.textContent = request.requesterUserName || "Користувач";
+
+        const actions = document.createElement("div");
+        actions.className = "friends-request-actions";
+
+        const acceptBtn = document.createElement("button");
+        acceptBtn.type = "button";
+        acceptBtn.className = "btn-primary friends-request-btn";
+        acceptBtn.textContent = "Прийняти";
+        acceptBtn.addEventListener("click", async () => {
+          await respondToRequest(request.requestId, "accept");
+        });
+
+        const declineBtn = document.createElement("button");
+        declineBtn.type = "button";
+        declineBtn.className = "btn-secondary friends-request-btn";
+        declineBtn.textContent = "Відхилити";
+        declineBtn.addEventListener("click", async () => {
+          await respondToRequest(request.requestId, "decline");
+        });
+
+        actions.append(acceptBtn, declineBtn);
+        item.append(avatar, name, actions);
+        friendRequestsList.appendChild(item);
+      });
+    } catch (error) {
+      console.error("Помилка завантаження запитів", error);
+      renderRequestsEmptyState();
+    }
+  };
+
+  const addFriend = async (friendUserName) => {
     try {
       const response = await fetch("/api/friends/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        credentials: "include",
+        body: JSON.stringify({ friendUserName }),
       });
 
       if (!response.ok) {
@@ -127,8 +205,12 @@
         return;
       }
 
-      if (friendUserNameInput) friendUserNameInput.value = "";
+      if (friendUserNameInput) {
+        friendUserNameInput.value = "";
+      }
+      renderSuggestionsEmptyState();
       await loadFriends();
+      await loadRequests();
     } catch (error) {
       console.error("Помилка додавання друга", error);
       showError(MESSAGES.ADD_ERROR);
@@ -139,6 +221,7 @@
     try {
       const response = await fetch(`/api/friends/remove/${friendUserId}`, {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -160,7 +243,109 @@
     }
   };
 
-  friendsAddForm.addEventListener("submit", (event) => {
+  const respondToRequest = async (requestId, action) => {
+    const endpoint =
+      action === "accept"
+        ? `/api/friends/requests/${requestId}/accept`
+        : `/api/friends/requests/${requestId}/decline`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || MESSAGES.REMOVE_ERROR);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        showError(data.message || MESSAGES.REMOVE_ERROR);
+        return;
+      }
+
+      await loadRequests();
+      await loadFriends();
+    } catch (error) {
+      console.error("Помилка обробки запиту", error);
+      showError(MESSAGES.REMOVE_ERROR);
+    }
+  };
+
+  const fetchSuggestions = async (query) => {
+    if (!friendSuggestions) {
+      return;
+    }
+
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) {
+      renderSuggestionsEmptyState();
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/friends/search?query=${encodeURIComponent(trimmedQuery)}&limit=5`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        renderSuggestionsEmptyState();
+        return;
+      }
+
+      const data = await response.json();
+      if (
+        !data.success ||
+        !Array.isArray(data.data) ||
+        data.data.length === 0
+      ) {
+        renderSuggestionsEmptyState();
+        return;
+      }
+
+      friendSuggestions.innerHTML = "";
+      data.data.forEach((user) => {
+        const item = document.createElement("li");
+        item.className = "friends-suggestion-item";
+
+        const avatar = document.createElement("img");
+        avatar.className = "friends-suggestion-avatar";
+        avatar.alt = "Аватар користувача";
+        avatar.src =
+          user.avatarUrl ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
+        const name = document.createElement("span");
+        name.className = "friends-suggestion-name";
+        name.textContent = user.userName || "Користувач";
+
+        item.append(avatar, name);
+        item.addEventListener("click", () => {
+          if (friendUserNameInput) {
+            friendUserNameInput.value = user.userName || "";
+            friendUserNameInput.focus();
+          }
+          renderSuggestionsEmptyState();
+        });
+
+        friendSuggestions.appendChild(item);
+      });
+
+      friendSuggestions.classList.add("show");
+    } catch (error) {
+      console.error("Помилка пошуку користувачів", error);
+      renderSuggestionsEmptyState();
+    }
+  };
+
+  const handleAddSubmit = (event) => {
     event.preventDefault();
     const friendUserName = friendUserNameInput?.value.trim() || "";
 
@@ -169,15 +354,49 @@
       return;
     }
 
-    void addFriend({ friendUserName });
+    void addFriend(friendUserName);
+  };
+
+  const handleSuggestionInput = (event) => {
+    const value = event.target.value;
+    if (suggestionTimeoutId !== null) {
+      globalThis.clearTimeout(suggestionTimeoutId);
+    }
+
+    suggestionTimeoutId = globalThis.setTimeout(() => {
+      void fetchSuggestions(value);
+    }, 250);
+  };
+
+  const handleOutsideClick = (event) => {
+    if (!friendSuggestions || !friendUserNameInput) {
+      return;
+    }
+
+    const target = event.target;
+    const clickedInsideSuggestions = friendSuggestions.contains(target);
+    const clickedInput = friendUserNameInput.contains(target);
+
+    if (!clickedInsideSuggestions && !clickedInput) {
+      renderSuggestionsEmptyState();
+    }
+  };
+
+  openFriendsModalBtn.addEventListener("click", () => {
+    openModal();
   });
 
-  openFriendsModalBtn.addEventListener("click", openModal);
-  closeFriendsModalBtn?.addEventListener("click", closeModal);
+  closeFriendsModalBtn?.addEventListener("click", () => {
+    closeModal();
+  });
 
   friendsModal.addEventListener("click", (event) => {
     if (event.target === friendsModal) {
       closeModal();
     }
   });
+
+  friendsAddForm.addEventListener("submit", handleAddSubmit);
+  friendUserNameInput?.addEventListener("input", handleSuggestionInput);
+  document.addEventListener("click", handleOutsideClick);
 })();

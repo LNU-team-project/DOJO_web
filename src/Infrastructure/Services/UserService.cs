@@ -74,26 +74,56 @@ public class UserService : IUserService
             return Result<bool>.FailureResult("Користувача для додавання не знайдено");
         }
 
-        var exists = await _context.Friends.AnyAsync(f => f.UserId == userId && f.FriendUserId == friendUserId);
-        if (exists)
+        var alreadyFriends = await AreFriendsAsync(userId, friendUserId);
+        if (alreadyFriends)
         {
             return Result<bool>.FailureResult("Цей користувач уже в списку друзів");
         }
 
-        var entry = new Friend
-        {
-            UserId = userId,
-            FriendUserId = friendUserId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _context.Friends.AddAsync(entry);
-        await _context.SaveChangesAsync();
+        await AddFriendshipAsync(userId, friendUserId);
 
         return Result<bool>.SuccessResult(true, "Додано до друзів");
     }
 
     public async Task<Result<bool>> AddFriendByUserNameAsync(int userId, string friendUserName)
+    {
+        if (userId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        if (string.IsNullOrWhiteSpace(friendUserName))
+        {
+            return Result<bool>.FailureResult("Ім'я користувача не може бути порожнім");
+        }
+
+        return await SendFriendRequestAsync(userId, friendUserName);
+    }
+
+    public async Task<Result<bool>> RemoveFriendAsync(int userId, int friendUserId)
+    {
+        if (userId <= 0 || friendUserId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var entries = await _context.Friends
+            .Where(f => (f.UserId == userId && f.FriendUserId == friendUserId)
+                || (f.UserId == friendUserId && f.FriendUserId == userId))
+            .ToListAsync();
+
+        if (entries.Count == 0)
+        {
+            return Result<bool>.FailureResult("Запис не знайдено");
+        }
+
+        _context.Friends.RemoveRange(entries);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, "Видалено з друзів");
+    }
+
+    public async Task<Result<bool>> SendFriendRequestAsync(int userId, string friendUserName)
     {
         if (userId <= 0)
         {
@@ -114,26 +144,192 @@ public class UserService : IUserService
             return Result<bool>.FailureResult("Користувача для додавання не знайдено");
         }
 
-        return await AddFriendAsync(userId, friendUser.Id);
-    }
-
-    public async Task<Result<bool>> RemoveFriendAsync(int userId, int friendUserId)
-    {
-        if (userId <= 0 || friendUserId <= 0)
+        if (friendUser.Id == userId)
         {
-            return Result<bool>.FailureResult("Невалідний ідентифікатор користувача");
+            return Result<bool>.FailureResult("Неможливо додати себе в друзі");
         }
 
-        var entry = await _context.Friends.FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendUserId);
-        if (entry == null)
+        var alreadyFriends = await AreFriendsAsync(userId, friendUser.Id);
+        if (alreadyFriends)
         {
-            return Result<bool>.FailureResult("Запис не знайдено");
+            return Result<bool>.FailureResult("Цей користувач уже в списку друзів");
         }
 
-        _context.Friends.Remove(entry);
+        var incomingRequest = await _context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.RequesterUserId == friendUser.Id && fr.ReceiverUserId == userId);
+
+        if (incomingRequest != null)
+        {
+            await AcceptFriendRequestInternalAsync(incomingRequest, userId);
+            return Result<bool>.SuccessResult(true, "Запит прийнято");
+        }
+
+        var existingRequest = await _context.FriendRequests
+            .AnyAsync(fr => fr.RequesterUserId == userId && fr.ReceiverUserId == friendUser.Id);
+
+        if (existingRequest)
+        {
+            return Result<bool>.FailureResult("Запит уже надіслано");
+        }
+
+        var request = new FriendRequest
+        {
+            RequesterUserId = userId,
+            ReceiverUserId = friendUser.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.FriendRequests.AddAsync(request);
         await _context.SaveChangesAsync();
 
-        return Result<bool>.SuccessResult(true, "Видалено з друзів");
+        return Result<bool>.SuccessResult(true, "Запит у друзі надіслано");
+    }
+
+    public async Task<Result<List<FriendRequestViewModel>>> GetIncomingFriendRequestsAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            return Result<List<FriendRequestViewModel>>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var requests = await _context.FriendRequests
+            .Where(fr => fr.ReceiverUserId == userId)
+            .OrderByDescending(fr => fr.CreatedAt)
+            .Select(fr => new FriendRequestViewModel
+            {
+                RequestId = fr.Id,
+                RequesterUserId = fr.RequesterUserId,
+                RequesterUserName = fr.RequesterUser != null ? fr.RequesterUser.UserName ?? string.Empty : string.Empty,
+                AvatarUrl = fr.RequesterUser != null ? fr.RequesterUser.AvatarUrl : null,
+                CreatedAt = fr.CreatedAt
+            })
+            .ToListAsync();
+
+        return Result<List<FriendRequestViewModel>>.SuccessResult(requests, "Запити завантажено");
+    }
+
+    public async Task<Result<bool>> AcceptFriendRequestAsync(int userId, int requestId)
+    {
+        if (userId <= 0 || requestId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідні дані запиту");
+        }
+
+        var request = await _context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == requestId && fr.ReceiverUserId == userId);
+
+        if (request == null)
+        {
+            return Result<bool>.FailureResult("Запит не знайдено");
+        }
+
+        await AcceptFriendRequestInternalAsync(request, userId);
+        return Result<bool>.SuccessResult(true, "Запит прийнято");
+    }
+
+    public async Task<Result<bool>> DeclineFriendRequestAsync(int userId, int requestId)
+    {
+        if (userId <= 0 || requestId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідні дані запиту");
+        }
+
+        var request = await _context.FriendRequests
+            .FirstOrDefaultAsync(fr => fr.Id == requestId && fr.ReceiverUserId == userId);
+
+        if (request == null)
+        {
+            return Result<bool>.FailureResult("Запит не знайдено");
+        }
+
+        _context.FriendRequests.Remove(request);
+        await _context.SaveChangesAsync();
+
+        return Result<bool>.SuccessResult(true, "Запит відхилено");
+    }
+
+    public async Task<Result<List<UserSearchViewModel>>> SearchUsersAsync(int userId, string query, int limit)
+    {
+        if (userId <= 0)
+        {
+            return Result<List<UserSearchViewModel>>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Result<List<UserSearchViewModel>>.SuccessResult(new List<UserSearchViewModel>(), "Порожній запит");
+        }
+
+        var normalizedQuery = query.Trim().ToUpperInvariant();
+        var safeLimit = Math.Clamp(limit, 1, 10);
+
+        var friendIds = _context.Friends
+            .Where(f => f.UserId == userId)
+            .Select(f => f.FriendUserId);
+
+        var pendingIds = _context.FriendRequests
+            .Where(fr => fr.RequesterUserId == userId || fr.ReceiverUserId == userId)
+            .Select(fr => fr.RequesterUserId == userId ? fr.ReceiverUserId : fr.RequesterUserId);
+
+        var users = await _userManager.Users
+            .Where(u => u.Id != userId
+                && u.NormalizedUserName != null
+                && u.NormalizedUserName.Contains(normalizedQuery)
+                && !friendIds.Contains(u.Id)
+                && !pendingIds.Contains(u.Id))
+            .OrderBy(u => u.UserName)
+            .Select(u => new UserSearchViewModel
+            {
+                Id = u.Id,
+                UserName = u.UserName ?? string.Empty,
+                AvatarUrl = u.AvatarUrl
+            })
+            .Take(safeLimit)
+            .ToListAsync();
+
+        return Result<List<UserSearchViewModel>>.SuccessResult(users, "Пошук завершено");
+    }
+
+    private async Task AcceptFriendRequestInternalAsync(FriendRequest request, int userId)
+    {
+        await AddFriendshipAsync(request.RequesterUserId, request.ReceiverUserId);
+        _context.FriendRequests.Remove(request);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Friend request {RequestId} accepted by user {UserId}", request.Id, userId);
+    }
+
+    private async Task AddFriendshipAsync(int userId, int friendUserId)
+    {
+        var now = DateTime.UtcNow;
+        var entries = new List<Friend>
+        {
+            new Friend { UserId = userId, FriendUserId = friendUserId, CreatedAt = now },
+            new Friend { UserId = friendUserId, FriendUserId = userId, CreatedAt = now }
+        };
+
+        var existing = await _context.Friends
+            .Where(f => (f.UserId == userId && f.FriendUserId == friendUserId)
+                || (f.UserId == friendUserId && f.FriendUserId == userId))
+            .Select(f => new { f.UserId, f.FriendUserId })
+            .ToListAsync();
+
+        foreach (var entry in entries)
+        {
+            if (existing.Any(e => e.UserId == entry.UserId && e.FriendUserId == entry.FriendUserId))
+            {
+                continue;
+            }
+            await _context.Friends.AddAsync(entry);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private Task<bool> AreFriendsAsync(int userId, int friendUserId)
+    {
+        return _context.Friends.AnyAsync(f =>
+            (f.UserId == userId && f.FriendUserId == friendUserId)
+            || (f.UserId == friendUserId && f.FriendUserId == userId));
     }
 
     public async Task<Result<UserProfileViewModel>> GetUserProfileAsync(int userId)

@@ -10,6 +10,7 @@ public interface IAppDbContext
     DbSet<ScheduleOccurrenceExclusion> ScheduleExclusions { get; }
     DbSet<Attachment> Attachments { get; }
     DbSet<Friend> Friends { get; }
+    DbSet<FriendRequest> FriendRequests { get; }
     DbSet<Pomodoro> Pomodoros { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -33,6 +33,7 @@ public class NotificationService : INotificationService
 
         AddStreakWarning(user, today, notifications);
         await AddPlanDueTomorrowNotificationsAsync(userId, tomorrow, notifications);
+        await AddFriendRequestNotificationsAsync(userId, notifications);
 
         if (notifications.Count == 0)
         {
@@ -107,6 +108,48 @@ public class NotificationService : INotificationService
             Title = "Серія під загрозою",
             Description = description
         });
+    }
+
+    private async Task AddFriendRequestNotificationsAsync(
+        int userId,
+        ICollection<DashboardNotificationViewModel> notifications)
+    {
+        var requests = await _context.FriendRequests.AsNoTracking()
+            .Where(fr => fr.ReceiverUserId == userId)
+            .OrderByDescending(fr => fr.CreatedAt)
+            .Select(fr => new
+            {
+                fr.Id,
+                RequesterName = fr.RequesterUser != null ? fr.RequesterUser.UserName : null
+            })
+            .ToListAsync();
+
+        foreach (var request in requests)
+        {
+            var requesterName = request.RequesterName ?? "Користувач";
+            notifications.Add(new DashboardNotificationViewModel
+            {
+                Severity = NotificationSeverity.Warning,
+                Badge = "Друзі",
+                Title = "Новий запит у друзі",
+                Description = $"{requesterName} надіслав запит у друзі.",
+                Actions = new List<NotificationActionViewModel>
+                {
+                    new()
+                    {
+                        Label = "Прийняти",
+                        Action = "accept",
+                        RequestId = request.Id
+                    },
+                    new()
+                    {
+                        Label = "Відхилити",
+                        Action = "decline",
+                        RequestId = request.Id
+                    }
+                }
+            });
+        }
     }
 }
 

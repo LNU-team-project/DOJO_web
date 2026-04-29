@@ -13,4 +13,9 @@ public interface IUserService
     Task<Result<bool>> AddFriendAsync(int userId, int friendUserId);
     Task<Result<bool>> AddFriendByUserNameAsync(int userId, string friendUserName);
     Task<Result<bool>> RemoveFriendAsync(int userId, int friendUserId);
+    Task<Result<bool>> SendFriendRequestAsync(int userId, string friendUserName);
+    Task<Result<List<FriendRequestViewModel>>> GetIncomingFriendRequestsAsync(int userId);
+    Task<Result<bool>> AcceptFriendRequestAsync(int userId, int requestId);
+    Task<Result<bool>> DeclineFriendRequestAsync(int userId, int requestId);
+    Task<Result<List<UserSearchViewModel>>> SearchUsersAsync(int userId, string query, int limit);
 }
