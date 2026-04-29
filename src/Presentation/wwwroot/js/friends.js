@@ -6,7 +6,6 @@
   const friendsAddForm = document.getElementById("friendsAddForm");
   const friendUserNameInput = document.getElementById("friendUserName");
   const friendSuggestions = document.getElementById("friendSuggestions");
-  const friendRequestsList = document.getElementById("friendRequestsList");
 
   if (
     !friendsModal ||
@@ -40,13 +39,6 @@
       '<li class="leaderboard-empty">Поки немає друзів</li>';
   };
 
-  const renderRequestsEmptyState = () => {
-    if (friendRequestsList) {
-      friendRequestsList.innerHTML =
-        '<li class="leaderboard-empty">Немає нових запитів</li>';
-    }
-  };
-
   const renderSuggestionsEmptyState = () => {
     if (!friendSuggestions) {
       return;
@@ -54,6 +46,19 @@
 
     friendSuggestions.innerHTML = "";
     friendSuggestions.classList.remove("show");
+  };
+
+  const openModal = () => {
+    friendsModal.style.display = "flex";
+    friendsModal.setAttribute("aria-hidden", "false");
+    renderSuggestionsEmptyState();
+    void loadFriends();
+  };
+
+  const closeModal = () => {
+    friendsModal.style.display = "none";
+    friendsModal.setAttribute("aria-hidden", "true");
+    renderSuggestionsEmptyState();
   };
 
   const loadFriends = async () => {
@@ -112,78 +117,6 @@
     }
   };
 
-  const loadRequests = async () => {
-    if (!friendRequestsList) {
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/friends/requests", {
-        method: "GET",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        renderRequestsEmptyState();
-        return;
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        renderRequestsEmptyState();
-        return;
-      }
-
-      const requests = Array.isArray(data.data) ? data.data : [];
-      if (requests.length === 0) {
-        renderRequestsEmptyState();
-        return;
-      }
-
-      friendRequestsList.innerHTML = "";
-      requests.forEach((request) => {
-        const item = document.createElement("li");
-        item.className = "leaderboard-item friends-request-item";
-
-        const avatar = document.createElement("img");
-        avatar.className = "leaderboard-avatar friends-avatar";
-        avatar.alt = "Аватар користувача";
-        avatar.src =
-          request.avatarUrl ||
-          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-
-        const name = document.createElement("span");
-        name.className = "leaderboard-name friends-name";
-        name.textContent = request.requesterUserName || "Користувач";
-
-        const actions = document.createElement("div");
-        actions.className = "friends-request-actions";
-
-        const acceptBtn = document.createElement("button");
-        acceptBtn.type = "button";
-        acceptBtn.className = "btn-primary friends-request-btn";
-        acceptBtn.textContent = "Прийняти";
-        acceptBtn.addEventListener("click", async () => {
-          await respondToRequest(request.requestId, "accept");
-        });
-
-        const declineBtn = document.createElement("button");
-        declineBtn.type = "button";
-        declineBtn.className = "btn-secondary friends-request-btn";
-        declineBtn.textContent = "Відхилити";
-        declineBtn.addEventListener("click", async () => {
-          await respondToRequest(request.requestId, "decline");
-        });
-
-        actions.append(acceptBtn, declineBtn);
-        item.append(avatar, name, actions);
-        friendRequestsList.appendChild(item);
-      });
-    } catch (error) {
-      console.error("Помилка завантаження запитів", error);
-      renderRequestsEmptyState();
-    }
-  };
-
   const addFriend = async (friendUserName) => {
     try {
       const response = await fetch("/api/friends/add", {
@@ -210,7 +143,6 @@
       }
       renderSuggestionsEmptyState();
       await loadFriends();
-      await loadRequests();
     } catch (error) {
       console.error("Помилка додавання друга", error);
       showError(MESSAGES.ADD_ERROR);
@@ -239,38 +171,6 @@
       await loadFriends();
     } catch (error) {
       console.error("Помилка видалення друга", error);
-      showError(MESSAGES.REMOVE_ERROR);
-    }
-  };
-
-  const respondToRequest = async (requestId, action) => {
-    const endpoint =
-      action === "accept"
-        ? `/api/friends/requests/${requestId}/accept`
-        : `/api/friends/requests/${requestId}/decline`;
-
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        showError(errorData.message || MESSAGES.REMOVE_ERROR);
-        return;
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        showError(data.message || MESSAGES.REMOVE_ERROR);
-        return;
-      }
-
-      await loadRequests();
-      await loadFriends();
-    } catch (error) {
-      console.error("Помилка обробки запиту", error);
       showError(MESSAGES.REMOVE_ERROR);
     }
   };

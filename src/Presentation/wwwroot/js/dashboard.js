@@ -12,13 +12,30 @@
   const nextButton = root.querySelector("[data-range-dir='next']");
   const notificationsUrl = root.dataset.notificationsUrl;
   const notificationsModal = document.getElementById("notificationsModal");
-  const notificationsModalOverlay = document.getElementById("notificationsModalOverlay");
-  const openNotificationsModalBtn = document.getElementById("openNotificationsModal");
-  const closeNotificationsModalBtn = document.getElementById("closeNotificationsModal");
-  const closeNotificationsModalFooterBtn = document.getElementById("closeNotificationsModalFooter");
-  let notificationsList = root.querySelector("[data-notifications-list]") || root.querySelector(".notifications-modal-list");
+  const notificationsModalOverlay = document.getElementById(
+    "notificationsModalOverlay",
+  );
+  const openNotificationsModalBtn = document.getElementById(
+    "openNotificationsModal",
+  );
+  const closeNotificationsModalBtn = document.getElementById(
+    "closeNotificationsModal",
+  );
+  const closeNotificationsModalFooterBtn = document.getElementById(
+    "closeNotificationsModalFooter",
+  );
+  let notificationsList =
+    root.querySelector("[data-notifications-list]") ||
+    root.querySelector(".notifications-modal-list");
 
-  if (!rangeLabel || !daysHeader || !timeGrid || !prevButton || !nextButton || !board) {
+  if (
+    !rangeLabel ||
+    !daysHeader ||
+    !timeGrid ||
+    !prevButton ||
+    !nextButton ||
+    !board
+  ) {
     return;
   }
 
@@ -143,7 +160,9 @@
       return notificationsList;
     }
 
-    notificationsList = root.querySelector("[data-notifications-list]") || document.querySelector(".notifications-modal-list");
+    notificationsList =
+      root.querySelector("[data-notifications-list]") ||
+      document.querySelector(".notifications-modal-list");
     return notificationsList;
   };
 
@@ -170,20 +189,92 @@
     }
 
     if (!Array.isArray(notifications) || notifications.length === 0) {
-      renderNotificationsState("Інфо", "Немає нових сповіщень", "Зараз у вас немає важливих оновлень.");
+      renderNotificationsState(
+        "Інфо",
+        "Немає нових сповіщень",
+        "Зараз у вас немає важливих оновлень.",
+      );
       return;
     }
 
     list.innerHTML = notifications
-      .map((notification) => `
+      .map((notification) => {
+        const actionsHtml =
+          Array.isArray(notification.actions) && notification.actions.length > 0
+            ? `
+            <div class="notification-item-actions">
+              ${notification.actions
+                .map(
+                  (action) => `
+                  <button type="button"
+                          class="notification-item-action"
+                          data-notification-action="${action.action ?? ""}"
+                          data-request-id="${action.requestId ?? ""}">
+                    ${action.label ?? "Дія"}
+                  </button>`,
+                )
+                .join("")}
+            </div>`
+            : "";
+
+        return `
         <li class="notification-item ${getSeverityClass(notification)}">
           <div class="notification-item-badge">${notification.badge ?? "Інфо"}</div>
           <div class="notification-item-content">
             <h3 class="notification-item-title">${notification.title ?? "Сповіщення"}</h3>
             <p class="notification-item-description">${notification.description ?? ""}</p>
+            ${actionsHtml}
           </div>
-        </li>`)
+        </li>`;
+      })
       .join("");
+  };
+
+  const handleNotificationActionClick = async (event) => {
+    const button = event.target.closest("[data-notification-action]");
+    if (!button || !notificationsModal?.classList.contains("show")) {
+      return;
+    }
+
+    const requestId = Number.parseInt(button.dataset.requestId ?? "", 10);
+    const action = button.dataset.notificationAction;
+    if (!Number.isFinite(requestId) || !action) {
+      return;
+    }
+
+    let endpoint = null;
+    if (action === "accept") {
+      endpoint = `/api/friends/requests/${requestId}/accept`;
+    } else if (action === "decline") {
+      endpoint = `/api/friends/requests/${requestId}/decline`;
+    }
+
+    if (!endpoint) {
+      return;
+    }
+
+    button.disabled = true;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        button.disabled = false;
+        return;
+      }
+
+      const payload = await response.json().catch(() => null);
+      if (!payload?.success) {
+        button.disabled = false;
+        return;
+      }
+
+      void loadNotifications();
+    } catch {
+      button.disabled = false;
+    }
   };
 
   const loadNotifications = async () => {
@@ -192,10 +283,16 @@
       return;
     }
 
-    renderNotificationsState("Завантаження", "Отримуємо актуальні повідомлення...", "Зачекайте кілька секунд...");
+    renderNotificationsState(
+      "Завантаження",
+      "Отримуємо актуальні повідомлення...",
+      "Зачекайте кілька секунд...",
+    );
 
     try {
-      const response = await fetch(notificationsUrl, { credentials: "include" });
+      const response = await fetch(notificationsUrl, {
+        credentials: "include",
+      });
       if (!response.ok) {
         renderNotifications([]);
         return;
@@ -237,20 +334,37 @@
     });
 
     if (notificationsModalOverlay) {
-      notificationsModalOverlay.addEventListener("click", closeNotificationsModal);
+      notificationsModalOverlay.addEventListener(
+        "click",
+        closeNotificationsModal,
+      );
     }
 
     if (closeNotificationsModalBtn) {
-      closeNotificationsModalBtn.addEventListener("click", closeNotificationsModal);
+      closeNotificationsModalBtn.addEventListener(
+        "click",
+        closeNotificationsModal,
+      );
     }
 
     if (closeNotificationsModalFooterBtn) {
-      closeNotificationsModalFooterBtn.addEventListener("click", closeNotificationsModal);
+      closeNotificationsModalFooterBtn.addEventListener(
+        "click",
+        closeNotificationsModal,
+      );
+    }
+
+    if (notificationsList) {
+      notificationsList.addEventListener("click", (event) => {
+        void handleNotificationActionClick(event);
+      });
     }
 
     globalThis.addEventListener("keydown", (event) => {
-
-      if (event.key === "Escape" && notificationsModal.classList.contains("show")) {
+      if (
+        event.key === "Escape" &&
+        notificationsModal.classList.contains("show")
+      ) {
         closeNotificationsModal();
       }
     });
@@ -275,7 +389,9 @@
       weekEndIso: weekEndBoundary.toISOString(),
     };
     globalThis.dashboardWeekState = detail;
-    globalThis.dispatchEvent(new CustomEvent("dashboard:week-changed", { detail }));
+    globalThis.dispatchEvent(
+      new CustomEvent("dashboard:week-changed", { detail }),
+    );
   };
 
   const setWeekByDate = (date) => {
@@ -307,7 +423,12 @@
       return;
     }
     const parts = iso.split("-").map((x) => Number.parseInt(x, 10));
-    if (parts.length !== 3 || Number.isNaN(parts[0]) || Number.isNaN(parts[1]) || Number.isNaN(parts[2])) {
+    if (
+      parts.length !== 3 ||
+      Number.isNaN(parts[0]) ||
+      Number.isNaN(parts[1]) ||
+      Number.isNaN(parts[2])
+    ) {
       return;
     }
     const target = new Date(parts[0], parts[1] - 1, parts[2]);
