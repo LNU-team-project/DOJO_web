@@ -17,10 +17,10 @@ public class TodoService : ITodoService
         public const int High = 3;
     }
 
-    private readonly AppDbContext _context;
+    private readonly IAppDbContext _context;
     private readonly ILogger<TodoService> _logger;
 
-    public TodoService(AppDbContext context, ILogger<TodoService> logger)
+    public TodoService(IAppDbContext context, ILogger<TodoService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

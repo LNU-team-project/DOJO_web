@@ -22,6 +22,12 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<Friend> Friends => Set<Friend>();
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
+    // Rooms
+    public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<RoomMember> RoomMembers => Set<RoomMember>();
+    public DbSet<RoomTask> RoomTasks => Set<RoomTask>();
+    public DbSet<RoomTaskComment> RoomTaskComments => Set<RoomTaskComment>();
+    public DbSet<PomodoroPreset> PomodoroPresets => Set<PomodoroPreset>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -237,6 +243,28 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.HasIndex(p => p.TaskId);
         });
 
+        // ── PomodoroPreset ───────────────────────────────────
+        builder.Entity<PomodoroPreset>(e =>
+        {
+            e.ToTable("pomodoro_presets");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(p => p.UserId).HasColumnName(UserIdColumnName);
+            e.Property(p => p.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            e.Property(p => p.FocusMinutes).HasColumnName("focus_minutes");
+            e.Property(p => p.ShortBreakMinutes).HasColumnName("short_break_minutes");
+            e.Property(p => p.LongBreakMinutes).HasColumnName("long_break_minutes");
+            e.Property(p => p.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(p => p.User)
+                .WithMany(u => u.PomodoroPresets)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(p => new { p.UserId, p.Name }).IsUnique();
+            e.HasIndex(p => p.UserId);
+        });
+
         // ── Attachment ────────────────────────────────────────
         builder.Entity<Attachment>(e =>
         {
@@ -303,6 +331,102 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
             e.HasIndex(f => new { f.UserId, f.FriendUserId }).IsUnique();
             e.HasIndex(f => f.UserId);
             e.HasIndex(f => f.FriendUserId);
+        });
+
+        // ── Room ──────────────────────────────────────────────
+        builder.Entity<Room>(e =>
+        {
+            e.ToTable("rooms");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(r => r.OwnerUserId).HasColumnName(UserIdColumnName);
+            e.Property(r => r.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            e.Property(r => r.Description).HasColumnName("description");
+            e.Property(r => r.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(r => r.OwnerUser)
+                .WithMany()
+                .HasForeignKey(r => r.OwnerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(r => r.OwnerUserId);
+        });
+
+        // ── RoomMember ────────────────────────────────────────
+        builder.Entity<RoomMember>(e =>
+        {
+            e.ToTable("room_members");
+            e.HasKey(m => m.Id);
+            e.Property(m => m.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(m => m.RoomId).HasColumnName("room_id");
+            e.Property(m => m.UserId).HasColumnName(UserIdColumnName);
+            e.Property(m => m.JoinedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(m => m.Room)
+                .WithMany(r => r.Members)
+                .HasForeignKey(m => m.RoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(m => new { m.RoomId, m.UserId }).IsUnique();
+            e.HasIndex(m => m.UserId);
+        });
+
+        // ── RoomTask ──────────────────────────────────────────
+        builder.Entity<RoomTask>(e =>
+        {
+            e.ToTable("room_tasks");
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(t => t.RoomId).HasColumnName("room_id");
+            e.Property(t => t.AssignedToUserId).HasColumnName(UserIdColumnName);
+            e.Property(t => t.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            e.Property(t => t.Description).HasColumnName("description");
+            e.Property(t => t.IsCompleted).HasColumnName("is_completed").HasDefaultValue(false);
+            e.Property(t => t.DueDate).HasColumnName("due_date");
+            e.Property(t => t.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(t => t.Room)
+                .WithMany(r => r.Tasks)
+                .HasForeignKey(t => t.RoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(t => t.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(t => t.RoomId);
+            e.HasIndex(t => t.AssignedToUserId);
+        });
+
+        // ── RoomTaskComment ───────────────────────────────────
+        builder.Entity<RoomTaskComment>(e =>
+        {
+            e.ToTable("room_task_comments");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(c => c.TaskId).HasColumnName("task_id");
+            e.Property(c => c.AuthorUserId).HasColumnName(UserIdColumnName);
+            e.Property(c => c.Text).HasColumnName("text");
+            e.Property(c => c.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(c => c.Task)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(c => c.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.AuthorUser)
+                .WithMany()
+                .HasForeignKey(c => c.AuthorUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(c => c.TaskId);
+            e.HasIndex(c => c.AuthorUserId);
         });
     }
 }

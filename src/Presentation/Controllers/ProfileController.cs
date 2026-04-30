@@ -83,6 +83,42 @@ public class ProfileController : BaseApiController
         return ToActionResult(result);
     }
 
+    /// <summary>
+    /// Експортує статистику профілю у CSV
+    /// </summary>
+    [HttpPost("export")]
+    public async Task<IActionResult> ExportProfile([FromBody] ProfileExportRequestViewModel? model)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        if (model == null)
+        {
+            return BadRequest(new { success = false, message = "Модель експорту не може бути порожною" });
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _userService.ExportUserProfileCsvAsync(userId, model);
+
+        if (!result.Success)
+        {
+            return result.Message?.Contains("не знайдено", StringComparison.OrdinalIgnoreCase) == true
+                ? NotFound(new { success = false, message = result.Message, errors = result.Errors })
+                : BadRequest(new { success = false, message = result.Message, errors = result.Errors });
+        }
+
+        ProfileExportFileViewModel? exportFile = result;
+        if (exportFile == null || exportFile.Content.Length == 0)
+        {
+            return BadRequest(new { success = false, message = "Не вдалося сформувати файл експорту" });
+        }
+
+        return File(exportFile.Content, exportFile.ContentType, exportFile.FileName);
+    }
+
     private static async Task<FileUploadData?> BuildUploadDataAsync(IFormFile? file)
     {
         if (file == null)
@@ -195,13 +231,14 @@ public class ProfileController : BaseApiController
             return ToActionResult(result);
         }
 
-        if (HttpContext.RequestServices != null)
+        var requestServices = HttpContext.RequestServices;
+        if (requestServices?.GetService<IAuthenticationService>() != null)
         {
             await HttpContext.SignOutAsync();
         }
         else
         {
-            _logger.LogWarning("Не вдалося виконати sign-out після видалення акаунта: RequestServices не налаштовано");
+            _logger.LogWarning("Не вдалося виконати sign-out після видалення акаунта: сервіс аутентифікації не налаштовано");
         }
 
         _logger.LogInformation("Користувач {UserId} видалив власний акаунт", userId);

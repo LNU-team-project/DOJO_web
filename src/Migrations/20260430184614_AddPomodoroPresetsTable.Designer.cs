@@ -3,6 +3,7 @@ using System;
 using DOJO2.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DOJO2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260430184614_AddPomodoroPresetsTable")]
+    partial class AddPomodoroPresetsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -437,164 +440,6 @@ namespace DOJO2.Migrations
                         .IsUnique();
 
                     b.ToTable("pomodoro_presets", (string)null);
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.Room", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<int>("OwnerUserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerUserId");
-
-                    b.ToTable("rooms", (string)null);
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomMember", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("JoinedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<int>("RoomId")
-                        .HasColumnType("integer")
-                        .HasColumnName("room_id");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("RoomId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("room_members", (string)null);
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomTask", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssignedToUserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("due_date");
-
-                    b.Property<bool>("IsCompleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_completed");
-
-                    b.Property<int>("RoomId")
-                        .HasColumnType("integer")
-                        .HasColumnName("room_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedToUserId");
-
-                    b.HasIndex("RoomId");
-
-                    b.ToTable("room_tasks", (string)null);
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomTaskComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AuthorUserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<int>("TaskId")
-                        .HasColumnType("integer")
-                        .HasColumnName("task_id");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorUserId");
-
-                    b.HasIndex("TaskId");
-
-                    b.ToTable("room_task_comments", (string)null);
                 });
 
             modelBuilder.Entity("DOJO2.Domain.Entities.ScheduleItem", b =>
@@ -1045,74 +890,6 @@ namespace DOJO2.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DOJO2.Domain.Entities.Room", b =>
-                {
-                    b.HasOne("DOJO2.Domain.Entities.AppUser", "OwnerUser")
-                        .WithMany()
-                        .HasForeignKey("OwnerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OwnerUser");
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomMember", b =>
-                {
-                    b.HasOne("DOJO2.Domain.Entities.Room", "Room")
-                        .WithMany("Members")
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DOJO2.Domain.Entities.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Room");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomTask", b =>
-                {
-                    b.HasOne("DOJO2.Domain.Entities.AppUser", "AssignedToUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedToUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("DOJO2.Domain.Entities.Room", "Room")
-                        .WithMany("Tasks")
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedToUser");
-
-                    b.Navigation("Room");
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomTaskComment", b =>
-                {
-                    b.HasOne("DOJO2.Domain.Entities.AppUser", "AuthorUser")
-                        .WithMany()
-                        .HasForeignKey("AuthorUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DOJO2.Domain.Entities.RoomTask", "Task")
-                        .WithMany("Comments")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AuthorUser");
-
-                    b.Navigation("Task");
-                });
-
             modelBuilder.Entity("DOJO2.Domain.Entities.ScheduleItem", b =>
                 {
                     b.HasOne("DOJO2.Domain.Entities.AppUser", "User")
@@ -1235,18 +1012,6 @@ namespace DOJO2.Migrations
             modelBuilder.Entity("DOJO2.Domain.Entities.Goal", b =>
                 {
                     b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.Room", b =>
-                {
-                    b.Navigation("Members");
-
-                    b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.RoomTask", b =>
-                {
-                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("DOJO2.Domain.Entities.TaskItem", b =>

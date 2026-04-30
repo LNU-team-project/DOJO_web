@@ -3,6 +3,7 @@ using System;
 using DOJO2.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DOJO2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260430192546_AddRoomsSchema")]
+    partial class AddRoomsSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,53 +393,6 @@ namespace DOJO2.Migrations
 
                             t.HasCheckConstraint("chk_pomodoro_work_cycles", "work_cycles > 0");
                         });
-                });
-
-            modelBuilder.Entity("DOJO2.Domain.Entities.PomodoroPreset", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<short>("FocusMinutes")
-                        .HasColumnType("smallint")
-                        .HasColumnName("focus_minutes");
-
-                    b.Property<short>("LongBreakMinutes")
-                        .HasColumnType("smallint")
-                        .HasColumnName("long_break_minutes");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.Property<short>("ShortBreakMinutes")
-                        .HasColumnType("smallint")
-                        .HasColumnName("short_break_minutes");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("pomodoro_presets", (string)null);
                 });
 
             modelBuilder.Entity("DOJO2.Domain.Entities.Room", b =>
@@ -1034,17 +990,6 @@ namespace DOJO2.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DOJO2.Domain.Entities.PomodoroPreset", b =>
-                {
-                    b.HasOne("DOJO2.Domain.Entities.AppUser", "User")
-                        .WithMany("PomodoroPresets")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("DOJO2.Domain.Entities.Room", b =>
                 {
                     b.HasOne("DOJO2.Domain.Entities.AppUser", "OwnerUser")
@@ -1224,8 +1169,6 @@ namespace DOJO2.Migrations
                     b.Navigation("Friends");
 
                     b.Navigation("Goals");
-
-                    b.Navigation("PomodoroPresets");
 
                     b.Navigation("Pomodoros");
 

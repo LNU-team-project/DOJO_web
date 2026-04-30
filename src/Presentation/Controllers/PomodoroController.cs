@@ -56,4 +56,82 @@ public class PomodoroController : BaseApiController
 
         return ToActionResult(result);
     }
+
+    [HttpGet("presets")]
+    public async Task<IActionResult> GetPresets()
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _pomodoroService.GetPresetsAsync(userId);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("presets")]
+    public async Task<IActionResult> CreatePreset([FromBody] PomodoroPresetCreateViewModel? model)
+    {
+        if (model == null)
+        {
+            return BadRequest(new { success = false, message = "Модель пресету не може бути порожньою" });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+        }
+
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _pomodoroService.CreatePresetAsync(userId, model);
+        return ToActionResult(result);
+    }
+
+    [HttpPut("presets/{presetId}")]
+    public async Task<IActionResult> UpdatePreset(int presetId, [FromBody] PomodoroPresetCreateViewModel? model)
+    {
+        if (model == null)
+        {
+            return BadRequest(new { success = false, message = "Модель пресету не може бути порожньою" });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Невалідні дані", errors });
+        }
+
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _pomodoroService.UpdatePresetAsync(userId, presetId, model);
+        return ToActionResult(result);
+    }
+
+    [HttpDelete("presets/{presetId}")]
+    public async Task<IActionResult> DeletePreset(int presetId)
+    {
+        var authError = ValidateUserAuthorization();
+        if (authError != null)
+        {
+            return authError;
+        }
+
+        var userId = GetCurrentUserId() ?? 0;
+        var result = await _pomodoroService.DeletePresetAsync(userId, presetId);
+        return ToActionResult(result);
+    }
 }

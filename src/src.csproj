@@ -28,4 +28,9 @@
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Migrations\20260429213827_AddRoomsFeature.cs" />
+      <Compile Remove="Migrations\20260429213827_AddRoomsFeature.Designer.cs" />
+    </ItemGroup>
+
 </Project>

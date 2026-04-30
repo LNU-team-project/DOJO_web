@@ -143,11 +143,17 @@
                         </button>
                     </div>
 
-                    <fieldset class="pomodoro-presets">
-                        <legend class="pomodoro-legend">Пресети таймера</legend>
-                        <button type="button" class="pomodoro-chip is-active" data-preset="25-5-15">25/5</button>
-                        <button type="button" class="pomodoro-chip" data-preset="50-10-20">50/10</button>
-                    </fieldset>
+                    <div class="pomodoro-presets-panel">
+                        <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
+                        <div class="pomodoro-presets-row">
+                            <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
+                            <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
+                                Додати пресет
+                            </button>
+                        </div>
+
+                        <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
+                    </div>
 
                     <div class="pomodoro-meta">
                         <p class="pomodoro-meta-row">
@@ -159,6 +165,44 @@
                             Автоматично запускати наступний раунд
                         </label>
                     </div>
+                </div>
+            </div>
+
+            <div class="todo-modal pomodoro-preset-modal" id="pomodoroPresetModal" aria-hidden="true" aria-labelledby="pomodoroPresetModalTitle">
+                <div class="todo-modal-content">
+                    <div class="todo-modal-header">
+                        <h2 id="pomodoroPresetModalTitle">Додати пресет</h2>
+                        <button type="button" class="todo-modal-close" id="closePomodoroPresetModal" aria-label="Закрити вікно">×</button>
+                    </div>
+
+                    <form id="pomodoroPresetForm" class="todo-form" novalidate>
+                        <div class="form-group">
+                            <label for="pomodoroPresetName">Назва пресету</label>
+                            <input type="text" id="pomodoroPresetName" class="form-control" maxlength="100" placeholder="Для навчання" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pomodoroPresetFocus">Робота, хв</label>
+                                <input type="number" id="pomodoroPresetFocus" class="form-control" min="1" max="180" value="25" />
+                            </div>
+                            <div class="form-group">
+                                <label for="pomodoroPresetShortBreak">Короткий відпочинок, хв</label>
+                                <input type="number" id="pomodoroPresetShortBreak" class="form-control" min="1" max="60" value="5" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pomodoroPresetLongBreak">Довгий відпочинок, хв</label>
+                            <input type="number" id="pomodoroPresetLongBreak" class="form-control" min="1" max="120" value="15" />
+                        </div>
+
+                        <p class="pomodoro-preset-error" data-pomodoro-preset-error aria-live="polite"></p>
+
+                        <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
+                            <button type="submit" class="btn-primary">Зберегти пресет</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -673,6 +717,9 @@
         </div>
 
           <div class="profile-modal-footer"> 
+                     <button type="button" class="profile-btn profile-btn-export" id="profileExportBtn" aria-haspopup="dialog" aria-controls="profileExportModal">
+                         ⬇️ Експортувати 
+                     </button>
                  <button type="button" class="profile-btn profile-btn-settings" id="profileSettingsBtn">
                       ⚙️ Налаштування 
                  </button>
@@ -680,6 +727,98 @@
                      Вихід 
                  </button> 
           </div> 
+    </div>
+</div>
+
+<div class="profile-modal profile-export-modal" id="profileExportModal" aria-hidden="true" aria-labelledby="profileExportModalTitle">
+    <div class="profile-modal-overlay" id="profileExportModalOverlay"></div>
+    <div class="profile-modal-content profile-export-modal-content">
+        <div class="profile-modal-header">
+            <h2 id="profileExportModalTitle">Експорт профілю</h2>
+            <button type="button" class="profile-modal-close" id="closeProfileExportModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <form id="profileExportForm" class="profile-modal-body" novalidate>
+            <div class="profile-section">
+                <p class="profile-export-description">
+                    Експортуй детальну статистику свого профілю для обміну з друзями.
+                </p>
+
+                <fieldset class="profile-export-options">
+                    <legend class="visually-hidden">Оберіть дані для експорту</legend>
+
+                    <label class="profile-export-option" for="exportLevel">
+                        <input type="checkbox" id="exportLevel" checked data-export-field="IncludeLevel" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Рівень користувача</span>
+                            <span class="profile-export-option-desc">Поточний рівень профілю</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportExpPoints">
+                        <input type="checkbox" id="exportExpPoints" checked data-export-field="IncludeExpPoints" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Очки досвіду</span>
+                            <span class="profile-export-option-desc">Увесь накопичений XP</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCurrentStreak">
+                        <input type="checkbox" id="exportCurrentStreak" checked data-export-field="IncludeCurrentStreak" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Серія</span>
+                            <span class="profile-export-option-desc">Поточна серія активності</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCompletedPlans">
+                        <input type="checkbox" id="exportCompletedPlans" checked data-export-field="IncludeCompletedPlans" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки всього виконаних планів</span>
+                            <span class="profile-export-option-desc">Усі завершені плани користувача</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCompletedTasks">
+                        <input type="checkbox" id="exportCompletedTasks" checked data-export-field="IncludeCompletedTasks" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки виконано завдань</span>
+                            <span class="profile-export-option-desc">Завершені TODO без прив'язки до планів і цілей</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportPomodoroSessions">
+                        <input type="checkbox" id="exportPomodoroSessions" checked data-export-field="IncludePomodoroSessions" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки було сесій помодоро</span>
+                            <span class="profile-export-option-desc">Усі збережені фокус-сесії</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportFocusMinutes">
+                        <input type="checkbox" id="exportFocusMinutes" checked data-export-field="IncludeFocusMinutes" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки було хвилин фокусу</span>
+                            <span class="profile-export-option-desc">Сумарний час усіх Pomodoro-сесій</span>
+                        </span>
+                    </label>
+                </fieldset>
+
+                <p class="profile-export-error" id="profileExportError" aria-live="polite"></p>
+                <p class="profile-export-hint">Після підтвердження файл CSV автоматично завантажиться на твій комп’ютер.</p>
+            </div>
+
+            <div class="profile-modal-footer" style="padding:0; border-top:none; margin-top:20px;">
+                <button type="button" class="profile-btn profile-btn-settings" id="closeProfileExportModalFooter">
+                    Скасувати
+                </button>
+                <button type="submit" class="profile-btn profile-btn-export profile-export-submit-btn" id="profileExportSubmitBtn">
+                    Завантажити CSV
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -795,6 +934,15 @@
         </div>
 
         <div class="friends-modal-body">
+            <div class="friends-action-buttons" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" id="openCreateRoomFromFriendsBtn" style="flex: 1;">
+                    🏠 Створити кімнату
+                </button>
+                <button type="button" class="btn-primary" id="openMyRoomsFromFriendsBtn" style="flex: 1;">
+                    👥 Мої кімнати
+                </button>
+            </div>
+
             <form id="friendsAddForm" class="todo-form" novalidate>
                 <div class="form-group">
                     <label for="friendUserName">Ім'я користувача</label>
@@ -852,12 +1000,56 @@
 <!-- Leaderboard Modal -->
 @await Html.PartialAsync("_Leaderboard", new DOJO2.Application.ViewModels.LeaderboardViewModel())
 
+<!-- Rooms Create Modal -->
+<div class="todo-modal" id="roomsModal" aria-hidden="true" aria-labelledby="roomsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="roomsModalTitle">Створити нову кімнату</h2>
+            <button type="button" class="todo-modal-close" id="closeRoomsModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <form id="createRoomForm" class="todo-form">
+            <div class="form-group">
+                <label for="roomTitle">Назва кімнати *</label>
+                <input type="text" id="roomTitle" name="title" class="form-control" maxlength="255" placeholder="Введіть назву кімнати" required />
+            </div>
+
+            <div class="form-group">
+                <label for="roomDescription">Опис</label>
+                <textarea id="roomDescription" name="description" class="form-control" rows="3" placeholder="Введіть опис кімнати (необов'язково)"></textarea>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelCreateRoomBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Створити кімнату</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rooms List Modal -->
+<div class="todo-modal" id="roomsListModal" aria-hidden="true" aria-labelledby="roomsListModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="roomsListModalTitle">Мої кімнати</h2>
+            <button type="button" class="todo-modal-close" id="closeRoomsListModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <div class="friends-modal-body">
+            <ul class="leaderboard-list rooms-list" id="roomsList" aria-live="polite">
+                <li class="leaderboard-empty">Кімнат не знайдено</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
     <script src="~/js/schedule.js" asp-append-version="true"></script>
     <script src="~/js/friends.js" asp-append-version="true"></script>
+    <script src="~/js/rooms.js" asp-append-version="true"></script>
     <script src="~/js/profile.js" asp-append-version="true"></script>
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>
