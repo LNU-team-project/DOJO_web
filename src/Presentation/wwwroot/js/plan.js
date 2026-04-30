@@ -1,4 +1,9 @@
 (() => {
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
   const planModal = document.getElementById("planModal");
   const openPlanModalBtn = document.getElementById("openPlanModal");
   const closePlanModalBtn = document.getElementById("closePlanModal");
@@ -84,7 +89,7 @@
   };
 
   const showError = (message) => {
-    console.error(MESSAGES.ERROR_PREFIX + message);
+    __log.error(MESSAGES.ERROR_PREFIX + message);
     const errorDiv = document.createElement("div");
     errorDiv.className = "alert alert-error";
     errorDiv.setAttribute("role", "alert");
@@ -97,7 +102,7 @@
   };
 
   const showSuccess = (message) => {
-    console.log(MESSAGES.SUCCESS_PREFIX + message);
+    __log.log(MESSAGES.SUCCESS_PREFIX + message);
   };
 
   const refreshHeroStatus = async () => {
@@ -131,7 +136,7 @@
       const payload = await response.json();
       await updateHeroStatus(payload);
     } catch (error) {
-      console.warn("Не вдалося обробити відповідь героя", error);
+      __log.warn("Не вдалося обробити відповідь героя", error);
       await refreshHeroStatus();
     }
   };
@@ -245,7 +250,7 @@
       // Оновлюємо статистику після створення плану
       await refreshStatistics();
     } catch (error) {
-      console.error("Помилка при створенні плану", error);
+      __log.error("Помилка при створенні плану", error);
       showError(MESSAGES.CREATE_ERROR);
     }
   };
@@ -276,10 +281,7 @@
           failedCount += 1;
         }
       } catch (error) {
-        console.error(
-          "Помилка при прикріпленні файлу під час створення",
-          error,
-        );
+        __log.error("Помилка при прикріпленні файлу під час створення", error);
         failedCount += 1;
       }
     }
@@ -304,7 +306,7 @@
 
       renderPlans(data.data);
     } catch (error) {
-      console.error("Помилка при завантаженні планів", error);
+      __log.error("Помилка при завантаженні планів", error);
       showError(MESSAGES.LOAD_ERROR);
     }
   };
@@ -439,19 +441,21 @@
 
         await refreshStatistics();
       } catch (error) {
-        console.warn(
+        __log.warn(
           "Не вдалося оновити пов'язані віджети після зміни плану",
           error,
         );
       }
     } catch (error) {
-      console.error("Помилка при оновленні плану", error);
+      __log.error("Помилка при оновленні плану", error);
       showError("Не вдалося оновити план");
     }
   };
 
   const handlePlanDelete = async (planId) => {
-    const confirmDelete = confirm("Ви впевнені, що хочете видалити цей план?");
+    const confirmDelete = globalThis.confirm(
+      "Ви впевнені, що хочете видалити цей план?",
+    );
     if (!confirmDelete) return;
     try {
       const response = await fetch(`/api/plan/delete/${planId}`, {
@@ -468,7 +472,7 @@
       // Оновлюємо статистику після видалення плану
       await refreshStatistics();
     } catch (error) {
-      console.error("Помилка при видаленні плану", error);
+      __log.error("Помилка при видаленні плану", error);
       showError("Не вдалося видалити план");
     }
   };

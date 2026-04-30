@@ -1,4 +1,9 @@
 (() => {
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
   const levelEl = document.getElementById("heroLevel");
   const expInner = document.getElementById("heroExpInner");
   const expText = document.getElementById("heroExpText");
@@ -34,25 +39,24 @@
     expText.textContent = `Потрібно ${Math.max(0, remaining)} XP до наступного рівня`;
   }
 
-
   async function refresh() {
     try {
       const res = await fetch("/api/hero/status", { method: "GET" });
       if (!res.ok) {
-        console.warn(MESSAGES.FETCH_ERROR);
+        __log.warn(MESSAGES.FETCH_ERROR);
         return;
       }
 
       const payload = await res.json();
       if (!payload?.success || !payload?.data) {
-        console.warn(MESSAGES.FETCH_ERROR);
+        __log.warn(MESSAGES.FETCH_ERROR);
         return;
       }
 
       const data = payload.data;
       applyStatus(data);
     } catch (err) {
-      console.error("Помилка при отриманні статусу героя:", err);
+      __log.error("Помилка при отриманні статусу героя:", err);
     }
   }
 
@@ -89,7 +93,7 @@
         await refresh();
       }, 3000);
     } catch (err) {
-      console.error("Помилка при показі LevelUp анімації", err);
+      __log.error("Помилка при показі LevelUp анімації", err);
     }
   }
 

@@ -1,4 +1,9 @@
 (() => {
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
   const friendsModal = document.getElementById("friendsModal");
   const openFriendsModalBtn = document.getElementById("openFriendsModal");
   const closeFriendsModalBtn = document.getElementById("closeFriendsModal");
@@ -8,10 +13,10 @@
   const friendSuggestions = document.getElementById("friendSuggestions");
 
   if (
-      !friendsModal ||
-      !openFriendsModalBtn ||
-      !friendsList ||
-      !friendsAddForm
+    !friendsModal ||
+    !openFriendsModalBtn ||
+    !friendsList ||
+    !friendsAddForm
   ) {
     return;
   }
@@ -36,7 +41,7 @@
 
   const renderEmptyState = () => {
     friendsList.innerHTML =
-        '<li class="leaderboard-empty">Поки немає друзів</li>';
+      '<li class="leaderboard-empty">Поки немає друзів</li>';
   };
 
   const renderSuggestionsEmptyState = () => {
@@ -94,8 +99,8 @@
         avatar.className = "leaderboard-avatar friends-avatar";
         avatar.alt = "Аватар друга";
         avatar.src =
-            friend.avatarUrl ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+          friend.avatarUrl ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
         const name = document.createElement("span");
         name.className = "leaderboard-name friends-name";
@@ -113,7 +118,7 @@
         friendsList.appendChild(item);
       });
     } catch (error) {
-      console.error("Помилка завантаження друзів", error);
+      __log.error("Помилка завантаження друзів", error);
       showError(MESSAGES.LOAD_ERROR);
     }
   };
@@ -145,7 +150,7 @@
       renderSuggestionsEmptyState();
       await loadFriends();
     } catch (error) {
-      console.error("Помилка додавання друга", error);
+      __log.error("Помилка додавання друга", error);
       showError(MESSAGES.ADD_ERROR);
     }
   };
@@ -171,7 +176,7 @@
 
       await loadFriends();
     } catch (error) {
-      console.error("Помилка видалення друга", error);
+      __log.error("Помилка видалення друга", error);
       showError(MESSAGES.REMOVE_ERROR);
     }
   };
@@ -189,11 +194,11 @@
 
     try {
       const response = await fetch(
-          `/api/friends/search?query=${encodeURIComponent(trimmedQuery)}&limit=5`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
+        `/api/friends/search?query=${encodeURIComponent(trimmedQuery)}&limit=5`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
       );
 
       if (!response.ok) {
@@ -203,9 +208,9 @@
 
       const data = await response.json();
       if (
-          !data.success ||
-          !Array.isArray(data.data) ||
-          data.data.length === 0
+        !data.success ||
+        !Array.isArray(data.data) ||
+        data.data.length === 0
       ) {
         renderSuggestionsEmptyState();
         return;
@@ -220,8 +225,8 @@
         avatar.className = "friends-suggestion-avatar";
         avatar.alt = "Аватар користувача";
         avatar.src =
-            user.avatarUrl ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+          user.avatarUrl ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a90'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
         const name = document.createElement("span");
         name.className = "friends-suggestion-name";
@@ -241,7 +246,7 @@
 
       friendSuggestions.classList.add("show");
     } catch (error) {
-      console.error("Помилка пошуку користувачів", error);
+      __log.error("Помилка пошуку користувачів", error);
       renderSuggestionsEmptyState();
     }
   };

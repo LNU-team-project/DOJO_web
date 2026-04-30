@@ -1,5 +1,10 @@
 ﻿(() => {
-  console.log("🚀 rooms.js завантажено!");
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
+  __log.log("🚀 rooms.js завантажено!");
 
   // ===== State Management =====
   const state = {
@@ -15,8 +20,12 @@
   const roomsListModal = document.getElementById("roomsListModal");
   const openCreateRoomBtn = document.getElementById("openCreateRoomBtn");
   const openMyRoomsBtn = document.getElementById("openMyRoomsBtn");
-  const openCreateRoomFromFriendsBtn = document.getElementById("openCreateRoomFromFriendsBtn");
-  const openMyRoomsFromFriendsBtn = document.getElementById("openMyRoomsFromFriendsBtn");
+  const openCreateRoomFromFriendsBtn = document.getElementById(
+    "openCreateRoomFromFriendsBtn",
+  );
+  const openMyRoomsFromFriendsBtn = document.getElementById(
+    "openMyRoomsFromFriendsBtn",
+  );
   const closeRoomsModalBtn = document.getElementById("closeRoomsModal");
   const closeRoomsListModalBtn = document.getElementById("closeRoomsListModal");
   const friendsModal = document.getElementById("friendsModal");
@@ -56,40 +65,166 @@
 
   // ===== Validation =====
   if (!roomsModal || !roomsListModal) {
-    console.error("❌ Не знайдені основні елементи модалей!");
+    __log.error("❌ Не знайдені основні елементи модалей!");
     return;
   }
 
   // ===== Utility Functions =====
   const escapeHtml = (unsafe) => {
     if (!unsafe) return "";
+    // use replaceAll for clarity and Sonar preference
     return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   };
 
   const showNotification = (message, type = "success") => {
     const notifDiv = document.createElement("div");
-    const notifClass = type === "success" ? "alert alert-success" : "alert alert-danger";
+    const notifClass =
+      type === "success" ? "alert alert-success" : "alert alert-danger";
     notifDiv.className = notifClass;
     notifDiv.setAttribute("role", "alert");
     notifDiv.textContent = `${type === "success" ? "✅" : "❌"} ${message}`;
     document.body.insertBefore(notifDiv, document.body.firstChild);
-    setTimeout(() => notifDiv.remove(), TIMEOUTS[`${type.toUpperCase()}_MESSAGE`]);
+    setTimeout(
+      () => notifDiv.remove(),
+      TIMEOUTS[`${type.toUpperCase()}_MESSAGE`],
+    );
   };
 
   const showError = (message) => {
-    console.error("❌", message);
+    __log.error("❌", message);
     showNotification(message, "error");
   };
 
   const showSuccess = (message) => {
-    console.log("✅", message);
+    __log.log("✅", message);
     showNotification(message, "success");
   };
+
+  // Handler extracted to avoid nested function (Sonar S2004)
+  async function handleRoomCommentAdd(modal, room, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const taskId = Number.parseInt(e.target.dataset.taskId, 10);
+    const input = modal.querySelector(
+      `[data-task-id="${taskId}"].room-comment-input`,
+    );
+    const text = input?.value.trim();
+
+    if (!text) {
+      showError(MESSAGES.NO_COMMENT_TEXT);
+      return;
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.ADD_COMMENT(taskId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        showError(MESSAGES.ADD_COMMENT_FAILED);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        showSuccess("Коментар додано!");
+        if (input) input.value = "";
+        setTimeout(() => {
+          modal.remove();
+          openRoomDetails(room.id);
+        }, TIMEOUTS.MODAL_CLOSE);
+      } else {
+        showError(data.message || MESSAGES.ADD_COMMENT_FAILED);
+      }
+    } catch (error) {
+      __log.error("❌ Помилка додавання коментаря", error);
+      showError("Помилка при додаванні коментаря");
+    }
+  }
+
+  // Extracted task form submit handler to avoid nested functions
+  async function handleAddTaskSubmit(roomId, taskModal, e) {
+    e.preventDefault();
+    __log.log("🎯 Submit форми додавання завдання");
+
+    const titleInput = taskModal.querySelector("#taskTitleInput");
+    const descriptionInput = taskModal.querySelector("#taskDescriptionInput");
+    const assigneeInput = taskModal.querySelector("#taskAssigneeSelect");
+
+    const title = titleInput ? titleInput.value.trim() : "";
+    const description = descriptionInput ? descriptionInput.value.trim() : "";
+    const assignedToUserId = Number.parseInt(
+      assigneeInput ? assigneeInput.value : 0,
+      10,
+    );
+
+    if (!title) {
+      showError(MESSAGES.NO_TASK_TITLE);
+      return;
+    }
+
+    if (!assignedToUserId || assignedToUserId <= 0) {
+      showError(MESSAGES.NO_TASK_ASSIGNEE);
+      return;
+    }
+
+    __log.log(
+      "Отправка завдання: title=",
+      title,
+      "assignedTo=",
+      assignedToUserId,
+      "roomId=",
+      roomId,
+    );
+
+    try {
+      const response = await fetch(API_ENDPOINTS.ADD_TASK(roomId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title,
+          description: description || null,
+          assignedToUserId: assignedToUserId,
+          dueDate: null,
+        }),
+      });
+
+      __log.log("Створення завдання - API response status:", response.status);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        __log.error("API Error:", errData);
+        showError(MESSAGES.ADD_TASK_FAILED);
+        return;
+      }
+
+      const roomTaskData = await response.json();
+      __log.log("Відповідь сервера при створенні завдання:", roomTaskData);
+
+      if (!roomTaskData.success) {
+        showError(roomTaskData.message || "Помилка при додаванні завдання");
+        return;
+      }
+
+      showSuccess("Завдання додано!");
+      taskModal.remove();
+      setTimeout(() => {
+        openRoomDetails(roomId);
+      }, TIMEOUTS.MODAL_CLOSE);
+    } catch (error) {
+      __log.error("❌ Помилка додавання завдання", error);
+      showError("Помилка при додаванні завдання");
+    }
+  }
 
   // ===== Cache Management =====
   const isCacheValid = () => {
@@ -99,11 +234,11 @@
 
   const getCachedFriends = async () => {
     if (state.friendsCache && isCacheValid()) {
-      console.log("📦 Використання кешованих друзів");
+      __log.log("📦 Використання кешованих друзів");
       return state.friendsCache;
     }
 
-    console.log("📥 Завантаження друзів із сервера");
+    __log.log("📥 Завантаження друзів із сервера");
     try {
       const response = await fetch(API_ENDPOINTS.FRIENDS, {
         method: "GET",
@@ -122,10 +257,10 @@
       state.friendsCache = friends;
       state.lastFriendsLoad = Date.now();
 
-      console.log(`✅ Друзів кешовано: ${friends.length}`);
+      __log.log(`✅ Друзів кешовано: ${friends.length}`);
       return friends;
     } catch (error) {
-      console.error("❌ Помилка завантаження друзів", error);
+      __log.error("❌ Помилка завантаження друзів", error);
       return [];
     }
   };
@@ -134,21 +269,27 @@
   const renderFriendsSelector = async () => {
     const friendsContainer = document.getElementById("roomFriendsSelector");
     if (!friendsContainer) {
-      console.warn("Контейнер для вибору друзів не знайдено");
+      __log.warn("Контейнер для вибору друзів не знайдено");
       return;
     }
 
     const friends = await getCachedFriends();
 
     if (friends.length === 0) {
-      friendsContainer.innerHTML = '<p class="room-friends-empty">Друзів немає</p>';
+      friendsContainer.innerHTML =
+        '<p class="room-friends-empty">Друзів немає</p>';
       return;
     }
 
     friendsContainer.innerHTML = "";
     friends.forEach((friend) => {
-      const userId = friend.friendUserId || friend.userId || friend.UserId || friend.id;
-      const userName = friend.friendUserName || friend.userName || friend.UserName || "Користувач";
+      const userId =
+        friend.friendUserId || friend.userId || friend.UserId || friend.id;
+      const userName =
+        friend.friendUserName ||
+        friend.userName ||
+        friend.UserName ||
+        "Користувач";
       const avatarUrl = friend.avatarUrl || "/images/default-avatar.png";
 
       const label = document.createElement("label");
@@ -163,7 +304,7 @@
         } else {
           state.selectedMemberIds.delete(userId);
         }
-        console.log("Вибрані користувачі:", Array.from(state.selectedMemberIds));
+        __log.log("Вибрані користувачі:", Array.from(state.selectedMemberIds));
       });
 
       const avatar = document.createElement("img");
@@ -182,7 +323,7 @@
 
   // ===== Modal Handlers =====
   const openCreateRoomModal = () => {
-    console.log("📝 Відкриття модалі створення кімнати");
+    __log.log("📝 Відкриття модалі створення кімнати");
     roomsModal.style.display = "flex";
     roomsModal.setAttribute("aria-hidden", "false");
     state.selectedMemberIds.clear();
@@ -197,14 +338,14 @@
   };
 
   const closeCreateRoomModal = () => {
-    console.log("Закриття модалі створення кімнати");
+    __log.log("Закриття модалі створення кімнати");
     roomsModal.style.display = "none";
     roomsModal.setAttribute("aria-hidden", "true");
     state.selectedMemberIds.clear();
   };
 
   const openRoomsListModal = () => {
-    console.log("👥 Відкриття модалі списку кімнат");
+    __log.log("👥 Відкриття модалі списку кімнат");
     roomsListModal.style.display = "flex";
     roomsListModal.setAttribute("aria-hidden", "false");
     if (friendsModal) {
@@ -215,14 +356,14 @@
   };
 
   const closeRoomsListModal = () => {
-    console.log("Закриття модалі списку кімнат");
+    __log.log("Закриття модалі списку кімнат");
     roomsListModal.style.display = "none";
     roomsListModal.setAttribute("aria-hidden", "true");
   };
 
   // ===== Data Loading =====
   const loadRooms = async () => {
-    console.log("📥 Завантаження кімнат...");
+    __log.log("📥 Завантаження кімнат...");
     try {
       const response = await fetch(API_ENDPOINTS.ROOMS, {
         method: "GET",
@@ -236,7 +377,7 @@
       }
 
       const data = await response.json();
-      console.log("📊 Отримані кімнати:", data);
+      __log.log("📊 Отримані кімнати:", data);
 
       if (!data.success) {
         showError(data.message || MESSAGES.LOAD_ERROR);
@@ -244,11 +385,12 @@
       }
 
       const rooms = Array.isArray(data.data) ? data.data : [];
-      console.log(`✅ Кімнат завантажено: ${rooms.length}`);
+      __log.log(`✅ Кімнат завантажено: ${rooms.length}`);
 
       if (rooms.length === 0) {
         if (roomsList) {
-          roomsList.innerHTML = '<li class="leaderboard-empty">Кімнат не знайдено</li>';
+          roomsList.innerHTML =
+            '<li class="leaderboard-empty">Кімнат не знайдено</li>';
         }
         return;
       }
@@ -274,7 +416,7 @@
           openBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log("🔓 Клік на кнопку Відкрити для кімнати:", room.id);
+            __log.log("🔓 Клік на кнопку Відкрити для кімнати:", room.id);
             openRoomDetails(room.id);
           });
 
@@ -283,13 +425,13 @@
         });
       }
     } catch (error) {
-      console.error("❌ Помилка завантаження кімнат", error);
+      __log.error("❌ Помилка завантаження кімнат", error);
       showError(MESSAGES.LOAD_ERROR);
     }
   };
 
   const openRoomDetails = async (roomId) => {
-    console.log("🔓 Відкриття деталей кімнати ID:", roomId);
+    __log.log("🔓 Відкриття деталей кімнати ID:", roomId);
     try {
       const response = await fetch(API_ENDPOINTS.ROOM_DETAILS(roomId), {
         method: "GET",
@@ -303,7 +445,7 @@
       }
 
       const data = await response.json();
-      console.log("📋 Отримані деталі кімнати:", data);
+      __log.log("📋 Отримані деталі кімнати:", data);
 
       if (!data.success) {
         showError(data.message || MESSAGES.LOAD_ERROR);
@@ -311,16 +453,16 @@
       }
 
       const room = data.data;
-      console.log("🏠 Відображення деталей кімнати:", room.title);
+      __log.log("🏠 Відображення деталей кімнати:", room.title);
       displayRoomDetailsModal(room);
     } catch (error) {
-      console.error("❌ Помилка завантаження деталей кімнати", error);
+      __log.error("❌ Помилка завантаження деталей кімнати", error);
       showError(MESSAGES.LOAD_ERROR);
     }
   };
 
   const displayRoomDetailsModal = (room) => {
-    console.log("🎨 Створення модалі деталей кімнати");
+    __log.log("🎨 Створення модалі деталей кімнати");
 
     const modal = document.createElement("div");
     modal.className = "modal-overlay";
@@ -341,12 +483,15 @@
     `;
 
     const membersHtml = (room.members || [])
-        .map((m) => `<div class="badge badge-info" style="margin: 4px;">${escapeHtml(m.userName)}</div>`)
-        .join("");
+      .map(
+        (m) =>
+          `<div class="badge badge-info" style="margin: 4px;">${escapeHtml(m.userName)}</div>`,
+      )
+      .join("");
 
     const tasksHtml = (room.tasks || [])
-        .map(
-            (task) => `
+      .map(
+        (task) => `
       <div class="card" style="margin-bottom: 16px; border: 1px solid var(--dojo-border); border-radius: 14px; background: var(--dojo-surface);">
         <div class="card-header" style="padding: 16px; border-bottom: 1px solid var(--dojo-border); display: flex; justify-content: space-between; align-items: center;">
           <h5 style="margin: 0; color: var(--dojo-ink); font-weight: 600;">${escapeHtml(task.title)}</h5>
@@ -359,11 +504,14 @@
             <div style="background: #f9f5f2; padding: 12px; border-radius: 10px; margin: 8px 0; min-height: 30px; max-height: 150px; overflow-y: auto;">
               ${
                 task.comments && task.comments.length > 0
-                    ? task.comments
-                        .map((c) => `<div style="margin: 4px 0; color: var(--dojo-ink); font-size: 14px;"><strong>${escapeHtml(c.authorUserName)}:</strong> ${escapeHtml(c.text)}</div>`)
-                        .join("")
-                    : '<p style="color: var(--dojo-muted); margin: 0; font-size: 14px;">Немає коментарів</p>'
-            }
+                  ? task.comments
+                      .map(
+                        (c) =>
+                          `<div style="margin: 4px 0; color: var(--dojo-ink); font-size: 14px;"><strong>${escapeHtml(c.authorUserName)}:</strong> ${escapeHtml(c.text)}</div>`,
+                      )
+                      .join("")
+                  : '<p style="color: var(--dojo-muted); margin: 0; font-size: 14px;">Немає коментарів</p>'
+              }
             </div>
             <div class="input-group" style="margin-top: 8px; display: flex; gap: 8px;">
               <input type="text" class="form-field room-comment-input" placeholder="Додайте коментар..." data-task-id="${task.id}" style="flex: 1; padding: 10px 12px; border: 1px solid var(--dojo-border); border-radius: 10px; font-size: 14px;" />
@@ -372,9 +520,9 @@
           </div>
         </div>
       </div>
-    `
-        )
-        .join("");
+    `,
+      )
+      .join("");
 
     modal.innerHTML = `
       <div class="modal-content" style="width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; background: var(--dojo-surface); border-radius: 20px; box-shadow: var(--dojo-shadow); border: 1px solid var(--dojo-border);">
@@ -407,14 +555,14 @@
     `;
 
     document.body.appendChild(modal);
-    console.log("✅ Модаль деталей додана до DOM, z-index:", modal.style.zIndex);
+    __log.log("✅ Модаль деталей додана до DOM, z-index:", modal.style.zIndex);
 
     const closeBtn = modal.querySelector(".close");
     if (closeBtn) {
       closeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Закриття деталей кімнати");
+        __log.log("Закриття деталей кімнати");
         modal.remove();
       });
     }
@@ -423,7 +571,7 @@
       if (e.target === modal) {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Клік за межами модалі - закриття");
+        __log.log("Клік за межами модалі - закриття");
         modal.remove();
       }
     });
@@ -431,47 +579,10 @@
     // Обробники коментарів
     const commentBtns = modal.querySelectorAll(".room-add-comment-btn");
     commentBtns.forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const taskId = parseInt(e.target.dataset.taskId, 10);
-        const input = modal.querySelector(`[data-task-id="${taskId}"].room-comment-input`);
-        const text = input?.value.trim();
-
-        if (!text) {
-          showError(MESSAGES.NO_COMMENT_TEXT);
-          return;
-        }
-
-        try {
-          const response = await fetch(API_ENDPOINTS.ADD_COMMENT(taskId), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ text }),
-          });
-
-          if (!response.ok) {
-            showError(MESSAGES.ADD_COMMENT_FAILED);
-            return;
-          }
-
-          const data = await response.json();
-          if (data.success) {
-            showSuccess("Коментар додано!");
-            input.value = "";
-            setTimeout(() => {
-              modal.remove();
-              openRoomDetails(room.id);
-            }, TIMEOUTS.MODAL_CLOSE);
-          } else {
-            showError(data.message || MESSAGES.ADD_COMMENT_FAILED);
-          }
-        } catch (error) {
-          console.error("❌ Помилка додавання коментаря", error);
-          showError("Помилка при додаванні коментаря");
-        }
-      });
+      btn.addEventListener(
+        "click",
+        handleRoomCommentAdd.bind(null, modal, room),
+      );
     });
 
     // Обробник кнопки додавання завдання
@@ -480,7 +591,7 @@
       addTaskBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Клік - додавання завдання до кімнати ID:", room.id);
+        __log.log("Клік - додавання завдання до кімнати ID:", room.id);
         showCreateTaskModal(room.id, room.members || []);
       });
     }
@@ -491,14 +602,14 @@
       addMemberBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Клік - додавання учасника до кімнати ID:", room.id);
+        __log.log("Клік - додавання учасника до кімнати ID:", room.id);
         showAddMemberModal(room.id);
       });
     }
   };
 
   const showCreateTaskModal = (roomId, members) => {
-    console.log("📝 Відкриття модалі створення завдання");
+    __log.log("📝 Відкриття модалі створення завдання");
     const taskModal = document.createElement("div");
     taskModal.className = "modal-overlay";
     taskModal.id = "addTaskModal";
@@ -517,12 +628,12 @@
 
     const validMembers = Array.isArray(members) ? members : [];
     const membersOptions = validMembers
-        .map((m) => {
-          const userId = m.userId || m.UserId || m.id;
-          const userName = m.userName || m.UserName || m.name || "Unknown";
-          return `<option value="${userId}">${escapeHtml(userName)}</option>`;
-        })
-        .join("");
+      .map((m) => {
+        const userId = m.userId || m.UserId || m.id;
+        const userName = m.userName || m.UserName || m.name || "Unknown";
+        return `<option value="${userId}">${escapeHtml(userName)}</option>`;
+      })
+      .join("");
 
     taskModal.innerHTML = `
       <div class="modal-content" style="width: 90%; max-width: 600px; background: var(--dojo-surface); border-radius: 20px; box-shadow: var(--dojo-shadow); border: 1px solid var(--dojo-border);">
@@ -555,14 +666,14 @@
     `;
 
     document.body.appendChild(taskModal);
-    console.log("✅ Модаль додавання завдання додана до DOM");
+    __log.log("✅ Модаль додавання завдання додана до DOM");
 
     const closeBtn = taskModal.querySelector(".close");
     if (closeBtn) {
       closeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Закриття модалі завдання");
+        __log.log("Закриття модалі завдання");
         taskModal.remove();
       });
     }
@@ -572,7 +683,7 @@
       cancelBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Скасування створення завдання");
+        __log.log("Скасування створення завдання");
         taskModal.remove();
       });
     }
@@ -581,84 +692,24 @@
       if (e.target === taskModal) {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Клік за межами - закриття модалі завдання");
+        __log.log("Клік за межами - закриття модалі завдання");
         taskModal.remove();
       }
     });
 
     const form = taskModal.querySelector("#addTaskFormModal");
     if (form) {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        console.log("🎯 Submit форми додавання завдання");
-
-        const titleInput = taskModal.querySelector("#taskTitleInput");
-        const descriptionInput = taskModal.querySelector("#taskDescriptionInput");
-        const assigneeInput = taskModal.querySelector("#taskAssigneeSelect");
-
-        const title = titleInput ? titleInput.value.trim() : "";
-        const description = descriptionInput ? descriptionInput.value.trim() : "";
-        const assignedToUserId = parseInt(assigneeInput ? assigneeInput.value : 0, 10);
-
-        if (!title) {
-          showError(MESSAGES.NO_TASK_TITLE);
-          return;
-        }
-
-        if (!assignedToUserId || assignedToUserId <= 0) {
-          showError(MESSAGES.NO_TASK_ASSIGNEE);
-          return;
-        }
-
-        console.log("Отправка завдання: title=", title, "assignedTo=", assignedToUserId, "roomId=", roomId);
-
-        try {
-          const response = await fetch(API_ENDPOINTS.ADD_TASK(roomId), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              title,
-              description: description || null,
-              assignedToUserId: assignedToUserId,
-              dueDate: null,
-            }),
-          });
-
-          console.log("Створення завдання - API response status:", response.status);
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            console.error("API Error:", errData);
-            showError(errData.message || MESSAGES.ADD_TASK_FAILED);
-            return;
-          }
-
-          const roomTaskData = await response.json();
-          console.log("Відповідь сервера при створенні завдання:", roomTaskData);
-
-          if (!roomTaskData.success) {
-            showError(roomTaskData.message || "Помилка при додаванні завдання");
-            return;
-          }
-
-          showSuccess("Завдання додано!");
-          taskModal.remove();
-          setTimeout(() => {
-            openRoomDetails(roomId);
-          }, TIMEOUTS.MODAL_CLOSE);
-        } catch (error) {
-          console.error("❌ Помилка додавання завдання", error);
-          showError("Помилка при додаванні завдання");
-        }
-      });
+      form.addEventListener(
+        "submit",
+        handleAddTaskSubmit.bind(null, roomId, taskModal),
+      );
     } else {
-      console.error("❌ Форма додавання завдання не знайдена!");
+      __log.error("❌ Форма додавання завдання не знайдена!");
     }
   };
 
   const showAddMemberModal = (roomId) => {
-    console.log("👤 Відкриття модалі додавання учасника");
+    __log.log("👤 Відкриття модалі додавання учасника");
     const memberModal = document.createElement("div");
     memberModal.className = "modal-overlay";
     memberModal.style.cssText = `
@@ -699,7 +750,7 @@
   `;
 
     document.body.appendChild(memberModal);
-    console.log("✅ Модаль додавання учасника додана до DOM");
+    __log.log("✅ Модаль додавання учасника додана до DOM");
 
     let suggestionTimeoutId = null;
 
@@ -711,7 +762,7 @@
         clearTimeout(suggestionTimeoutId);
         const query = e.target.value.trim();
 
-        console.log("🔍 Пошук:", query);
+        __log.log("🔍 Пошук:", query);
 
         if (query.length < 1) {
           suggestionsDiv.style.display = "none";
@@ -721,70 +772,94 @@
         suggestionTimeoutId = setTimeout(async () => {
           const friends = await getCachedFriends();
 
-          console.log("📦 Друзів доступно:", friends.length);
+          __log.log("📦 Друзів доступно:", friends.length);
 
           if (friends.length === 0) {
-            suggestionsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--dojo-muted);">Немає доданих друзів</div>';
+            suggestionsDiv.innerHTML =
+              '<div style="padding: 12px 14px; color: var(--dojo-muted);">Немає доданих друзів</div>';
             suggestionsDiv.style.display = "block";
             return;
           }
 
           const queryLower = query.toLowerCase();
           const filtered = friends.filter((friend) => {
-            const userName = (friend.friendUserName || friend.userName || friend.UserName || friend.name || "").toLowerCase();
+            const userName = (
+              friend.friendUserName ||
+              friend.userName ||
+              friend.UserName ||
+              friend.name ||
+              ""
+            ).toLowerCase();
             return userName.includes(queryLower);
           });
 
-          console.log(`Результат фільтрації: ${filtered.length} знайдено`);
+          __log.log(`Результат фільтрації: ${filtered.length} знайдено`);
 
           if (filtered.length === 0) {
-            suggestionsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--dojo-muted);">Користувачі не знайдені</div>';
+            suggestionsDiv.innerHTML =
+              '<div style="padding: 12px 14px; color: var(--dojo-muted);">Користувачі не знайдені</div>';
             suggestionsDiv.style.display = "block";
             return;
           }
 
           suggestionsDiv.innerHTML = filtered
-              .map((friend) => {
-                const userId = friend.friendUserId || friend.userId || friend.UserId || friend.id;
-                const userName = friend.friendUserName || friend.userName || friend.UserName || friend.name || "Unknown";
-                return `
+            .map((friend) => {
+              const userId =
+                friend.friendUserId ||
+                friend.userId ||
+                friend.UserId ||
+                friend.id;
+              const userName =
+                friend.friendUserName ||
+                friend.userName ||
+                friend.UserName ||
+                friend.name ||
+                "Unknown";
+              return `
             <div class="suggestion-item" data-user-id="${userId}" data-user-name="${escapeHtml(userName)}" style="padding: 12px 14px; cursor: pointer; border-bottom: 1px solid var(--dojo-border); transition: background 0.2s ease;">
               ${escapeHtml(userName)}
             </div>
           `;
-              })
-              .join("");
+            })
+            .join("");
 
           suggestionsDiv.style.display = "block";
 
-          suggestionsDiv.querySelectorAll(".suggestion-item").forEach((item) => {
-            item.addEventListener("mouseover", () => {
-              item.style.background = "var(--dojo-border)";
-            });
-            item.addEventListener("mouseout", () => {
-              item.style.background = "transparent";
-            });
-            item.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const userId = item.dataset.userId;
-              const userName = item.dataset.userName;
+          suggestionsDiv
+            .querySelectorAll(".suggestion-item")
+            .forEach((item) => {
+              item.addEventListener("mouseover", () => {
+                item.style.background = "var(--dojo-border)";
+              });
+              item.addEventListener("mouseout", () => {
+                item.style.background = "transparent";
+              });
+              item.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const userId = item.dataset.userId;
+                const userName = item.dataset.userName;
 
-              memberModal.querySelector("#memberSelectedUserId").value = userId;
-              memberModal.querySelector("#memberSelectedName").textContent = userName;
-              memberModal.querySelector("#memberSelectedDisplay").style.display = "block";
-              searchInput.value = "";
-              suggestionsDiv.style.display = "none";
-              console.log("✅ Вибрано користувача:", userName, "ID:", userId);
+                memberModal.querySelector("#memberSelectedUserId").value =
+                  userId;
+                memberModal.querySelector("#memberSelectedName").textContent =
+                  userName;
+                memberModal.querySelector(
+                  "#memberSelectedDisplay",
+                ).style.display = "block";
+                searchInput.value = "";
+                suggestionsDiv.style.display = "none";
+                __log.log("✅ Вибрано користувача:", userName, "ID:", userId);
+              });
             });
-          });
         }, 300);
       });
 
       // Завантажуємо друзів одразу при відкритті модалі
       getCachedFriends().then((friends) => {
         searchInput.disabled = false;
-        searchInput.placeholder = friends.length > 0 ? "Введіть ім'я користувача" : "Немає друзів";
+        searchInput.placeholder =
+          friends.length > 0 ? "Введіть ім'я користувача" : "Немає друзів";
         if (friends.length === 0) {
           searchInput.disabled = true;
         }
@@ -827,7 +902,10 @@
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const userId = parseInt(memberModal.querySelector("#memberSelectedUserId").value, 10);
+        const userId = Number.parseInt(
+          memberModal.querySelector("#memberSelectedUserId").value,
+          10,
+        );
 
         if (!userId || userId <= 0) {
           showError(MESSAGES.NO_MEMBER_SELECTED);
@@ -860,7 +938,7 @@
             showError(data.message || MESSAGES.ADD_MEMBER_FAILED);
           }
         } catch (error) {
-          console.error("❌ Помилка додавання учасника", error);
+          __log.error("❌ Помилка додавання учасника", error);
           showError("Помилка при додаванні учасника");
         }
       });
@@ -918,11 +996,11 @@
 
   // Обробник форми створення кімнати
   if (createRoomForm) {
-    console.log("✅ Форма створення кімнати знайдена, додаються слухачі подій");
+    __log.log("✅ Форма створення кімнати знайдена, додаються слухачі подій");
 
     createRoomForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      console.log("📝 Submit форми створення кімнати");
+      __log.log("📝 Submit форми створення кімнати");
 
       const titleInput = document.getElementById("roomTitle");
       const descriptionInput = document.getElementById("roomDescription");
@@ -941,7 +1019,14 @@
         return;
       }
 
-      console.log("Отправка даних: title=", title, "description=", description, "members=", memberIds);
+      __log.log(
+        "Отправка даних: title=",
+        title,
+        "description=",
+        description,
+        "members=",
+        memberIds,
+      );
 
       try {
         const response = await fetch("/api/rooms/create", {
@@ -955,17 +1040,17 @@
           }),
         });
 
-        console.log("API response status:", response.status);
+        __log.log("API response status:", response.status);
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          console.error("API Error:", errData);
+          __log.error("API Error:", errData);
           showError(errData.message || MESSAGES.CREATE_ERROR);
           return;
         }
 
         const data = await response.json();
-        console.log("API response data:", data);
+        __log.log("API response data:", data);
 
         if (!data.success) {
           showError(data.message || MESSAGES.CREATE_ERROR);
@@ -980,12 +1065,12 @@
           openRoomsListModal();
         }, TIMEOUTS.PAGE_RELOAD);
       } catch (error) {
-        console.error("❌ Помилка створення кімнати", error);
+        __log.error("❌ Помилка створення кімнати", error);
         showError(MESSAGES.CREATE_ERROR);
       }
     });
   } else {
-    console.warn("⚠️ Форма створення кімнати не знайдена!");
+    __log.warn("⚠️ Форма створення кімнати не знайдена!");
   }
 
   // Закриття модалей при кліку поза ними
@@ -1009,15 +1094,20 @@
     });
   }
 
-  console.log("✅ Усі обробники подій зареєстровані");
+  __log.log("✅ Усі обробники подій зареєстровані");
 
   // Завантаження кімнат при запиті
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(
+    globalThis.location?.search ?? location.search,
+  );
   const roomIdParam = urlParams.get("roomId");
   if (roomIdParam) {
-    const roomId = parseInt(roomIdParam, 10);
-    if (!isNaN(roomId)) {
-      console.log("🔓 Завантаження деталей кімнати за запитом (roomId з URL):", roomId);
+    const roomId = Number.parseInt(roomIdParam, 10);
+    if (!Number.isNaN(roomId)) {
+      __log.log(
+        "🔓 Завантаження деталей кімнати за запитом (roomId з URL):",
+        roomId,
+      );
       openRoomDetails(roomId);
     }
   }

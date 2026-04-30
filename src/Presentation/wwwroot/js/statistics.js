@@ -4,21 +4,26 @@
  */
 
 (function () {
-  'use strict';
+  "use strict";
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
 
   const STATS_CONFIG = {
-    apiEndpoint: '/api/statistics',
+    apiEndpoint: "/api/statistics",
     selectors: {
-      widget: '[data-statistics-root]',
-      modal: '#statisticsModal',
-      modalBody: '#statisticsModalBody',
-      modalClose: '#closeStatisticsModal',
-      openButton: '#openStatisticsModal',
-      completedTodos: '[data-stat-completed-todos]',
-      completedPlans: '[data-stat-completed-plans]',
-      pomodoroSessions: '[data-stat-pomodoro-sessions]',
-      pomodoroMinutes: '[data-stat-pomodoro-minutes]'
-    }
+      widget: "[data-statistics-root]",
+      modal: "#statisticsModal",
+      modalBody: "#statisticsModalBody",
+      modalClose: "#closeStatisticsModal",
+      openButton: "#openStatisticsModal",
+      completedTodos: "[data-stat-completed-todos]",
+      completedPlans: "[data-stat-completed-plans]",
+      pomodoroSessions: "[data-stat-pomodoro-sessions]",
+      pomodoroMinutes: "[data-stat-pomodoro-minutes]",
+    },
   };
 
   /**
@@ -28,15 +33,15 @@
     try {
       const response = await fetch(`${STATS_CONFIG.apiEndpoint}/today`);
       if (!response.ok) {
-        throw new Error('Помилка при отриманні статистики');
+        throw new Error("Помилка при отриманні статистики");
       }
       const result = await response.json();
       if (!result.success || !result.data) {
-        throw new Error(result.message || 'Невірний формат відповіді');
+        throw new Error(result.message || "Невірний формат відповіді");
       }
       return result.data;
     } catch (error) {
-      console.error('Помилка завантаження статистики:', error);
+      console.error("Помилка завантаження статистики:", error);
       return null;
     }
   }
@@ -46,21 +51,24 @@
    */
   async function fetchDetailedStatistics(startDate = null) {
     try {
-      const url = new URL(`${STATS_CONFIG.apiEndpoint}/detailed`, window.location.origin);
+      const url = new URL(
+        `${STATS_CONFIG.apiEndpoint}/detailed`,
+        globalThis.location?.origin ?? location.origin,
+      );
       if (startDate) {
-        url.searchParams.append('startDate', startDate);
+        url.searchParams.append("startDate", startDate);
       }
       const response = await fetch(url.toString());
       if (!response.ok) {
-        throw new Error('Помилка при отриманні детальної статистики');
+        throw new Error("Помилка при отриманні детальної статистики");
       }
       const result = await response.json();
       if (!result.success || !result.data) {
-        throw new Error(result.message || 'Невірний формат відповіді');
+        throw new Error(result.message || "Невірний формат відповіді");
       }
       return result.data;
     } catch (error) {
-      console.error('Помилка завантаження детальної статистики:', error);
+      __log.error("Помилка завантаження детальної статистики:", error);
       return null;
     }
   }
@@ -70,21 +78,24 @@
    */
   async function fetchWeeklyProgress(dateInWeek = null) {
     try {
-      const url = new URL(`${STATS_CONFIG.apiEndpoint}/weekly`, window.location.origin);
+      const url = new URL(
+        `${STATS_CONFIG.apiEndpoint}/weekly`,
+        globalThis.location?.origin ?? location.origin,
+      );
       if (dateInWeek) {
-        url.searchParams.append('dateInWeek', dateInWeek);
+        url.searchParams.append("dateInWeek", dateInWeek);
       }
       const response = await fetch(url.toString());
       if (!response.ok) {
-        throw new Error('Помилка при отриманні статистики за тиждень');
+        throw new Error("Помилка при отриманні статистики за тиждень");
       }
       const result = await response.json();
       if (!result.success || !result.data) {
-        throw new Error(result.message || 'Невірний формат відповіді');
+        throw new Error(result.message || "Невірний формат відповіді");
       }
       return result.data;
     } catch (error) {
-      console.error('Помилка завантаження статистики за тиждень:', error);
+      __log.error("Помилка завантаження статистики за тиждень:", error);
       return null;
     }
   }
@@ -99,12 +110,13 @@
       todos: document.querySelector(STATS_CONFIG.selectors.completedTodos),
       plans: document.querySelector(STATS_CONFIG.selectors.completedPlans),
       sessions: document.querySelector(STATS_CONFIG.selectors.pomodoroSessions),
-      minutes: document.querySelector(STATS_CONFIG.selectors.pomodoroMinutes)
+      minutes: document.querySelector(STATS_CONFIG.selectors.pomodoroMinutes),
     };
 
     if (els.todos) els.todos.textContent = stats.completedTodos || 0;
     if (els.plans) els.plans.textContent = stats.completedPlans || 0;
-    if (els.sessions) els.sessions.textContent = stats.completedPomodoroSessions || 0;
+    if (els.sessions)
+      els.sessions.textContent = stats.completedPomodoroSessions || 0;
     if (els.minutes) els.minutes.textContent = stats.totalPomodoroMinutes || 0;
   }
 
@@ -112,14 +124,14 @@
    * Форматує дату для відображення
    */
   function formatDate(dateString) {
-    if (!dateString) return '-';
+    if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toLocaleDateString('uk-UA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("uk-UA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
@@ -127,11 +139,11 @@
    * Форматує дату для відображення у графіку
    */
   function formatDateShort(dateString) {
-    if (!dateString) return '-';
+    if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toLocaleDateString('uk-UA', {
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("uk-UA", {
+      month: "short",
+      day: "numeric",
     });
   }
 
@@ -165,12 +177,16 @@
             <div class="statistics-progress-fill" style="width: ${todoRate}%"></div>
           </div>
         </div>
-        ${stats.lastCompletedTodo ? `
+        ${
+          stats.lastCompletedTodo
+            ? `
           <div class="statistics-metric" style="margin-top: 8px;">
             <span class="statistics-metric-label">Останнє завдання</span>
             <span class="statistics-metric-value">${formatDate(stats.lastCompletedTodo)}</span>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
 
       <div class="statistics-section">
@@ -191,12 +207,16 @@
             <div class="statistics-progress-fill" style="width: ${planRate}%"></div>
           </div>
         </div>
-        ${stats.lastCompletedPlan ? `
+        ${
+          stats.lastCompletedPlan
+            ? `
           <div class="statistics-metric" style="margin-top: 8px;">
             <span class="statistics-metric-label">Останній план</span>
             <span class="statistics-metric-value">${formatDate(stats.lastCompletedPlan)}</span>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
 
       <div class="statistics-section">
@@ -220,22 +240,25 @@
     `;
   }
 
-
   function createWeeklyChartHTML(weeklyData) {
     if (!weeklyData || !weeklyData.dailyStats) {
       return '<div class="statistics-empty">Не вдалося завантажити статистику за тиждень</div>';
     }
 
-    const maxValue = Math.max(
-      ...weeklyData.dailyStats.map(d => Math.max(d.completedTodos, d.completedPlans, d.pomodoroSessions))
-    ) || 1;
+    const maxValue =
+      Math.max(
+        ...weeklyData.dailyStats.map((d) =>
+          Math.max(d.completedTodos, d.completedPlans, d.pomodoroSessions),
+        ),
+      ) || 1;
 
-    const chartHTML = weeklyData.dailyStats.map(day => {
-      const todosHeight = (day.completedTodos / maxValue) * 100;
-      const plansHeight = (day.completedPlans / maxValue) * 100;
-      const pomodoroHeight = (day.pomodoroSessions / maxValue) * 100;
+    const chartHTML = weeklyData.dailyStats
+      .map((day) => {
+        const todosHeight = (day.completedTodos / maxValue) * 100;
+        const plansHeight = (day.completedPlans / maxValue) * 100;
+        const pomodoroHeight = (day.pomodoroSessions / maxValue) * 100;
 
-      return `
+        return `
         <div class="weekly-chart-bar-group">
           <div class="weekly-chart-bars">
             <div class="weekly-chart-bar-item">
@@ -261,10 +284,17 @@
           <div class="weekly-chart-date">${formatDateShort(day.date)}</div>
         </div>
       `;
-    }).join('');
+      })
+      .join("");
 
-    const weekStart = new Date(weeklyData.weekStartDate).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-    const weekEnd = new Date(weeklyData.weekEndDate).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    const weekStart = new Date(weeklyData.weekStartDate).toLocaleDateString(
+      "uk-UA",
+      { day: "numeric", month: "short" },
+    );
+    const weekEnd = new Date(weeklyData.weekEndDate).toLocaleDateString(
+      "uk-UA",
+      { day: "numeric", month: "short" },
+    );
 
     return `
       <div class="statistics-section">
@@ -312,11 +342,12 @@
     if (!modal || !modalBody) return;
 
     // Показати модаль
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
 
     // Показати спіннер
-    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+    modalBody.innerHTML =
+      '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
 
     // Завантажити дані
     const stats = await fetchDetailedStatistics();
@@ -335,11 +366,12 @@
     if (!modal || !modalBody) return;
 
     // Показати модаль
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
 
     // Показати спіннер
-    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+    modalBody.innerHTML =
+      '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
 
     // Завантажити дані
     const stats = await fetchDetailedStatistics();
@@ -357,9 +389,9 @@
     modalBody.innerHTML = weeklyButtonHTML + detailedHTML;
 
     // Додати слухач на кнопку тижневої статистики
-    const weeklyBtn = document.getElementById('viewWeeklyBtn');
+    const weeklyBtn = document.getElementById("viewWeeklyBtn");
     if (weeklyBtn) {
-      weeklyBtn.addEventListener('click', openWeeklyProgress);
+      weeklyBtn.addEventListener("click", openWeeklyProgress);
     }
   }
 
@@ -373,7 +405,8 @@
     if (!modal || !modalBody) return;
 
     // Показати спіннер
-    modalBody.innerHTML = '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
+    modalBody.innerHTML =
+      '<div class="statistics-loading"><div class="statistics-spinner"></div></div>';
 
     // Завантажити дані
     const weeklyData = await fetchWeeklyProgress();
@@ -391,9 +424,9 @@
     modalBody.innerHTML = backButtonHTML + weeklyHTML;
 
     // Додати слухач на кнопку повернення
-    const backBtn = document.getElementById('backToDetailedBtn');
+    const backBtn = document.getElementById("backToDetailedBtn");
     if (backBtn) {
-      backBtn.addEventListener('click', openDetailedStatisticsWithTabs);
+      backBtn.addEventListener("click", openDetailedStatisticsWithTabs);
     }
   }
 
@@ -404,8 +437,8 @@
     const modal = document.querySelector(STATS_CONFIG.selectors.modal);
     if (!modal) return;
 
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
   }
 
   /**
@@ -423,7 +456,7 @@
    */
   function init() {
     // Оновити віджет при завантаженні
-    fetchTodayStatistics().then(stats => {
+    fetchTodayStatistics().then((stats) => {
       if (stats) {
         updateWidgetDisplay(stats);
       }
@@ -435,16 +468,16 @@
     const modal = document.querySelector(STATS_CONFIG.selectors.modal);
 
     if (openBtn) {
-      openBtn.addEventListener('click', openDetailedStatisticsWithTabs);
+      openBtn.addEventListener("click", openDetailedStatisticsWithTabs);
     }
 
     if (closeBtn) {
-      closeBtn.addEventListener('click', closeDetailedStatistics);
+      closeBtn.addEventListener("click", closeDetailedStatistics);
     }
 
     // Закрити модаль при кліку поза нею
     if (modal) {
-      modal.addEventListener('click', (e) => {
+      modal.addEventListener("click", (e) => {
         if (e.target === modal) {
           closeDetailedStatistics();
         }
@@ -453,7 +486,7 @@
 
     // Оновлювати статистику щохвилини
     setInterval(() => {
-      fetchTodayStatistics().then(stats => {
+      fetchTodayStatistics().then((stats) => {
         if (stats) {
           updateWidgetDisplay(stats);
         }
@@ -462,19 +495,19 @@
   }
 
   // Ініціалізувати при завантаженні DOM
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
 
   // Експортувати функції для глобального використання
-  window.StatisticsModule = {
+  globalThis.StatisticsModule = {
     fetchTodayStatistics,
     fetchDetailedStatistics,
     updateWidgetDisplay,
     openDetailedStatistics,
     closeDetailedStatistics,
-    refreshStatistics
+    refreshStatistics,
   };
 })();

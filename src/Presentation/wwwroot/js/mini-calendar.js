@@ -1,4 +1,9 @@
 (() => {
+  const __log = globalThis.AppLogger ?? {
+    log: () => {},
+    warn: () => {},
+    error: () => {},
+  };
   const calendarRoot = document.querySelector("[data-mini-calendar]");
   if (!calendarRoot) {
     return;
@@ -177,7 +182,7 @@
       markDates.forEach((iso) => marks.add(iso));
       renderGrid();
     } catch (err) {
-      console.error("Помилка завантаження позначок календаря", err);
+      __log.error("Помилка завантаження позначок календаря", err);
     }
   };
 

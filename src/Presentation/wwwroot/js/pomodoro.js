@@ -643,7 +643,7 @@
   };
 
   const deletePreset = async (presetId, presetName) => {
-    const confirmed = window.confirm(`Видалити пресет «${presetName}»?`);
+    const confirmed = globalThis.confirm(`Видалити пресет «${presetName}»?`);
     if (!confirmed) {
       return;
     }
