@@ -62,6 +62,8 @@ try
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+    builder.Services.AddSingleton<IClock, DOJO2.Infrastructure.Services.SystemClock>();
+    builder.Services.AddSingleton<IRateLimitService, RateLimitService>();
 
     // Identity: користувачі, ролі, токени
     builder.Services.AddDataProtection(); // Використовуємо персистентні ключі, щоб куки лишались валідними після рестарту без виходу
@@ -81,7 +83,6 @@ try
 
     builder.Services.ConfigureApplicationCookie(options =>
     {
-        const string BlockedNoticeCookieName = "dojo_blocked_notice";
 
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
@@ -116,7 +117,7 @@ try
             context.RejectPrincipal();
             await context.HttpContext.SignOutAsync();
             context.HttpContext.Response.Cookies.Append(
-                BlockedNoticeCookieName,
+                AuthCookieOptions.DefaultBlockedNoticeCookieName,
                 "1",
                 new CookieOptions
                 {

@@ -1,6 +1,7 @@
 using DOJO2.Application.Interfaces;
 using DOJO2.Application.Common;
 using DOJO2.Application.ViewModels;
+using DOJO2.Presentation.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -32,6 +33,7 @@ public class AccountController : Controller
     }
 
     [HttpGet]
+    [RateLimit(20)]
     public IActionResult Login(string? returnUrl = null, bool blocked = false)
     {
         if (!ModelState.IsValid)
@@ -93,6 +95,7 @@ public class AccountController : Controller
     }
 
     [HttpGet]
+    [RateLimit(20)]
     public IActionResult Register()
     {
         return View(new RegisterViewModel());
@@ -123,6 +126,7 @@ public class AccountController : Controller
     }
     
     [HttpGet]
+    [RateLimit(20)]
     public IActionResult ForgotPassword()
     {
         return View();
