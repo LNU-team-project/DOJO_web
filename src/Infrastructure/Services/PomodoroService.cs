@@ -10,11 +10,13 @@ namespace DOJO2.Infrastructure.Services;
 public class PomodoroService : IPomodoroService
 {
     private readonly IAppDbContext _context;
+    private readonly IPomodoroPresetRepository _presetRepository;
     private readonly ILogger<PomodoroService> _logger;
 
-    public PomodoroService(IAppDbContext context, ILogger<PomodoroService> logger)
+    public PomodoroService(IAppDbContext context, IPomodoroPresetRepository presetRepository, ILogger<PomodoroService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _presetRepository = presetRepository ?? throw new ArgumentNullException(nameof(presetRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -93,6 +95,88 @@ public class PomodoroService : IPomodoroService
         return await GetTodayStatsAsync(userId, DateTime.UtcNow);
     }
 
+    public async Task<Result<IReadOnlyList<PomodoroPresetViewModel>>> GetPresetsAsync(int userId)
+    {
+        if (userId <= 0)
+        {
+            return Result<IReadOnlyList<PomodoroPresetViewModel>>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        var presets = await _presetRepository.GetUserPresetsAsync(userId);
+        var result = presets
+            .Select(preset => new PomodoroPresetViewModel
+            {
+                Id = preset.Id,
+                Name = preset.Name,
+                FocusMinutes = preset.FocusMinutes,
+                ShortBreakMinutes = preset.ShortBreakMinutes,
+                LongBreakMinutes = preset.LongBreakMinutes,
+                CreatedAt = preset.CreatedAt
+            })
+            .ToList();
+
+        return Result<IReadOnlyList<PomodoroPresetViewModel>>.SuccessResult(result, "Пресети завантажено");
+    }
+
+    public async Task<Result<PomodoroPresetViewModel>> CreatePresetAsync(int userId, PomodoroPresetCreateViewModel? model)
+    {
+        if (userId <= 0)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Невалідний ідентифікатор користувача");
+        }
+
+        if (model == null)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Модель пресету не може бути порожньою");
+        }
+
+        var name = model.Name.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Назва пресету не може бути порожньою");
+        }
+
+        var normalizedName = name.ToUpperInvariant();
+        var presetExists = await _presetRepository.HasPresetNameAsync(userId, normalizedName);
+        if (presetExists)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Пресет з такою назвою вже існує");
+        }
+
+        var preset = new PomodoroPreset
+        {
+            UserId = userId,
+            Name = name,
+            FocusMinutes = model.FocusMinutes,
+            ShortBreakMinutes = model.ShortBreakMinutes,
+            LongBreakMinutes = model.LongBreakMinutes
+        };
+
+        var savedPreset = await _presetRepository.AddAsync(preset);
+        _logger.LogInformation("Створено Pomodoro пресет {PresetId} для користувача {UserId}", savedPreset.Id, userId);
+
+        return Result<PomodoroPresetViewModel>.SuccessResult(MapPreset(savedPreset), "Пресет збережено");
+    }
+
+    public async Task<Result<bool>> DeletePresetAsync(int userId, int presetId)
+    {
+        if (userId <= 0 || presetId <= 0)
+        {
+            return Result<bool>.FailureResult("Невалідні дані пресету");
+        }
+
+        var preset = await _presetRepository.GetUserPresetAsync(userId, presetId);
+        if (preset == null)
+        {
+            return Result<bool>.FailureResult("Пресет не знайдено");
+        }
+
+        await _presetRepository.DeleteAsync(preset);
+        _logger.LogInformation("Pomodoro пресет {PresetId} видалено для користувача {UserId}", presetId, userId);
+
+        return Result<bool>.SuccessResult(true, "Пресет видалено");
+    }
+
     private static DateTime NormalizeUtc(DateTime value)
     {
         return value.Kind switch
@@ -100,6 +184,19 @@ public class PomodoroService : IPomodoroService
             DateTimeKind.Utc => value,
             DateTimeKind.Local => value.ToUniversalTime(),
             _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
+    private static PomodoroPresetViewModel MapPreset(PomodoroPreset preset)
+    {
+        return new PomodoroPresetViewModel
+        {
+            Id = preset.Id,
+            Name = preset.Name,
+            FocusMinutes = preset.FocusMinutes,
+            ShortBreakMinutes = preset.ShortBreakMinutes,
+            LongBreakMinutes = preset.LongBreakMinutes,
+            CreatedAt = preset.CreatedAt
         };
     }
 }

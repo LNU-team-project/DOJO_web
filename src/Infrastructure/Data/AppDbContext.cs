@@ -22,6 +22,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<Friend> Friends => Set<Friend>();
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
+    public DbSet<PomodoroPreset> PomodoroPresets => Set<PomodoroPreset>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -235,6 +236,28 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, 
 
             e.HasIndex(p => p.UserId);
             e.HasIndex(p => p.TaskId);
+        });
+
+        // ── PomodoroPreset ───────────────────────────────────
+        builder.Entity<PomodoroPreset>(e =>
+        {
+            e.ToTable("pomodoro_presets");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            e.Property(p => p.UserId).HasColumnName(UserIdColumnName);
+            e.Property(p => p.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            e.Property(p => p.FocusMinutes).HasColumnName("focus_minutes");
+            e.Property(p => p.ShortBreakMinutes).HasColumnName("short_break_minutes");
+            e.Property(p => p.LongBreakMinutes).HasColumnName("long_break_minutes");
+            e.Property(p => p.CreatedAt).HasColumnName(CreatedAtColumnName).HasDefaultValueSql(NowSqlExpression);
+
+            e.HasOne(p => p.User)
+                .WithMany(u => u.PomodoroPresets)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(p => new { p.UserId, p.Name }).IsUnique();
+            e.HasIndex(p => p.UserId);
         });
 
         // ── Attachment ────────────────────────────────────────

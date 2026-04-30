@@ -2,6 +2,7 @@ using DOJO2.Domain.Entities;
 using DOJO2.Application.Interfaces;
 using DOJO2.Infrastructure.Data;
 using DOJO2.Infrastructure.Middleware;
+using DOJO2.Infrastructure.Repositories;
 using DOJO2.Infrastructure.Services;
 using DOJO2.Application.Common;
 using Microsoft.AspNetCore.Authentication;
@@ -140,6 +141,7 @@ try
     builder.Services.AddScoped<IPlanService, PlanService>();
     builder.Services.AddScoped<IScheduleService, ScheduleService>();
     builder.Services.AddScoped<ICalendarService, CalendarService>();
+    builder.Services.AddScoped<IPomodoroPresetRepository, PomodoroPresetRepository>();
     builder.Services.AddScoped<IPomodoroService, PomodoroService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IStatisticsService, StatisticsService>();

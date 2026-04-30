@@ -143,11 +143,15 @@
                         </button>
                     </div>
 
-                    <fieldset class="pomodoro-presets">
-                        <legend class="pomodoro-legend">Пресети таймера</legend>
-                        <button type="button" class="pomodoro-chip is-active" data-preset="25-5-15">25/5</button>
-                        <button type="button" class="pomodoro-chip" data-preset="50-10-20">50/10</button>
-                    </fieldset>
+                    <div class="pomodoro-presets-panel">
+                        <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
+                        <div class="pomodoro-presets-row">
+                            <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
+                            <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
+                                Додати пресет
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="pomodoro-meta">
                         <p class="pomodoro-meta-row">
@@ -159,6 +163,44 @@
                             Автоматично запускати наступний раунд
                         </label>
                     </div>
+                </div>
+            </div>
+
+            <div class="todo-modal pomodoro-preset-modal" id="pomodoroPresetModal" aria-hidden="true" aria-labelledby="pomodoroPresetModalTitle">
+                <div class="todo-modal-content">
+                    <div class="todo-modal-header">
+                        <h2 id="pomodoroPresetModalTitle">Додати пресет</h2>
+                        <button type="button" class="todo-modal-close" id="closePomodoroPresetModal" aria-label="Закрити вікно">×</button>
+                    </div>
+
+                    <form id="pomodoroPresetForm" class="todo-form" novalidate>
+                        <div class="form-group">
+                            <label for="pomodoroPresetName">Назва пресету</label>
+                            <input type="text" id="pomodoroPresetName" class="form-control" maxlength="100" placeholder="Для навчання" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pomodoroPresetFocus">Робота, хв</label>
+                                <input type="number" id="pomodoroPresetFocus" class="form-control" min="1" max="180" value="25" />
+                            </div>
+                            <div class="form-group">
+                                <label for="pomodoroPresetShortBreak">Короткий відпочинок, хв</label>
+                                <input type="number" id="pomodoroPresetShortBreak" class="form-control" min="1" max="60" value="5" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pomodoroPresetLongBreak">Довгий відпочинок, хв</label>
+                            <input type="number" id="pomodoroPresetLongBreak" class="form-control" min="1" max="120" value="15" />
+                        </div>
+
+                        <p class="pomodoro-preset-error" data-pomodoro-preset-error aria-live="polite"></p>
+
+                        <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
+                            <button type="submit" class="btn-primary">Зберегти пресет</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
