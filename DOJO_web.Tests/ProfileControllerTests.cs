@@ -5,9 +5,9 @@ using DOJO2.Application.Common;
 using DOJO2.Application.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace DOJO_web.Tests;
 
@@ -159,6 +159,52 @@ public class ProfileControllerTests
     }
 
     [Fact]
+    public async Task ExportProfile_ReturnsUnauthorized_WhenUserIdClaimMissing()
+    {
+        var controller = CreateControllerWithoutUserIdClaim();
+
+        var result = await controller.ExportProfile(new ProfileExportRequestViewModel());
+
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(StatusCodes.Status401Unauthorized, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task ExportProfile_ReturnsBadRequest_WhenModelIsNull()
+    {
+        var controller = CreateControllerWithUserId(ValidUserId);
+
+        var result = await controller.ExportProfile(null);
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task ExportProfile_ReturnsFile_WhenServiceReturnsSuccess()
+    {
+        var exportFile = new ProfileExportFileViewModel
+        {
+            FileName = "profile-export-123.csv",
+            ContentType = "text/csv; charset=utf-8",
+            Content = new byte[] { 1, 2, 3 }
+        };
+
+        _userServiceMock
+            .Setup(s => s.ExportUserProfileCsvAsync(ValidUserId, It.IsAny<ProfileExportRequestViewModel>()))
+            .ReturnsAsync(Result<ProfileExportFileViewModel>.SuccessResult(exportFile));
+
+        var controller = CreateControllerWithUserId(ValidUserId);
+
+        var result = await controller.ExportProfile(new ProfileExportRequestViewModel());
+
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", fileResult.ContentType);
+        Assert.Equal("profile-export-123.csv", fileResult.FileDownloadName);
+        Assert.Equal(new byte[] { 1, 2, 3 }, fileResult.FileContents);
+    }
+
+    [Fact]
     public void Logout_ReturnsUnauthorized_WhenUserIdInvalid()
     {
         var controller = CreateControllerWithUserId(0);
@@ -260,7 +306,8 @@ public class ProfileControllerTests
         {
             HttpContext = new DefaultHttpContext
             {
-                User = BuildUser(userId.ToString())
+                User = BuildUser(userId.ToString()),
+                RequestServices = new ServiceCollection().BuildServiceProvider()
             }
         };
 
@@ -274,7 +321,8 @@ public class ProfileControllerTests
         {
             HttpContext = new DefaultHttpContext
             {
-                User = new ClaimsPrincipal(new ClaimsIdentity())
+                User = new ClaimsPrincipal(new ClaimsIdentity()),
+                RequestServices = new ServiceCollection().BuildServiceProvider()
             }
         };
 

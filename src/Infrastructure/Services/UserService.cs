@@ -1,4 +1,5 @@
-using System.Linq;
+using System.Globalization;
+using System.Text;
 using DOJO2.Domain.Entities;
 using DOJO2.Application.Common;
 using DOJO2.Application.Interfaces;
@@ -20,6 +21,8 @@ public class UserService : IUserService
     private const string AvatarDirectory = "uploads/avatars";
     private const long MaxAvatarSize = 5 * 1024 * 1024; // 5MB
     private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+    private const char CsvSeparator = ';';
+    private const string CsvContentType = "text/csv; charset=utf-8";
 
     public UserService(
         UserManager<AppUser> userManager,
@@ -169,7 +172,7 @@ public class UserService : IUserService
 
         if (existingRequest)
         {
-            return Result<bool>.FailureResult("Запит уже надіслано");
+            return Result<bool>.FailureResult("Запит вже надіслано");
         }
 
         var request = new FriendRequest
@@ -505,6 +508,84 @@ public class UserService : IUserService
         return Result<bool>.SuccessResult(true, "Акаунт успішно видалено");
     }
 
+    public async Task<Result<ProfileExportFileViewModel>> ExportUserProfileCsvAsync(int userId, ProfileExportRequestViewModel? model)
+    {
+        if (userId <= 0)
+        {
+            _logger.LogWarning("Спроба експорту профілю з невалідним userId: {UserId}", userId);
+            return Result<ProfileExportFileViewModel>.FailureResult(InvalidUserIdMessage);
+        }
+
+        if (model == null)
+        {
+            return (Result<ProfileExportFileViewModel>)"Модель експорту не може бути порожною";
+        }
+
+        if (!model.HasSelectedFields())
+        {
+            return Result<ProfileExportFileViewModel>.FailureResult("Оберіть хоча б один параметр для експорту");
+        }
+
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Користувач {UserId} не знайдено при експорті профілю", userId);
+            return Result<ProfileExportFileViewModel>.FailureResult(UserNotFoundMessage);
+        }
+
+        var headers = new List<string>();
+        var values = new List<string>();
+
+        AddColumn(model.IncludeLevel, "Рівень користувача", user.Level.ToString(CultureInfo.InvariantCulture), headers, values);
+        AddColumn(model.IncludeExpPoints, "Очки досвіду", user.ExpPoints.ToString(CultureInfo.InvariantCulture), headers, values);
+        AddColumn(model.IncludeCurrentStreak, "Серія", user.CurrentStreak.ToString(CultureInfo.InvariantCulture), headers, values);
+
+        if (model.IncludeCompletedPlans)
+        {
+            var completedPlans = await _context.Tasks.CountAsync(task =>
+                task.UserId == userId && task.IsPlan && task.IsCompleted);
+            AddColumn(true, "Скільки всього виконаних планів", completedPlans.ToString(CultureInfo.InvariantCulture), headers, values);
+        }
+
+        if (model.IncludeCompletedTasks)
+        {
+            var completedTasks = await _context.Tasks.CountAsync(task =>
+                task.UserId == userId
+                && !task.IsPlan
+                && task.GoalId == null
+                && task.ParentTaskId == null
+                && task.IsCompleted);
+            AddColumn(true, "Скільки виконано завдань", completedTasks.ToString(CultureInfo.InvariantCulture), headers, values);
+        }
+
+        if (model.IncludePomodoroSessions)
+        {
+            var pomodoroSessions = await _context.Pomodoros.CountAsync(pomodoro => pomodoro.UserId == userId);
+            AddColumn(true, "Скільки було сесій помодоро", pomodoroSessions.ToString(CultureInfo.InvariantCulture), headers, values);
+        }
+
+        if (model.IncludeFocusMinutes)
+        {
+            var focusMinutes = await _context.Pomodoros
+                .Where(pomodoro => pomodoro.UserId == userId)
+                .Select(pomodoro => (int?)(pomodoro.DurationMinutes ?? 0))
+                .SumAsync() ?? 0;
+
+            AddColumn(true, "Скільки було хвилин фокусу", focusMinutes.ToString(CultureInfo.InvariantCulture), headers, values);
+        }
+
+        var csvBytes = BuildCsvBytes(headers, values);
+        var exportFile = new ProfileExportFileViewModel
+        {
+            FileName = BuildExportFileName(userId),
+            ContentType = CsvContentType,
+            Content = csvBytes
+        };
+
+        _logger.LogInformation("CSV-експорт профілю для користувача {UserId} сформовано", userId);
+        return (Result<ProfileExportFileViewModel>)exportFile;
+    }
+
     private static UserProfileViewModel MapToProfileViewModel(AppUser user)
     {
         return new UserProfileViewModel
@@ -520,6 +601,47 @@ public class UserService : IUserService
             EmailConfirmed = user.EmailConfirmed,
             AvatarUrl = user.AvatarUrl
         };
+    }
+
+    private static void AddColumn(bool include, string header, string value, ICollection<string> headers, ICollection<string> values)
+    {
+        if (!include)
+        {
+            return;
+        }
+
+        headers.Add(header);
+        values.Add(value);
+    }
+
+    private static byte[] BuildCsvBytes(IReadOnlyCollection<string> headers, IReadOnlyCollection<string> values)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(string.Join(CsvSeparator, headers.Select(EscapeCsvValue)));
+        builder.AppendLine(string.Join(CsvSeparator, values.Select(EscapeCsvValue)));
+
+        return new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(builder.ToString());
+    }
+
+    private static string EscapeCsvValue(string? value)
+    {
+        var safeValue = value ?? string.Empty;
+        var needsQuotes = safeValue.Contains(CsvSeparator)
+            || safeValue.Contains('"')
+            || safeValue.Contains('\n')
+            || safeValue.Contains('\r');
+
+        if (!needsQuotes)
+        {
+            return safeValue;
+        }
+
+        return $"\"{safeValue.Replace("\"", "\"\"")}\"";
+    }
+
+    private static string BuildExportFileName(int userId)
+    {
+        return $"profile-export-{userId}-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv";
     }
 
     private void TryDeleteExistingAvatar(AppUser user, int userId)

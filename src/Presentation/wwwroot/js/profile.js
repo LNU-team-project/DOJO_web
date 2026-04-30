@@ -10,6 +10,7 @@
   const closeProfileModalBtn = document.getElementById("closeProfileModal");
   const profileLogoutBtn = document.getElementById("profileLogoutBtn");
   const profileSettingsBtn = document.getElementById("profileSettingsBtn");
+  const profileExportBtn = document.getElementById("profileExportBtn");
   const profileAvatarUploadBtn = document.getElementById(
     "profileAvatarUploadBtn",
   );
@@ -61,6 +62,21 @@
     "sendEmailConfirmationBtn",
   );
 
+  // Export modal elements
+  const exportModal = document.getElementById("profileExportModal");
+  const exportModalOverlay = document.getElementById(
+    "profileExportModalOverlay",
+  );
+  const closeExportModalBtn = document.getElementById(
+    "closeProfileExportModal",
+  );
+  const closeExportModalFooterBtn = document.getElementById(
+    "closeProfileExportModalFooter",
+  );
+  const exportForm = document.getElementById("profileExportForm");
+  const exportError = document.getElementById("profileExportError");
+  const exportSubmitBtn = document.getElementById("profileExportSubmitBtn");
+
   console.log("🔍 DOM Elements статус:", {
     profileModal: !!profileModal,
     openProfileModalBtn: !!openProfileModalBtn,
@@ -85,6 +101,10 @@
    */
   const openProfileModal = () => {
     console.log("🔓 Відкриваємо модаль профіля");
+    settingsModal?.classList.remove("show");
+    settingsModal?.setAttribute("aria-hidden", "true");
+    exportModal?.classList.remove("show");
+    exportModal?.setAttribute("aria-hidden", "true");
     profileModal.classList.add("show");
     profileModal.setAttribute("aria-hidden", "false");
     loadUserProfile();
@@ -97,6 +117,10 @@
     console.log("🔒 Закриваємо модаль профіля");
     profileModal.classList.remove("show");
     profileModal.setAttribute("aria-hidden", "true");
+    settingsModal?.classList.remove("show");
+    settingsModal?.setAttribute("aria-hidden", "true");
+    exportModal?.classList.remove("show");
+    exportModal?.setAttribute("aria-hidden", "true");
   };
 
   /**
@@ -104,6 +128,8 @@
    */
   const openSettingsModal = () => {
     console.log("🛠️ Відкриваємо модаль налаштувань");
+    exportModal?.classList.remove("show");
+    exportModal?.setAttribute("aria-hidden", "true");
     settingsModal.classList.add("show");
     settingsModal.setAttribute("aria-hidden", "false");
     if (settingsUserNameInput && profileDisplayUsername?.textContent) {
@@ -124,6 +150,39 @@
   const closeSettingsModal = () => {
     settingsModal.classList.remove("show");
     settingsModal.setAttribute("aria-hidden", "true");
+  };
+
+  /**
+   * Відкриває модальне вікно експорту профіля
+   */
+  const openExportModal = () => {
+    console.log("⬇️ Відкриваємо модаль експорту");
+    settingsModal?.classList.remove("show");
+    settingsModal?.setAttribute("aria-hidden", "true");
+    if (exportError) {
+      exportError.textContent = "";
+    }
+
+    if (exportForm) {
+      const checkboxes = exportForm.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = true;
+      });
+    }
+
+    exportModal?.classList.add("show");
+    exportModal?.setAttribute("aria-hidden", "false");
+  };
+
+  /**
+   * Закриває модальне вікно експорту профіля
+   */
+  const closeExportModal = () => {
+    exportModal?.classList.remove("show");
+    exportModal?.setAttribute("aria-hidden", "true");
+    if (exportError) {
+      exportError.textContent = "";
+    }
   };
 
   /**
@@ -531,6 +590,123 @@
     }
   };
 
+  const setExportError = (message) => {
+    if (exportError) {
+      exportError.textContent = message || "";
+    }
+  };
+
+  const getExportRequestPayload = () => {
+    const readCheckbox = (fieldName) =>
+      Boolean(exportForm?.querySelector(`[data-export-field="${fieldName}"]`)?.checked);
+
+    return {
+      includeLevel: readCheckbox("IncludeLevel"),
+      includeExpPoints: readCheckbox("IncludeExpPoints"),
+      includeCurrentStreak: readCheckbox("IncludeCurrentStreak"),
+      includeCompletedPlans: readCheckbox("IncludeCompletedPlans"),
+      includeCompletedTasks: readCheckbox("IncludeCompletedTasks"),
+      includePomodoroSessions: readCheckbox("IncludePomodoroSessions"),
+      includeFocusMinutes: readCheckbox("IncludeFocusMinutes"),
+    };
+  };
+
+  const hasSelectedExportFields = (payload) =>
+    Object.values(payload).some(Boolean);
+
+  const getFileNameFromContentDisposition = (headerValue) => {
+    if (!headerValue) {
+      return "profile-export.csv";
+    }
+
+    const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]);
+    }
+
+    const simpleMatch = headerValue.match(/filename="?([^";]+)"?/i);
+    if (simpleMatch?.[1]) {
+      return simpleMatch[1];
+    }
+
+    return "profile-export.csv";
+  };
+
+  const triggerDownload = (blob, fileName) => {
+    const downloadUrl = globalThis.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = fileName;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    globalThis.setTimeout(() => globalThis.URL.revokeObjectURL(downloadUrl), 1000);
+  };
+
+  const readErrorMessage = async (response) => {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json().catch(() => ({}));
+      return data.message || "Не вдалося експортувати профіль";
+    }
+
+    const text = await response.text().catch(() => "");
+    return text || "Не вдалося експортувати профіль";
+  };
+
+  const exportProfileCsv = async () => {
+    const payload = getExportRequestPayload();
+
+    if (!hasSelectedExportFields(payload)) {
+      setExportError("Оберіть хоча б один параметр для експорту");
+      return;
+    }
+
+    setExportError("");
+
+    if (exportSubmitBtn) {
+      exportSubmitBtn.disabled = true;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/export`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigateTo("/Account/Login");
+          return;
+        }
+
+        throw new Error(await readErrorMessage(response));
+      }
+
+      const blob = await response.blob();
+      const fileName = getFileNameFromContentDisposition(
+        response.headers.get("content-disposition"),
+      );
+
+      triggerDownload(blob, fileName);
+      closeExportModal();
+      showSuccess("CSV-файл успішно завантажено");
+    } catch (error) {
+      console.error("❌ Помилка при експорті профіля:", error);
+      setExportError(error.message || "Не вдалося експортувати профіль");
+    } finally {
+      if (exportSubmitBtn) {
+        exportSubmitBtn.disabled = false;
+      }
+    }
+  };
+
   const getAntiForgeryToken = () => {
     const tokenInput = document.querySelector(
       'input[name="__RequestVerificationToken"]',
@@ -577,6 +753,13 @@
     "click",
     openSettingsModal,
     "✅ Event listener на profileSettingsBtn додано",
+  );
+
+  bindEventIfPresent(
+    profileExportBtn,
+    "click",
+    openExportModal,
+    "✅ Event listener на profileExportBtn додано",
   );
 
   bindEventIfPresent(
@@ -668,6 +851,33 @@
     "✅ Event listener на closeSettingsModalFooterBtn додано",
   );
   bindEventIfPresent(
+    closeExportModalBtn,
+    "click",
+    closeExportModal,
+    "✅ Event listener на closeExportModalBtn додано",
+  );
+  bindEventIfPresent(
+    closeExportModalFooterBtn,
+    "click",
+    closeExportModal,
+    "✅ Event listener на closeExportModalFooterBtn додано",
+  );
+  bindEventIfPresent(
+    exportModalOverlay,
+    "click",
+    closeExportModal,
+    "✅ Event listener на exportModalOverlay додано",
+  );
+  bindEventIfPresent(
+    exportForm,
+    "submit",
+    (event) => {
+      event.preventDefault();
+      exportProfileCsv();
+    },
+    "✅ Event listener на exportForm додано",
+  );
+  bindEventIfPresent(
     sendEmailConfirmationBtn,
     "click",
     sendEmailConfirmation,
@@ -683,6 +893,10 @@
     if (e.key === "Escape" && settingsModal.classList.contains("show")) {
       console.log("⌨️ Натиск Escape, закриваємо модаль налаштувань");
       closeSettingsModal();
+    }
+    if (e.key === "Escape" && exportModal?.classList.contains("show")) {
+      console.log("⌨️ Натиск Escape, закриваємо модаль експорту");
+      closeExportModal();
     }
   });
   console.log("✅ Event listener на Escape додано");
