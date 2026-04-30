@@ -590,43 +590,185 @@ fieldset.form-group {
   border-color: transparent;
 }
 
-.pomodoro-presets {
+.pomodoro-presets-panel {
   margin-top: 14px;
-  display: flex;
+  display: grid;
   gap: 8px;
+}
+
+.pomodoro-custom-presets {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pomodoro-custom-presets-empty {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff7fa;
+  border: 1px dashed rgba(255, 122, 144, 0.35);
+  color: #7b5c69;
+  font-size: 0.92rem;
+}
+
+.pomodoro-preset-card {
+  border: 1px solid #f0d6df;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff8fb 100%);
+  padding: 12px;
+  box-shadow: 0 8px 18px rgba(223, 141, 172, 0.08);
+}
+
+.pomodoro-preset-card.is-active {
+  border-color: rgba(255, 122, 144, 0.6);
+  box-shadow: 0 10px 24px rgba(223, 141, 172, 0.18);
+}
+
+.pomodoro-preset-card-summary {
+  width: 100%;
   border: none;
+  background: transparent;
   padding: 0;
-  min-inline-size: 0;
-  margin-inline: 0;
-}
-
-.pomodoro-legend {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.pomodoro-chip {
-  border: 1px solid #e9d9e0;
-  background: #ffffff;
-  color: #6f4659;
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
   cursor: pointer;
+  color: #5a3947;
 }
 
-.pomodoro-chip.is-active {
-  border-color: var(--dojo-accent);
-  background: rgba(255, 122, 144, 0.12);
-  color: #4c2032;
+.pomodoro-preset-card-name {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pomodoro-preset-card-meta {
+  font-size: 0.82rem;
+  color: #8b6470;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pomodoro-preset-card-body {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.pomodoro-preset-settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pomodoro-preset-setting {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 10px;
+  border: 1px solid #f2dde4;
+}
+
+.pomodoro-preset-setting-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8a6471;
+  margin-bottom: 4px;
+}
+
+.pomodoro-preset-setting-value {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #472d39;
+}
+
+.pomodoro-preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pomodoro-preset-action {
+  flex: 1 1 110px;
+  min-width: 0;
+}
+
+.pomodoro-preset-action-delete {
+  border-color: rgba(226, 75, 75, 0.35);
+  color: var(--dojo-danger);
+}
+
+.pomodoro-preset-action-delete:hover {
+  background-color: rgba(226, 75, 75, 0.08);
+  box-shadow: 0 6px 14px rgba(226, 75, 75, 0.18);
+}
+
+.pomodoro-preset-action-edit {
+  border-color: rgba(255, 122, 144, 0.35);
+}
+
+.pomodoro-preset-action-start {
+  background: linear-gradient(
+    135deg,
+    var(--dojo-accent) 0%,
+    var(--dojo-accent-strong) 100%
+  );
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.pomodoro-preset-action-start:hover {
+  background: linear-gradient(
+    135deg,
+    var(--dojo-accent-strong) 0%,
+    var(--dojo-accent) 100%
+  );
+}
+
+@media (max-width: 520px) {
+  .pomodoro-preset-settings {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pomodoro-presets-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #5a3947;
+}
+
+.pomodoro-presets-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.pomodoro-preset-select {
+  width: 100%;
+  border: 1px solid #e9d9e0;
+  border-radius: 12px;
+  background: #fff;
+  color: #5a3947;
+  font-weight: 700;
+  padding: 10px 12px;
+  appearance: none;
+}
+
+.pomodoro-preset-add-btn {
+  white-space: nowrap;
+  padding-inline: 14px;
+}
+
+.pomodoro-preset-modal .todo-modal-content {
+  max-width: 560px;
+}
+
+.pomodoro-preset-modal .form-control {
+  width: 100%;
 }
 
 .pomodoro-meta {
@@ -659,6 +801,13 @@ fieldset.form-group {
 
 .pomodoro-auto input {
   accent-color: var(--dojo-accent);
+}
+
+.pomodoro-preset-error {
+  margin: 0;
+  color: var(--dojo-danger);
+  font-size: 0.88rem;
+  min-height: 1.1em;
 }
 
 @media (max-width: 1180px) {

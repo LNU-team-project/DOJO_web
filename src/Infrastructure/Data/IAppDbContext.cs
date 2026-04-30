@@ -11,6 +11,7 @@ public interface IAppDbContext
     DbSet<Attachment> Attachments { get; }
     DbSet<Friend> Friends { get; }
     DbSet<FriendRequest> FriendRequests { get; }
+    DbSet<PomodoroPreset> PomodoroPresets { get; }
     DbSet<Pomodoro> Pomodoros { get; }
     // Rooms
     DbSet<Room> Rooms { get; }
