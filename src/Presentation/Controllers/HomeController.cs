@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DOJO2.Models;
 using DOJO2.Application.Interfaces;
-using DOJO2.Application.ViewModels;
 using System.Security.Claims;
 
 namespace DOJO2.Presentation.Controllers;
@@ -51,8 +50,12 @@ public class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    public IActionResult Error(string? message = null)
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        ViewData["ErrorMessage"] = message;
+        return View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+        });
     }
 }
