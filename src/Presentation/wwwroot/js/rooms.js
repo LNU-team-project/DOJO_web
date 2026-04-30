@@ -1,6 +1,15 @@
 ﻿(() => {
   console.log("🚀 rooms.js завантажено!");
 
+  // ===== State Management =====
+  const state = {
+    friendsCache: null,
+    roomsCache: null,
+    lastFriendsLoad: null,
+    CACHE_TTL: 5 * 60 * 1000, // 5 хвилин
+    selectedMemberIds: new Set(),
+  };
+
   // ===== DOM Elements =====
   const roomsModal = document.getElementById("roomsModal");
   const roomsListModal = document.getElementById("roomsListModal");
@@ -82,11 +91,101 @@
     showNotification(message, "success");
   };
 
+  // ===== Cache Management =====
+  const isCacheValid = () => {
+    if (!state.lastFriendsLoad) return false;
+    return Date.now() - state.lastFriendsLoad < state.CACHE_TTL;
+  };
+
+  const getCachedFriends = async () => {
+    if (state.friendsCache && isCacheValid()) {
+      console.log("📦 Використання кешованих друзів");
+      return state.friendsCache;
+    }
+
+    console.log("📥 Завантаження друзів із сервера");
+    try {
+      const response = await fetch(API_ENDPOINTS.FRIENDS, {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        showError("Не вдалося завантажити друзів");
+        return [];
+      }
+
+      const data = await response.json();
+      const friends = Array.isArray(data.data) ? data.data : [];
+
+      state.friendsCache = friends;
+      state.lastFriendsLoad = Date.now();
+
+      console.log(`✅ Друзів кешовано: ${friends.length}`);
+      return friends;
+    } catch (error) {
+      console.error("❌ Помилка завантаження друзів", error);
+      return [];
+    }
+  };
+
+  // ===== Render Friends Selector =====
+  const renderFriendsSelector = async () => {
+    const friendsContainer = document.getElementById("roomFriendsSelector");
+    if (!friendsContainer) {
+      console.warn("Контейнер для вибору друзів не знайдено");
+      return;
+    }
+
+    const friends = await getCachedFriends();
+
+    if (friends.length === 0) {
+      friendsContainer.innerHTML = '<p class="room-friends-empty">Друзів немає</p>';
+      return;
+    }
+
+    friendsContainer.innerHTML = "";
+    friends.forEach((friend) => {
+      const userId = friend.friendUserId || friend.userId || friend.UserId || friend.id;
+      const userName = friend.friendUserName || friend.userName || friend.UserName || "Користувач";
+      const avatarUrl = friend.avatarUrl || "/images/default-avatar.png";
+
+      const label = document.createElement("label");
+      label.className = "room-friend-checkbox";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = userId;
+      checkbox.addEventListener("change", (e) => {
+        if (e.target.checked) {
+          state.selectedMemberIds.add(userId);
+        } else {
+          state.selectedMemberIds.delete(userId);
+        }
+        console.log("Вибрані користувачі:", Array.from(state.selectedMemberIds));
+      });
+
+      const avatar = document.createElement("img");
+      avatar.className = "room-friend-avatar";
+      avatar.alt = "Аватар друга";
+      avatar.src = avatarUrl;
+
+      const name = document.createElement("span");
+      name.className = "room-friend-name";
+      name.textContent = userName;
+
+      label.append(checkbox, avatar, name);
+      friendsContainer.appendChild(label);
+    });
+  };
+
   // ===== Modal Handlers =====
   const openCreateRoomModal = () => {
     console.log("📝 Відкриття модалі створення кімнати");
     roomsModal.style.display = "flex";
     roomsModal.setAttribute("aria-hidden", "false");
+    state.selectedMemberIds.clear();
     if (friendsModal) {
       friendsModal.style.display = "none";
       friendsModal.setAttribute("aria-hidden", "true");
@@ -94,12 +193,14 @@
     if (createRoomForm) {
       createRoomForm.reset();
     }
+    void renderFriendsSelector();
   };
 
   const closeCreateRoomModal = () => {
     console.log("Закриття модалі створення кімнати");
     roomsModal.style.display = "none";
     roomsModal.setAttribute("aria-hidden", "true");
+    state.selectedMemberIds.clear();
   };
 
   const openRoomsListModal = () => {
@@ -128,8 +229,6 @@
         credentials: "include",
         cache: "no-store",
       });
-
-      console.log("API response status:", response.status);
 
       if (!response.ok) {
         showError(MESSAGES.LOAD_ERROR);
@@ -198,8 +297,6 @@
         cache: "no-store",
       });
 
-      console.log("Деталі кімнати - API response status:", response.status);
-
       if (!response.ok) {
         showError(MESSAGES.LOAD_ERROR);
         return;
@@ -230,7 +327,6 @@
     modal.id = `room-details-${room.id}`;
     modal.setAttribute("aria-hidden", "false");
 
-    // Встановлюємо важливі стилі для відображення БЕЗ темного фону
     modal.style.cssText = `
       display: flex !important;
       position: fixed !important;
@@ -245,7 +341,7 @@
     `;
 
     const membersHtml = (room.members || [])
-        .map((m) => `<div class="badge badge-info" style="margin: 4px;">${m.userName}</div>`)
+        .map((m) => `<div class="badge badge-info" style="margin: 4px;">${escapeHtml(m.userName)}</div>`)
         .join("");
 
     const tasksHtml = (room.tasks || [])
@@ -253,18 +349,18 @@
             (task) => `
       <div class="card" style="margin-bottom: 16px; border: 1px solid var(--dojo-border); border-radius: 14px; background: var(--dojo-surface);">
         <div class="card-header" style="padding: 16px; border-bottom: 1px solid var(--dojo-border); display: flex; justify-content: space-between; align-items: center;">
-          <h5 style="margin: 0; color: var(--dojo-ink); font-weight: 600;">${task.title}</h5>
-          <span class="badge badge-secondary" style="background: var(--dojo-primary); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">${task.assignedToUserName}</span>
+          <h5 style="margin: 0; color: var(--dojo-ink); font-weight: 600;">${escapeHtml(task.title)}</h5>
+          <span class="badge badge-secondary" style="background: var(--dojo-primary); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">${escapeHtml(task.assignedToUserName)}</span>
         </div>
         <div class="card-body" style="padding: 16px;">
-          ${task.description ? `<p style="color: var(--dojo-ink); margin-bottom: 12px;">${task.description}</p>` : ""}
+          ${task.description ? `<p style="color: var(--dojo-ink); margin-bottom: 12px;">${escapeHtml(task.description)}</p>` : ""}
           <div class="room-task-comments-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--dojo-border);">
             <strong style="color: var(--dojo-ink);">Коментарі:</strong>
             <div style="background: #f9f5f2; padding: 12px; border-radius: 10px; margin: 8px 0; min-height: 30px; max-height: 150px; overflow-y: auto;">
               ${
                 task.comments && task.comments.length > 0
                     ? task.comments
-                        .map((c) => `<div style="margin: 4px 0; color: var(--dojo-ink); font-size: 14px;"><strong>${c.authorUserName}:</strong> ${c.text}</div>`)
+                        .map((c) => `<div style="margin: 4px 0; color: var(--dojo-ink); font-size: 14px;"><strong>${escapeHtml(c.authorUserName)}:</strong> ${escapeHtml(c.text)}</div>`)
                         .join("")
                     : '<p style="color: var(--dojo-muted); margin: 0; font-size: 14px;">Немає коментарів</p>'
             }
@@ -276,18 +372,18 @@
           </div>
         </div>
       </div>
-    `,
+    `
         )
         .join("");
 
     modal.innerHTML = `
       <div class="modal-content" style="width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; background: var(--dojo-surface); border-radius: 20px; box-shadow: var(--dojo-shadow); border: 1px solid var(--dojo-border);">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--dojo-border); position: sticky; top: 0; background: var(--dojo-surface); border-radius: 20px 20px 0 0; z-index: 1;">
-          <h2 style="margin: 0; color: var(--dojo-ink); font-size: 24px; font-weight: 700;">🏠 ${room.title}</h2>
+          <h2 style="margin: 0; color: var(--dojo-ink); font-size: 24px; font-weight: 700;">🏠 ${escapeHtml(room.title)}</h2>
           <button type="button" class="close" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--dojo-muted); padding: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">×</button>
         </div>
         <div class="modal-body" style="padding: 24px;">
-          ${room.description ? `<p style="color: var(--dojo-muted); margin-bottom: 20px; font-size: 15px;"><strong style="color: var(--dojo-ink);">Опис:</strong> ${room.description}</p>` : ""}
+          ${room.description ? `<p style="color: var(--dojo-muted); margin-bottom: 20px; font-size: 15px;"><strong style="color: var(--dojo-ink);">Опис:</strong> ${escapeHtml(room.description)}</p>` : ""}
           
           <div style="margin-bottom: 28px;">
             <h4 style="color: var(--dojo-ink); margin-bottom: 12px; font-weight: 700;">Учасники (${room.members?.length || 0})</h4>
@@ -419,13 +515,12 @@
       z-index: 10001 !important;
     `;
 
-    // Переконаємся що members це масив з правильною структурою
     const validMembers = Array.isArray(members) ? members : [];
     const membersOptions = validMembers
         .map((m) => {
           const userId = m.userId || m.UserId || m.id;
           const userName = m.userName || m.UserName || m.name || "Unknown";
-          return `<option value="${userId}">${userName}</option>`;
+          return `<option value="${userId}">${escapeHtml(userName)}</option>`;
         })
         .join("");
 
@@ -606,77 +701,37 @@
     document.body.appendChild(memberModal);
     console.log("✅ Модаль додавання учасника додана до DOM");
 
-    let allFriends = [];
     let suggestionTimeoutId = null;
-
-    const loadFriendsForSearch = async () => {
-      console.log("📥 Завантаження списку друзів для пошуку");
-      const searchInput = memberModal.querySelector("#memberSearchInput");
-      try {
-        const response = await fetch(API_ENDPOINTS.FRIENDS, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          showError("Не вдалося завантажити друзів");
-          if (searchInput) {
-            searchInput.placeholder = "Помилка завантаження";
-          }
-          return;
-        }
-
-        const data = await response.json();
-        allFriends = Array.isArray(data.data) ? data.data : [];
-        console.log(`✅ Друзів завантажено: ${allFriends.length}`);
-        console.log("Повні дані друзів:", allFriends);
-
-        allFriends.forEach(f => {
-          const userName = f.userName || f.UserName || f.name || "Unknown";
-          const userId = f.userId || f.UserId || f.id || "No ID";
-          console.log(`👤 Ім'я: "${userName}" | ID: ${userId}`);
-        });
-
-        if (searchInput) {
-          searchInput.disabled = false;
-          searchInput.placeholder = "Введіть ім'я користувача";
-        }
-      } catch (error) {
-        console.error("❌ Помилка завантаження друзів", error);
-        showError("Помилка при завантаженні друзів");
-        if (searchInput) {
-          searchInput.placeholder = "Помилка завантаження";
-        }
-      }
-    };
 
     const searchInput = memberModal.querySelector("#memberSearchInput");
     const suggestionsDiv = memberModal.querySelector("#memberSuggestions");
 
     if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
+      searchInput.addEventListener("input", async (e) => {
         clearTimeout(suggestionTimeoutId);
         const query = e.target.value.trim();
 
-        console.log("🔍 Пошук:", query, "Друзів доступно:", allFriends.length);
+        console.log("🔍 Пошук:", query);
 
         if (query.length < 1) {
           suggestionsDiv.style.display = "none";
           return;
         }
 
-        if (allFriends.length === 0) {
-          suggestionsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--dojo-muted);">Немає доданих друзів</div>';
-          suggestionsDiv.style.display = "block";
-          return;
-        }
+        suggestionTimeoutId = setTimeout(async () => {
+          const friends = await getCachedFriends();
 
-        suggestionTimeoutId = setTimeout(() => {
+          console.log("📦 Друзів доступно:", friends.length);
+
+          if (friends.length === 0) {
+            suggestionsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--dojo-muted);">Немає доданих друзів</div>';
+            suggestionsDiv.style.display = "block";
+            return;
+          }
+
           const queryLower = query.toLowerCase();
-          const filtered = allFriends.filter((friend) => {
-            const userName = (friend.userName || friend.UserName || friend.name || "").toLowerCase();
-            console.log(`Порівняння: "${userName}" містить "${queryLower}" = ${userName.includes(queryLower)}`);
+          const filtered = friends.filter((friend) => {
+            const userName = (friend.friendUserName || friend.userName || friend.UserName || friend.name || "").toLowerCase();
             return userName.includes(queryLower);
           });
 
@@ -690,13 +745,13 @@
 
           suggestionsDiv.innerHTML = filtered
               .map((friend) => {
-                const userId = friend.userId || friend.UserId || friend.id;
-                const userName = friend.userName || friend.UserName || friend.name || "Unknown";
+                const userId = friend.friendUserId || friend.userId || friend.UserId || friend.id;
+                const userName = friend.friendUserName || friend.userName || friend.UserName || friend.name || "Unknown";
                 return `
-              <div class="suggestion-item" data-user-id="${userId}" data-user-name="${userName}" style="padding: 12px 14px; cursor: pointer; border-bottom: 1px solid var(--dojo-border); transition: background 0.2s ease;">
-                ${userName}
-              </div>
-            `;
+            <div class="suggestion-item" data-user-id="${userId}" data-user-name="${escapeHtml(userName)}" style="padding: 12px 14px; cursor: pointer; border-bottom: 1px solid var(--dojo-border); transition: background 0.2s ease;">
+              ${escapeHtml(userName)}
+            </div>
+          `;
               })
               .join("");
 
@@ -724,6 +779,15 @@
             });
           });
         }, 300);
+      });
+
+      // Завантажуємо друзів одразу при відкритті модалі
+      getCachedFriends().then((friends) => {
+        searchInput.disabled = false;
+        searchInput.placeholder = friends.length > 0 ? "Введіть ім'я користувача" : "Немає друзів";
+        if (friends.length === 0) {
+          searchInput.disabled = true;
+        }
       });
 
       document.addEventListener("click", (e) => {
@@ -801,19 +865,13 @@
         }
       });
     }
-
-    loadFriendsForSearch();
   };
 
-
-
-
-  // Ініціалізація обробників подій
+  // ===== Event Listeners =====
   if (openCreateRoomBtn) {
     openCreateRoomBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку 'Створити кімнату'");
       openCreateRoomModal();
     });
   }
@@ -822,7 +880,6 @@
     closeRoomsModalBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку закриття - закриття модалі створення");
       closeCreateRoomModal();
     });
   }
@@ -831,7 +888,6 @@
     openMyRoomsBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку 'Мої кімнати'");
       openRoomsListModal();
     });
   }
@@ -840,7 +896,6 @@
     openCreateRoomFromFriendsBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку 'Створити кімнату' (з друзів)");
       openCreateRoomModal();
     });
   }
@@ -849,7 +904,6 @@
     openMyRoomsFromFriendsBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку 'Мої кімнати' (з друзів)");
       openRoomsListModal();
     });
   }
@@ -858,7 +912,6 @@
     closeRoomsListModalBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Клік на кнопку закриття - закриття модалі списку");
       closeRoomsListModal();
     });
   }
@@ -881,13 +934,14 @@
 
       const title = titleInput.value.trim();
       const description = descriptionInput ? descriptionInput.value.trim() : "";
+      const memberIds = Array.from(state.selectedMemberIds);
 
       if (!title) {
         showError(MESSAGES.EMPTY_INPUT);
         return;
       }
 
-      console.log("Отправка даних: title=", title, "description=", description);
+      console.log("Отправка даних: title=", title, "description=", description, "members=", memberIds);
 
       try {
         const response = await fetch("/api/rooms/create", {
@@ -897,7 +951,7 @@
           body: JSON.stringify({
             title,
             description: description || null,
-            memberUserIds: [],
+            memberUserIds: memberIds,
           }),
         });
 
@@ -922,7 +976,6 @@
         createRoomForm.reset();
         closeCreateRoomModal();
 
-        // Завантажуємо оновлений список кімнат
         setTimeout(() => {
           openRoomsListModal();
         }, TIMEOUTS.PAGE_RELOAD);
@@ -958,7 +1011,7 @@
 
   console.log("✅ Усі обробники подій зареєстровані");
 
-  // Завантаження кімнат при відкритті модалі
+  // Завантаження кімнат при запиті
   const urlParams = new URLSearchParams(window.location.search);
   const roomIdParam = urlParams.get("roomId");
   if (roomIdParam) {
