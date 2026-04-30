@@ -717,6 +717,9 @@
         </div>
 
           <div class="profile-modal-footer"> 
+                     <button type="button" class="profile-btn profile-btn-export" id="profileExportBtn" aria-haspopup="dialog" aria-controls="profileExportModal">
+                         ⬇️ Експортувати 
+                     </button>
                  <button type="button" class="profile-btn profile-btn-settings" id="profileSettingsBtn">
                       ⚙️ Налаштування 
                  </button>
@@ -724,6 +727,98 @@
                      Вихід 
                  </button> 
           </div> 
+    </div>
+</div>
+
+<div class="profile-modal profile-export-modal" id="profileExportModal" aria-hidden="true" aria-labelledby="profileExportModalTitle">
+    <div class="profile-modal-overlay" id="profileExportModalOverlay"></div>
+    <div class="profile-modal-content profile-export-modal-content">
+        <div class="profile-modal-header">
+            <h2 id="profileExportModalTitle">Експорт профілю</h2>
+            <button type="button" class="profile-modal-close" id="closeProfileExportModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <form id="profileExportForm" class="profile-modal-body" novalidate>
+            <div class="profile-section">
+                <p class="profile-export-description">
+                    Експортуй детальну статистику свого профілю для обміну з друзями.
+                </p>
+
+                <fieldset class="profile-export-options">
+                    <legend class="visually-hidden">Оберіть дані для експорту</legend>
+
+                    <label class="profile-export-option" for="exportLevel">
+                        <input type="checkbox" id="exportLevel" checked data-export-field="IncludeLevel" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Рівень користувача</span>
+                            <span class="profile-export-option-desc">Поточний рівень профілю</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportExpPoints">
+                        <input type="checkbox" id="exportExpPoints" checked data-export-field="IncludeExpPoints" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Очки досвіду</span>
+                            <span class="profile-export-option-desc">Увесь накопичений XP</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCurrentStreak">
+                        <input type="checkbox" id="exportCurrentStreak" checked data-export-field="IncludeCurrentStreak" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Серія</span>
+                            <span class="profile-export-option-desc">Поточна серія активності</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCompletedPlans">
+                        <input type="checkbox" id="exportCompletedPlans" checked data-export-field="IncludeCompletedPlans" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки всього виконаних планів</span>
+                            <span class="profile-export-option-desc">Усі завершені плани користувача</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportCompletedTasks">
+                        <input type="checkbox" id="exportCompletedTasks" checked data-export-field="IncludeCompletedTasks" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки виконано завдань</span>
+                            <span class="profile-export-option-desc">Завершені TODO без прив'язки до планів і цілей</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportPomodoroSessions">
+                        <input type="checkbox" id="exportPomodoroSessions" checked data-export-field="IncludePomodoroSessions" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки було сесій помодоро</span>
+                            <span class="profile-export-option-desc">Усі збережені фокус-сесії</span>
+                        </span>
+                    </label>
+
+                    <label class="profile-export-option" for="exportFocusMinutes">
+                        <input type="checkbox" id="exportFocusMinutes" checked data-export-field="IncludeFocusMinutes" />
+                        <span class="profile-export-option-text">
+                            <span class="profile-export-option-title">Скільки було хвилин фокусу</span>
+                            <span class="profile-export-option-desc">Сумарний час усіх Pomodoro-сесій</span>
+                        </span>
+                    </label>
+                </fieldset>
+
+                <p class="profile-export-error" id="profileExportError" aria-live="polite"></p>
+                <p class="profile-export-hint">Після підтвердження файл CSV автоматично завантажиться на твій комп’ютер.</p>
+            </div>
+
+            <div class="profile-modal-footer" style="padding:0; border-top:none; margin-top:20px;">
+                <button type="button" class="profile-btn profile-btn-settings" id="closeProfileExportModalFooter">
+                    Скасувати
+                </button>
+                <button type="submit" class="profile-btn profile-btn-export profile-export-submit-btn" id="profileExportSubmitBtn">
+                    Завантажити CSV
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
