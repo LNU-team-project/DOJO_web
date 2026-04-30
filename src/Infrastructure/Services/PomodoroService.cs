@@ -158,6 +158,52 @@ public class PomodoroService : IPomodoroService
         return Result<PomodoroPresetViewModel>.SuccessResult(MapPreset(savedPreset), "Пресет збережено");
     }
 
+    public async Task<Result<PomodoroPresetViewModel>> UpdatePresetAsync(int userId, int presetId, PomodoroPresetCreateViewModel? model)
+    {
+        if (userId <= 0 || presetId <= 0)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Невалідні дані пресету");
+        }
+
+        if (model == null)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Модель пресету не може бути порожньою");
+        }
+
+        var preset = await _presetRepository.GetUserPresetAsync(userId, presetId);
+        if (preset == null)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Пресет не знайдено");
+        }
+
+        var name = model.Name.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Назва пресету не може бути порожньою");
+        }
+
+        var normalizedName = name.ToUpperInvariant();
+        var presets = await _presetRepository.GetUserPresetsAsync(userId);
+        var duplicateExists = presets.Any(existing =>
+            existing.Id != presetId &&
+            existing.Name.ToUpperInvariant() == normalizedName);
+
+        if (duplicateExists)
+        {
+            return Result<PomodoroPresetViewModel>.FailureResult("Пресет з такою назвою вже існує");
+        }
+
+        preset.Name = name;
+        preset.FocusMinutes = model.FocusMinutes;
+        preset.ShortBreakMinutes = model.ShortBreakMinutes;
+        preset.LongBreakMinutes = model.LongBreakMinutes;
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Оновлено Pomodoro пресет {PresetId} для користувача {UserId}", presetId, userId);
+
+        return Result<PomodoroPresetViewModel>.SuccessResult(MapPreset(preset), "Пресет оновлено");
+    }
+
     public async Task<Result<bool>> DeletePresetAsync(int userId, int presetId)
     {
         if (userId <= 0 || presetId <= 0)

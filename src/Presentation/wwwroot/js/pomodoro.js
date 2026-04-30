@@ -15,14 +15,17 @@
   const presetSelect =
     root.querySelector("[data-pomodoro-preset-select]") ||
     root.querySelector("#pomodoroPresetSelect");
+  const customPresetList = root.querySelector("[data-pomodoro-custom-presets]");
   const openPresetModalButton = document.getElementById(
     "openPomodoroPresetModal",
   );
   const presetModal = document.getElementById("pomodoroPresetModal");
+  const presetModalTitle = document.getElementById("pomodoroPresetModalTitle");
   const closePresetModalButton = document.getElementById(
     "closePomodoroPresetModal",
   );
   const presetForm = document.getElementById("pomodoroPresetForm");
+  const presetSubmitButton = presetForm.querySelector("button[type='submit']");
   const presetNameInput = document.getElementById("pomodoroPresetName");
   const presetFocusInput = document.getElementById("pomodoroPresetFocus");
   const presetShortBreakInput = document.getElementById(
@@ -43,10 +46,13 @@
     !skipButton ||
     !autoCheckbox ||
     !presetSelect ||
+    !customPresetList ||
     !openPresetModalButton ||
     !presetModal ||
+    !presetModalTitle ||
     !closePresetModalButton ||
     !presetForm ||
+    !presetSubmitButton ||
     !presetNameInput ||
     !presetFocusInput ||
     !presetShortBreakInput ||
@@ -83,6 +89,7 @@
 
   let customPresets = [];
   let activePresetKey = BUILTIN_PRESETS[0].key;
+  let editingPresetId = null;
   let durations = {
     focus: BUILTIN_PRESETS[0].focus,
     shortBreak: BUILTIN_PRESETS[0].shortBreak,
@@ -100,6 +107,50 @@
     const seconds = totalSeconds % 60;
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   };
+
+  const toPositiveNumber = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  };
+
+  const normalizePreset = (preset) => {
+    const id = Number.parseInt(preset?.id, 10);
+    return {
+      id: Number.isFinite(id) ? id : 0,
+      name: String(preset?.name ?? "").trim(),
+      focus: toPositiveNumber(
+        preset?.focus ?? preset?.focusMinutes,
+        BUILTIN_PRESETS[0].focus,
+      ),
+      shortBreak: toPositiveNumber(
+        preset?.shortBreak ?? preset?.shortBreakMinutes,
+        BUILTIN_PRESETS[0].shortBreak,
+      ),
+      longBreak: toPositiveNumber(
+        preset?.longBreak ?? preset?.longBreakMinutes,
+        BUILTIN_PRESETS[0].longBreak,
+      ),
+      createdAt: preset?.createdAt ?? null,
+    };
+  };
+
+  const getActiveCustomPresetId = () => {
+    if (!activePresetKey.startsWith("custom:")) {
+      return null;
+    }
+
+    const presetId = Number.parseInt(
+      activePresetKey.slice("custom:".length),
+      10,
+    );
+    return Number.isFinite(presetId) ? presetId : null;
+  };
+
+  const getPresetMinutes = (preset) => [
+    `${preset.focus} хв`,
+    `${preset.shortBreak} хв`,
+    `${preset.longBreak} хв`,
+  ];
 
   const setPresetError = (message) => {
     if (!presetError) {
@@ -169,6 +220,139 @@
     presetSelect.value = nextValue;
   };
 
+  const renderCustomPresetList = () => {
+    customPresetList.innerHTML = "";
+
+    if (customPresets.length === 0) {
+      const emptyMessage = document.createElement("p");
+      emptyMessage.className = "pomodoro-custom-presets-empty";
+      emptyMessage.textContent = "Тут з'являться ваші збережені пресети.";
+      customPresetList.appendChild(emptyMessage);
+      return;
+    }
+
+    const activeCustomPresetId = getActiveCustomPresetId();
+
+    for (const preset of customPresets) {
+      const isActive = preset.id === activeCustomPresetId;
+      const card = document.createElement("article");
+      card.className = `pomodoro-preset-card${isActive ? " is-active" : ""}`;
+
+      const summary = document.createElement("button");
+      summary.type = "button";
+      summary.className = "pomodoro-preset-card-summary";
+      summary.setAttribute("aria-expanded", String(isActive));
+      const summaryName = document.createElement("span");
+      summaryName.className = "pomodoro-preset-card-name";
+      summaryName.textContent = preset.name;
+
+      const summaryMeta = document.createElement("span");
+      summaryMeta.className = "pomodoro-preset-card-meta";
+      summaryMeta.textContent = getPresetMinutes(preset).join(" · ");
+
+      summary.append(summaryName, summaryMeta);
+      summary.addEventListener("click", () => {
+        applyPresetByKey(`custom:${preset.id}`);
+      });
+
+      card.appendChild(summary);
+
+      const body = document.createElement("div");
+      body.className = "pomodoro-preset-card-body";
+      body.hidden = !isActive;
+
+      const settings = document.createElement("div");
+      settings.className = "pomodoro-preset-settings";
+      const focusSetting = document.createElement("div");
+      focusSetting.className = "pomodoro-preset-setting";
+      const focusLabel = document.createElement("span");
+      focusLabel.className = "pomodoro-preset-setting-label";
+      focusLabel.textContent = "Фокус";
+      const focusValue = document.createElement("span");
+      focusValue.className = "pomodoro-preset-setting-value";
+      focusValue.textContent = `${preset.focus} хв`;
+      focusSetting.append(focusLabel, focusValue);
+
+      const shortBreakSetting = document.createElement("div");
+      shortBreakSetting.className = "pomodoro-preset-setting";
+      const shortBreakLabel = document.createElement("span");
+      shortBreakLabel.className = "pomodoro-preset-setting-label";
+      shortBreakLabel.textContent = "Коротка перерва";
+      const shortBreakValue = document.createElement("span");
+      shortBreakValue.className = "pomodoro-preset-setting-value";
+      shortBreakValue.textContent = `${preset.shortBreak} хв`;
+      shortBreakSetting.append(shortBreakLabel, shortBreakValue);
+
+      const longBreakSetting = document.createElement("div");
+      longBreakSetting.className = "pomodoro-preset-setting";
+      const longBreakLabel = document.createElement("span");
+      longBreakLabel.className = "pomodoro-preset-setting-label";
+      longBreakLabel.textContent = "Довга перерва";
+      const longBreakValue = document.createElement("span");
+      longBreakValue.className = "pomodoro-preset-setting-value";
+      longBreakValue.textContent = `${preset.longBreak} хв`;
+      longBreakSetting.append(longBreakLabel, longBreakValue);
+
+      settings.append(focusSetting, shortBreakSetting, longBreakSetting);
+
+      const actions = document.createElement("div");
+      actions.className = "pomodoro-preset-actions";
+
+      const startAction = document.createElement("button");
+      startAction.type = "button";
+      startAction.className =
+        "pomodoro-btn pomodoro-preset-action pomodoro-preset-action-start";
+      startAction.textContent = "Запустити";
+      startAction.addEventListener("click", () => {
+        applyPresetByKey(`custom:${preset.id}`);
+        start();
+      });
+
+      const editAction = document.createElement("button");
+      editAction.type = "button";
+      editAction.className =
+        "pomodoro-btn pomodoro-preset-action pomodoro-preset-action-edit";
+      editAction.textContent = "Редагувати";
+      editAction.addEventListener("click", () => {
+        openPresetModal(preset);
+      });
+
+      const deleteAction = document.createElement("button");
+      deleteAction.type = "button";
+      deleteAction.className =
+        "pomodoro-btn pomodoro-preset-action pomodoro-preset-action-delete";
+      deleteAction.textContent = "Видалити";
+      deleteAction.addEventListener("click", () => {
+        void deletePreset(preset.id, preset.name);
+      });
+
+      actions.append(startAction, editAction, deleteAction);
+      body.append(settings, actions);
+      card.appendChild(body);
+
+      customPresetList.appendChild(card);
+    }
+  };
+
+  const refreshPresetViews = () => {
+    renderPresetSelect();
+    renderCustomPresetList();
+  };
+
+  const syncPresetSelectionFallback = () => {
+    if (getPresetByKey(activePresetKey)) {
+      return;
+    }
+
+    activePresetKey = BUILTIN_PRESETS[0].key;
+    durations = {
+      focus: BUILTIN_PRESETS[0].focus,
+      shortBreak: BUILTIN_PRESETS[0].shortBreak,
+      longBreak: BUILTIN_PRESETS[0].longBreak,
+    };
+    presetSelect.value = activePresetKey;
+  };
+
   const applyPresetByKey = (key, resetTimer = true) => {
     const preset = getPresetByKey(key);
     if (!preset) {
@@ -183,6 +367,7 @@
     };
 
     presetSelect.value = key;
+    renderCustomPresetList();
 
     if (resetTimer) {
       reset();
@@ -225,10 +410,13 @@
         return;
       }
 
-      customPresets = payload.data;
-      renderPresetSelect();
+      customPresets = payload.data
+        .map(normalizePreset)
+        .filter((preset) => preset.id > 0 && preset.name);
+      syncPresetSelectionFallback();
+      refreshPresetViews();
     } catch {
-      renderPresetSelect();
+      refreshPresetViews();
     }
   };
 
@@ -394,11 +582,25 @@
     }
   };
 
-  const openPresetModal = () => {
-    presetNameInput.value = "";
-    presetFocusInput.value = String(durations.focus);
-    presetShortBreakInput.value = String(durations.shortBreak);
-    presetLongBreakInput.value = String(durations.longBreak);
+  const openPresetModal = (preset = null) => {
+    editingPresetId = preset?.id ?? null;
+    presetModalTitle.textContent = editingPresetId
+      ? "Редагувати пресет"
+      : "Додати пресет";
+    presetSubmitButton.textContent = editingPresetId
+      ? "Зберегти зміни"
+      : "Зберегти пресет";
+
+    const values = preset ?? {
+      focus: durations.focus,
+      shortBreak: durations.shortBreak,
+      longBreak: durations.longBreak,
+    };
+
+    presetNameInput.value = preset?.name ?? "";
+    presetFocusInput.value = String(values.focus);
+    presetShortBreakInput.value = String(values.shortBreak);
+    presetLongBreakInput.value = String(values.longBreak);
     setPresetError("");
     presetModal.style.display = "flex";
     presetModal.setAttribute("aria-hidden", "false");
@@ -406,14 +608,22 @@
   };
 
   const closePresetModal = () => {
+    editingPresetId = null;
+    presetModalTitle.textContent = "Додати пресет";
+    presetSubmitButton.textContent = "Зберегти пресет";
     presetModal.style.display = "none";
     presetModal.setAttribute("aria-hidden", "true");
     setPresetError("");
   };
 
-  const createPreset = async (model) => {
-    const response = await fetch(PRESETS_API, {
-      method: "POST",
+  const savePreset = async (model) => {
+    const isEditing = editingPresetId !== null;
+    const endpoint = isEditing
+      ? `${PRESETS_API}/${editingPresetId}`
+      : PRESETS_API;
+
+    const response = await fetch(endpoint, {
+      method: isEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(model),
@@ -429,7 +639,44 @@
       return payload.message ?? "Не вдалося зберегти пресет";
     }
 
-    return payload.data;
+    return normalizePreset(payload.data);
+  };
+
+  const deletePreset = async (presetId, presetName) => {
+    const confirmed = window.confirm(`Видалити пресет «${presetName}»?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${PRESETS_API}/${presetId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        setPresetError(payload?.message ?? "Не вдалося видалити пресет");
+        return;
+      }
+
+      const payload = await response.json();
+      if (!payload.success) {
+        setPresetError(payload.message ?? "Не вдалося видалити пресет");
+        return;
+      }
+
+      customPresets = customPresets.filter((preset) => preset.id !== presetId);
+      if (activePresetKey === `custom:${presetId}`) {
+        syncPresetSelectionFallback();
+        reset();
+      }
+
+      setPresetError("");
+      refreshPresetViews();
+    } catch {
+      setPresetError("Не вдалося видалити пресет");
+    }
   };
 
   const handlePresetSubmit = async (event) => {
@@ -459,7 +706,7 @@
     setPresetError("");
 
     try {
-      const savedPreset = await createPreset(model);
+      const savedPreset = await savePreset(model);
       if (typeof savedPreset === "string") {
         setPresetError(savedPreset);
         return;
@@ -468,8 +715,9 @@
       customPresets = [
         ...customPresets.filter((preset) => preset.id !== savedPreset.id),
         savedPreset,
-      ];
-      renderPresetSelect();
+      ].sort((left, right) => left.name.localeCompare(right.name, "uk"));
+
+      refreshPresetViews();
       applyPresetByKey(`custom:${savedPreset.id}`);
       closePresetModal();
     } catch {
@@ -484,7 +732,7 @@
   presetSelect.addEventListener("change", () => {
     applyPresetByKey(presetSelect.value);
   });
-  openPresetModalButton.addEventListener("click", openPresetModal);
+  openPresetModalButton.addEventListener("click", () => openPresetModal());
   closePresetModalButton.addEventListener("click", closePresetModal);
   presetModal.addEventListener("click", (event) => {
     if (event.target === presetModal) {
@@ -494,6 +742,7 @@
   presetForm.addEventListener("submit", handlePresetSubmit);
 
   renderPresetSelect();
+  renderCustomPresetList();
   render();
   void loadTodayStats();
   void loadPresets();

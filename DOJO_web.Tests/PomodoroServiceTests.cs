@@ -367,6 +367,93 @@ public class PomodoroServiceTests
     }
 
     [Fact]
+    public async Task UpdatePresetAsync_PersistsPreset_WhenNameIsUnique()
+    {
+        var presetRepository = new Mock<IPomodoroPresetRepository>(MockBehavior.Strict);
+        var preset = new PomodoroPreset
+        {
+            Id = 15,
+            UserId = 9,
+            Name = "Для навчання",
+            FocusMinutes = 45,
+            ShortBreakMinutes = 15,
+            LongBreakMinutes = 30
+        };
+
+        presetRepository
+            .Setup(repository => repository.GetUserPresetAsync(9, 15, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(preset);
+        presetRepository
+            .Setup(repository => repository.GetUserPresetsAsync(9, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PomodoroPreset> { preset });
+
+        var service = BuildService(new List<Pomodoro>(), new List<TaskItem>(), out _, presetRepository);
+        var model = new PomodoroPresetCreateViewModel
+        {
+            Name = "Для інтенсивного навчання",
+            FocusMinutes = 50,
+            ShortBreakMinutes = 10,
+            LongBreakMinutes = 20
+        };
+
+        var result = await service.UpdatePresetAsync(9, 15, model);
+
+        Assert.True(result.Success);
+        Assert.Equal("Для інтенсивного навчання", result.Data?.Name);
+        Assert.Equal((short)50, result.Data?.FocusMinutes);
+        Assert.Equal("Для інтенсивного навчання", preset.Name);
+        Assert.Equal((short)50, preset.FocusMinutes);
+    }
+
+    [Fact]
+    public async Task UpdatePresetAsync_ReturnsFailure_WhenPresetNameExists()
+    {
+        var presetRepository = new Mock<IPomodoroPresetRepository>(MockBehavior.Strict);
+        var preset = new PomodoroPreset
+        {
+            Id = 15,
+            UserId = 9,
+            Name = "Для навчання",
+            FocusMinutes = 45,
+            ShortBreakMinutes = 15,
+            LongBreakMinutes = 30
+        };
+
+        presetRepository
+            .Setup(repository => repository.GetUserPresetAsync(9, 15, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(preset);
+        presetRepository
+            .Setup(repository => repository.GetUserPresetsAsync(9, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PomodoroPreset>
+            {
+                preset,
+                new PomodoroPreset
+                {
+                    Id = 17,
+                    UserId = 9,
+                    Name = "Для інтенсивного навчання",
+                    FocusMinutes = 60,
+                    ShortBreakMinutes = 10,
+                    LongBreakMinutes = 20
+                }
+            });
+
+        var service = BuildService(new List<Pomodoro>(), new List<TaskItem>(), out _, presetRepository);
+        var model = new PomodoroPresetCreateViewModel
+        {
+            Name = "Для інтенсивного навчання",
+            FocusMinutes = 50,
+            ShortBreakMinutes = 10,
+            LongBreakMinutes = 20
+        };
+
+        var result = await service.UpdatePresetAsync(9, 15, model);
+
+        Assert.False(result.Success);
+        Assert.Contains("вже існує", result.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task DeletePresetAsync_DeletesExistingPreset()
     {
         var presetRepository = new Mock<IPomodoroPresetRepository>(MockBehavior.Strict);
