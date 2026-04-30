@@ -145,6 +145,7 @@ try
     builder.Services.AddScoped<IStatisticsService, StatisticsService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+    builder.Services.AddScoped<IRoomService, RoomService>();
 
     var app = builder.Build();
 

@@ -795,6 +795,15 @@
         </div>
 
         <div class="friends-modal-body">
+            <div class="friends-action-buttons" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" id="openCreateRoomFromFriendsBtn" style="flex: 1;">
+                    🏠 Створити кімнату
+                </button>
+                <button type="button" class="btn-primary" id="openMyRoomsFromFriendsBtn" style="flex: 1;">
+                    👥 Мої кімнати
+                </button>
+            </div>
+
             <form id="friendsAddForm" class="todo-form" novalidate>
                 <div class="form-group">
                     <label for="friendUserName">Ім'я користувача</label>
@@ -852,12 +861,56 @@
 <!-- Leaderboard Modal -->
 @await Html.PartialAsync("_Leaderboard", new DOJO2.Application.ViewModels.LeaderboardViewModel())
 
+<!-- Rooms Create Modal -->
+<div class="todo-modal" id="roomsModal" aria-hidden="true" aria-labelledby="roomsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="roomsModalTitle">Створити нову кімнату</h2>
+            <button type="button" class="todo-modal-close" id="closeRoomsModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <form id="createRoomForm" class="todo-form">
+            <div class="form-group">
+                <label for="roomTitle">Назва кімнати *</label>
+                <input type="text" id="roomTitle" name="title" class="form-control" maxlength="255" placeholder="Введіть назву кімнати" required />
+            </div>
+
+            <div class="form-group">
+                <label for="roomDescription">Опис</label>
+                <textarea id="roomDescription" name="description" class="form-control" rows="3" placeholder="Введіть опис кімнати (необов'язково)"></textarea>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelCreateRoomBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Створити кімнату</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rooms List Modal -->
+<div class="todo-modal" id="roomsListModal" aria-hidden="true" aria-labelledby="roomsListModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="roomsListModalTitle">Мої кімнати</h2>
+            <button type="button" class="todo-modal-close" id="closeRoomsListModal" aria-label="Закрити вікно">×</button>
+        </div>
+
+        <div class="friends-modal-body">
+            <ul class="leaderboard-list rooms-list" id="roomsList" aria-live="polite">
+                <li class="leaderboard-empty">Кімнат не знайдено</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
     <script src="~/js/schedule.js" asp-append-version="true"></script>
     <script src="~/js/friends.js" asp-append-version="true"></script>
+    <script src="~/js/rooms.js" asp-append-version="true"></script>
     <script src="~/js/profile.js" asp-append-version="true"></script>
     <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
     <script src="~/js/pomodoro.js" asp-append-version="true"></script>

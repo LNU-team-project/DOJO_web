@@ -7,6 +7,7 @@ public class TodoCreateViewModel
     public string? Description { get; set; }
     public short Priority { get; set; } = 2; // 1 = Low, 2 = Medium, 3 = High
     public DateOnly? DueDate { get; set; }
+    public int? RoomId { get; set; } // Опціонально - якщо завдання з кімнати
 }
 
 public class UpdateTodoViewModel
