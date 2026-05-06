@@ -1,6 +1,7 @@
 using DOJO2.Domain.Entities;
 using DOJO2.Application.Interfaces;
 using DOJO2.Infrastructure.Data;
+using DOJO2.Infrastructure.BackgroundServices;
 using DOJO2.Infrastructure.Middleware;
 using DOJO2.Infrastructure.Repositories;
 using DOJO2.Infrastructure.Services;
@@ -12,6 +13,7 @@ using Serilog;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using DOJO2.Application.Services;
+using DOJO2.Presentation.Hubs;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -57,6 +59,7 @@ try
     builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.SectionName));
 
     builder.Services.AddMemoryCache();
+    builder.Services.AddSignalR();
     
     // Підключення до PostgreSQL через EF Core
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -149,6 +152,7 @@ try
     builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
     builder.Services.AddScoped<IRoomService, RoomService>();
+    builder.Services.AddHostedService<NotificationBackgroundService>();
 
     var app = builder.Build();
 
@@ -184,6 +188,8 @@ try
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Account}/{action=Register}/{id?}");
+
+    app.MapHub<NotificationsHub>("/hubs/notifications");
 
 
     await app.RunAsync();

@@ -4,7 +4,8 @@
 
 <div class="dashboard-page"
      data-dashboard-root
-     data-notifications-url="@Url.Content("~/api/notifications/dashboard")">
+     data-notifications-url="@Url.Content("~/api/notifications/dashboard")"
+     data-notifications-hub-url="@Url.Content("~/hubs/notifications")">
     <header class="dashboard-header" aria-label="Dashboard navigation">
         <h1 class="dashboard-title">Dashboard</h1>
 
@@ -1044,6 +1045,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
     <script src="~/js/todo.js" asp-append-version="true"></script>
     <script src="~/js/plan.js" asp-append-version="true"></script>
