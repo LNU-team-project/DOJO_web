@@ -73,7 +73,7 @@ public class HomeDashboardTests
     {
         var content = File.ReadAllText(DashboardViewPath);
 
-        Assert.Contains("~/js/dashboard.js", content, StringComparison.Ordinal);
+        Assert.Contains("~/js/dashboard.bundle.min.js", content, StringComparison.Ordinal);
     }
 
     [Fact]

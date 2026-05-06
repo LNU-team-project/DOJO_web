@@ -11,6 +11,7 @@
   const prevButton = root.querySelector("[data-range-dir='prev']");
   const nextButton = root.querySelector("[data-range-dir='next']");
   const notificationsUrl = root.dataset.notificationsUrl;
+  const notificationsHubUrl = root.dataset.notificationsHubUrl;
   const notificationsModal = document.getElementById("notificationsModal");
   const notificationsModalOverlay = document.getElementById(
     "notificationsModalOverlay",
@@ -27,6 +28,9 @@
   let notificationsList =
     root.querySelector("[data-notifications-list]") ||
     root.querySelector(".notifications-modal-list");
+  let notificationsConnection = null;
+  const signalRCdnUrl =
+    "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js";
 
   if (
     !rangeLabel ||
@@ -282,6 +286,59 @@
     }
   };
 
+  const loadSignalRClient = () => {
+    if (globalThis.signalR) {
+      return Promise.resolve(true);
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = signalRCdnUrl;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => reject(new Error("Не вдалося завантажити SignalR client"));
+      document.head.appendChild(script);
+    });
+  };
+
+  const connectNotificationsHub = async () => {
+    if (!notificationsHubUrl) {
+      return;
+    }
+
+    if (!globalThis.signalR) {
+      try {
+        await loadSignalRClient();
+      } catch {
+        return;
+      }
+    }
+
+    notificationsConnection = new globalThis.signalR.HubConnectionBuilder()
+      .withUrl(notificationsHubUrl, { withCredentials: true })
+      .withAutomaticReconnect()
+      .build();
+
+    notificationsConnection.on("notifications-updated", (notifications) => {
+      if (Array.isArray(notifications)) {
+        renderNotifications(notifications);
+        return;
+      }
+
+      void loadNotifications();
+    });
+
+    notificationsConnection.onreconnected(() => {
+      void loadNotifications();
+    });
+
+    try {
+      await notificationsConnection.start();
+    } catch {
+      notificationsConnection = null;
+    }
+  };
+
   const loadNotifications = async () => {
     if (!notificationsUrl) {
       renderNotifications([]);
@@ -435,6 +492,7 @@
   });
 
   bindNotificationModalControls();
+  void connectNotificationsHub();
   void loadNotifications();
 
   render();
