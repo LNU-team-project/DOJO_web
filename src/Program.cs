@@ -14,6 +14,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using DOJO2.Application.Services;
 using DOJO2.Presentation.Hubs;
+using DOJO2.Presentation.Configuration;
+using WebOptimizer;
 
 // Bootstrap logger — щоб логи були навіть під час старту
 Log.Logger = new LoggerConfiguration()
@@ -60,6 +62,7 @@ try
 
     builder.Services.AddMemoryCache();
     builder.Services.AddSignalR();
+    builder.Services.AddProjectBundles();
     
     // Підключення до PostgreSQL через EF Core
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -182,6 +185,8 @@ try
     app.UseRequestDetailsLogging();
 
     app.UseAuthorization();
+
+    app.UseWebOptimizer();
 
     app.UseStaticFiles();
 

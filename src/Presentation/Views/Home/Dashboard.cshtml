@@ -2,6 +2,10 @@
     ViewData["Title"] = "Dashboard";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.bundle.min.css" />
+}
+
 <div class="dashboard-page"
      data-dashboard-root
      data-notifications-url="@Url.Content("~/api/notifications/dashboard")"
@@ -242,8 +246,6 @@
             </div>
 
             <div class="sidebar-card sidebar-placeholder">
-                <link rel="stylesheet" href="@Url.Content("~/css/hero-widget.css")" />
-
                 <section class="hero-widget" aria-label="Твій герой">
                     <div class="hero-left">
                         <div class="hero-title">Твій герой</div>
@@ -1045,17 +1047,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js" asp-append-version="true"></script>
-    <script src="~/js/dashboard.js" asp-append-version="true"></script>
-    <script src="~/js/todo.js" asp-append-version="true"></script>
-    <script src="~/js/plan.js" asp-append-version="true"></script>
-    <script src="~/js/schedule.js" asp-append-version="true"></script>
-    <script src="~/js/friends.js" asp-append-version="true"></script>
-    <script src="~/js/rooms.js" asp-append-version="true"></script>
-    <script src="~/js/profile.js" asp-append-version="true"></script>
-    <script src="~/js/mini-calendar.js" asp-append-version="true"></script>
-    <script src="~/js/pomodoro.js" asp-append-version="true"></script>
-    <script src="~/js/statistics.js" asp-append-version="true"></script>
-    <script src="~/js/hero-widget.js" asp-append-version="true"></script>
-    <script src="~/js/leaderboard.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.bundle.min.js"></script>
 }
