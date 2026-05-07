@@ -262,22 +262,22 @@
         <div class="weekly-chart-bar-group">
           <div class="weekly-chart-bars">
             <div class="weekly-chart-bar-item">
-              <div class="weekly-chart-bar" style="height: ${todosHeight}%" title="${day.completedTodos} завдань">
+              <div class="weekly-chart-bar" style="height: ${todosHeight}%" title="${day.completedTodos} завдань" aria-label="${day.dayName}: ${day.completedTodos} завдань">
                 <span class="weekly-chart-bar-label">${day.completedTodos}</span>
               </div>
-              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-primary);">Завдання</span>
+              <span class="weekly-chart-bar-legend" style="--legend-color: var(--dojo-primary);">Завдання</span>
             </div>
             <div class="weekly-chart-bar-item">
-              <div class="weekly-chart-bar weekly-chart-bar-plans" style="height: ${plansHeight}%" title="${day.completedPlans} планів">
+              <div class="weekly-chart-bar weekly-chart-bar-plans" style="height: ${plansHeight}%" title="${day.completedPlans} планів" aria-label="${day.dayName}: ${day.completedPlans} планів">
                 <span class="weekly-chart-bar-label">${day.completedPlans}</span>
               </div>
-              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-accent);">Плани</span>
+              <span class="weekly-chart-bar-legend" style="--legend-color: var(--dojo-accent);">Плани</span>
             </div>
             <div class="weekly-chart-bar-item">
-              <div class="weekly-chart-bar weekly-chart-bar-pomodoro" style="height: ${pomodoroHeight}%" title="${day.pomodoroSessions} сесій">
+              <div class="weekly-chart-bar weekly-chart-bar-pomodoro" style="height: ${pomodoroHeight}%" title="${day.pomodoroSessions} сесій" aria-label="${day.dayName}: ${day.pomodoroSessions} сесій">
                 <span class="weekly-chart-bar-label">${day.pomodoroSessions}</span>
               </div>
-              <span class="weekly-chart-bar-legend" style="background-color: var(--dojo-success);">Помодоро</span>
+              <span class="weekly-chart-bar-legend" style="--legend-color: var(--dojo-success);">Помодоро</span>
             </div>
           </div>
           <div class="weekly-chart-day-label">${day.dayName}</div>

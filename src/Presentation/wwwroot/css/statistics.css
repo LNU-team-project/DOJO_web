@@ -4,6 +4,7 @@
   padding: 0;
   overflow: hidden;
   height: 100%;
+  min-height: 0;
 }
 
 .statistics-card {
@@ -20,14 +21,14 @@
     linear-gradient(180deg, #ffffff 0%, #fff9f6 100%);
   border: 1.5px solid rgba(255, 122, 144, 0.25);
   box-shadow: 0 14px 34px rgba(223, 141, 172, 0.15);
-  padding: 16px;
+  padding: 12px;
 }
 
 .statistics-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .statistics-eyebrow {
@@ -40,17 +41,18 @@
 }
 
 .statistics-title {
-  margin: 4px 0 0;
+  margin: 0 0 10px;
   font-family: "Playfair Display", "Times New Roman", serif;
   color: #4e3541;
-  font-size: 18px;
+  font-size: 1.25rem;
+  line-height: 1.1;
 }
 
 .statistics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
   flex: 1;
   align-content: start;
 }
@@ -58,24 +60,24 @@
 .statistics-item {
   background: rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid rgba(255, 122, 144, 0.15);
   text-align: center;
 }
 
 .statistics-label {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #9e7486;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .statistics-value {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #36232c;
   line-height: 1;
@@ -90,7 +92,7 @@
   margin-top: auto;
   border: 1.5px solid rgba(255, 122, 144, 0.3);
   border-radius: 12px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   background: #fff;
   color: #5a3947;
   font-weight: 700;
@@ -466,10 +468,22 @@
 }
 
 .weekly-chart-bar-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0;
+  line-height: 1;
+  color: #5a3947;
+}
+
+.weekly-chart-bar-legend::before {
+  content: "";
   width: 10px;
   height: 10px;
+  flex: 0 0 10px;
   border-radius: 2px;
-  font-size: 0;
+  background-color: var(--legend-color);
+  box-shadow: 0 1px 3px rgba(24, 22, 22, 0.12);
 }
 
 .weekly-chart-day-label {
@@ -530,3 +544,24 @@
     min-width: 8px;
   }
 }
+
+@media (hover: none), (pointer: coarse) {
+  .weekly-chart-bar-label {
+    display: block;
+  }
+
+  .weekly-chart-bar-legend {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 122, 144, 0.15);
+  }
+
+  .weekly-chart-bar-legend::before {
+    width: 8px;
+    height: 8px;
+    flex-basis: 8px;
+  }
+}
+

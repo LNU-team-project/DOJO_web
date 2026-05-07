@@ -89,38 +89,51 @@
                     </div>
                 </section>
 
-                <section class="dashboard-statistics-section" aria-label="Статистика користувача">
-                    <div class="statistics-widget" data-statistics-root>
-                        <div class="statistics-card">
-                            <div class="statistics-header">
-                                <div>
-                                    <p class="statistics-eyebrow">Твій прогрес</p>
-                                    <h2 class="statistics-title">Статистика</h2>
-                                </div>
+                <section class="dashboard-pomodoro-section" aria-label="Pomodoro таймер">
+                    <div class="sidebar-card pomodoro-widget" data-pomodoro-root>
+                        <div class="pomodoro-card">
+                             <h2 class="pomodoro-title">Pomodoro</h2>
+
+                             <div class="pomodoro-mode" data-pomodoro-mode>Фокус</div>
+                            <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
+
+                            <div class="pomodoro-controls">
+                                <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
+                                    Старт
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-pause>
+                                    Пауза
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-reset>
+                                    Скинути
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-skip>
+                                    Пропустити
+                                </button>
                             </div>
 
-                            <div class="statistics-grid">
-                                <div class="statistics-item">
-                                    <span class="statistics-label">Завдань виконано</span>
-                                    <span class="statistics-value" data-stat-completed-todos>0</span>
+                            <div class="pomodoro-presets-panel">
+                                <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
+                                <div class="pomodoro-presets-row">
+                                    <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
+                                    <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
+                                        Додати пресет
+                                    </button>
                                 </div>
-                                <div class="statistics-item">
-                                    <span class="statistics-label">Планів виконано</span>
-                                    <span class="statistics-value" data-stat-completed-plans>0</span>
-                                </div>
-                                <div class="statistics-item">
-                                    <span class="statistics-label">Помодоро сесій</span>
-                                    <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
-                                </div>
-                                <div class="statistics-item">
-                                    <span class="statistics-label">Хвилин фокусу</span>
-                                    <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
-                                </div>
+
+                                <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
                             </div>
 
-                            <button type="button" class="statistics-button" id="openStatisticsModal">
-                                Переглянути детальніше
-                            </button>
+                            <div class="pomodoro-meta">
+                                <p class="pomodoro-meta-row">
+                                    <span>Сесій сьогодні</span>
+                                    <strong data-pomodoro-count>0</strong>
+                                </p>
+                                <label class="pomodoro-auto">
+                                    <input type="checkbox" data-pomodoro-auto checked>
+                                    Автоматично запускати наступний раунд
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -162,92 +175,6 @@
                     <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
                 </div>
 
-            <div class="sidebar-card pomodoro-widget" data-pomodoro-root aria-label="Pomodoro таймер">
-                <div class="pomodoro-card">
-                    <p class="pomodoro-eyebrow">Focus station</p>
-                    <h2 class="pomodoro-title">Pomodoro</h2>
-
-                    <div class="pomodoro-mode" data-pomodoro-mode>Фокус</div>
-                    <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
-
-                    <div class="pomodoro-controls">
-                        <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
-                            Старт
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-pause>
-                            Пауза
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-reset>
-                            Скинути
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-skip>
-                            Пропустити
-                        </button>
-                    </div>
-
-                    <div class="pomodoro-presets-panel">
-                        <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
-                        <div class="pomodoro-presets-row">
-                            <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
-                            <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
-                                Додати пресет
-                            </button>
-                        </div>
-
-                        <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
-                    </div>
-
-                    <div class="pomodoro-meta">
-                        <p class="pomodoro-meta-row">
-                            <span>Сесій сьогодні</span>
-                            <strong data-pomodoro-count>0</strong>
-                        </p>
-                        <label class="pomodoro-auto">
-                            <input type="checkbox" data-pomodoro-auto checked>
-                            Автоматично запускати наступний раунд
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="todo-modal pomodoro-preset-modal" id="pomodoroPresetModal" aria-hidden="true" aria-labelledby="pomodoroPresetModalTitle">
-                <div class="todo-modal-content">
-                    <div class="todo-modal-header">
-                        <h2 id="pomodoroPresetModalTitle">Додати пресет</h2>
-                        <button type="button" class="todo-modal-close" id="closePomodoroPresetModal" aria-label="Закрити вікно">×</button>
-                    </div>
-
-                    <form id="pomodoroPresetForm" class="todo-form" novalidate>
-                        <div class="form-group">
-                            <label for="pomodoroPresetName">Назва пресету</label>
-                            <input type="text" id="pomodoroPresetName" class="form-control" maxlength="100" placeholder="Для навчання" />
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="pomodoroPresetFocus">Робота, хв</label>
-                                <input type="number" id="pomodoroPresetFocus" class="form-control" min="1" max="180" value="25" />
-                            </div>
-                            <div class="form-group">
-                                <label for="pomodoroPresetShortBreak">Короткий відпочинок, хв</label>
-                                <input type="number" id="pomodoroPresetShortBreak" class="form-control" min="1" max="60" value="5" />
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pomodoroPresetLongBreak">Довгий відпочинок, хв</label>
-                            <input type="number" id="pomodoroPresetLongBreak" class="form-control" min="1" max="120" value="15" />
-                        </div>
-
-                        <p class="pomodoro-preset-error" data-pomodoro-preset-error aria-live="polite"></p>
-
-                        <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
-                            <button type="submit" class="btn-primary">Зберегти пресет</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <div class="sidebar-card sidebar-placeholder">
                 <section class="hero-widget" aria-label="Твій герой">
                     <div class="hero-left">
@@ -271,6 +198,42 @@
                     </div>
                 </section>
             </div>
+
+            <section class="dashboard-statistics-section" aria-label="Статистика користувача">
+                <div class="statistics-widget" data-statistics-root>
+                    <div class="statistics-card">
+                        <div class="statistics-header">
+                            <div>
+                                <p class="statistics-eyebrow">Твій прогрес</p>
+                                <h2 class="statistics-title">Статистика</h2>
+                            </div>
+                        </div>
+
+                        <div class="statistics-grid">
+                            <div class="statistics-item">
+                                <span class="statistics-label">Завдань виконано</span>
+                                <span class="statistics-value" data-stat-completed-todos>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Планів виконано</span>
+                                <span class="statistics-value" data-stat-completed-plans>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Помодоро сесій</span>
+                                <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Хвилин фокусу</span>
+                                <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="statistics-button" id="openStatisticsModal">
+                            Переглянути детальніше
+                        </button>
+                    </div>
+                </div>
+            </section>
         </aside>
     </div>
 </div>
