@@ -89,29 +89,26 @@
             </div>
         </div>
 
-        <div class="dashboard-sidebar-stack" aria-label="Бічні віджети">
-            <div class="dashboard-range-shell" aria-label="Навігація тижня">
-                <fieldset class="dashboard-range-control dashboard-range-control--flat">
-                    <button type="button"
-                            class="dashboard-arrow"
-                            data-range-dir="prev"
-                            aria-label="Попередній тиждень">
-                        &#9664;
-                    </button>
+        <aside class="dashboard-sidebar" aria-label="Бічні віджети">
+            <div class="sidebar-card" aria-label="Навігація тижня" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="prev"
+                        aria-label="Попередній тиждень">
+                    &#9664;
+                </button>
 
-                    <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
+                <p class="dashboard-range-label" data-range-label aria-live="polite" style="margin: 0; font-weight: 700; flex: 1; text-align: center; color: var(--dojo-ink);"></p>
 
-                    <button type="button"
-                            class="dashboard-arrow"
-                            data-range-dir="next"
-                            aria-label="Наступний тиждень">
-                        &#9654;
-                    </button>
-                </fieldset>
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="next"
+                        aria-label="Наступний тиждень">
+                    &#9654;
+                </button>
             </div>
 
-            <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
-                <div class="sidebar-card" data-mini-calendar>
+            <div class="sidebar-card" data-mini-calendar>
                     <div class="sidebar-card-header">
                         <span class="sidebar-card-icon" aria-hidden="true">📅</span>
                         <span class="sidebar-card-title">Календарі</span>
