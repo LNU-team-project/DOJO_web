@@ -716,6 +716,10 @@ fieldset.form-group {
 }
 
 .pomodoro-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   border-radius: 18px;
   background:
     radial-gradient(
@@ -726,11 +730,11 @@ fieldset.form-group {
     linear-gradient(180deg, #ffffff 0%, #fff9f6 100%);
   border: 1.5px solid rgba(255, 122, 144, 0.3);
   box-shadow: 0 14px 34px rgba(223, 141, 172, 0.2);
-      padding: 14px;
-    }
+  padding: 14px;
+}
 
-    .pomodoro-mode {
-      margin-top: 10px;
+.pomodoro-mode {
+  margin-top: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -776,6 +780,8 @@ fieldset.form-group {
   margin-top: 8px;
   display: grid;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 .pomodoro-presets-label {
@@ -817,51 +823,6 @@ fieldset.form-group {
   font-size: 0.92rem;
 }
 
-.pomodoro-preset-card {
-  border: 1px solid #f0d6df;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #fff8fb 100%);
-  padding: 10px;
-  box-shadow: 0 8px 18px rgba(223, 141, 172, 0.08);
-}
-
-.pomodoro-preset-card-body {
-  margin-top: 10px;
-  display: grid;
-  gap: 10px;
-}
-
-.pomodoro-preset-settings {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.pomodoro-preset-setting {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 8px;
-  border: 1px solid #f2dde4;
-}
-
-.pomodoro-presets-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.pomodoro-preset-select {
-  width: 100%;
-  border: 1px solid #e9d9e0;
-  border-radius: 12px;
-  background: #fff;
-  color: #5a3947;
-  font-weight: 700;
-  padding: 8px 10px;
-  appearance: none;
-}
-
 .pomodoro-meta {
   margin-top: 10px;
   padding-top: 10px;
@@ -891,6 +852,26 @@ fieldset.form-group {
   color: var(--dojo-danger);
   font-size: 0.88rem;
   min-height: 1.1em;
+}
+
+.pomodoro-preset-modal .todo-modal-content {
+  max-width: 640px;
+}
+
+.pomodoro-preset-modal .todo-modal-header h2 {
+  font-size: 1.35rem;
+}
+
+.pomodoro-preset-modal .form-row {
+  gap: 12px;
+}
+
+.pomodoro-preset-modal .form-group {
+  flex: 1 1 0;
+}
+
+.pomodoro-preset-modal .todo-modal-footer {
+  margin-top: 6px;
 }
 
 @media (max-width: 1180px) {
