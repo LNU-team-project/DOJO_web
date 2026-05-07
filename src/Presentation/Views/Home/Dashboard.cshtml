@@ -90,23 +90,25 @@
         </div>
 
         <div class="dashboard-sidebar-stack" aria-label="Бічні віджети">
-            <fieldset class="dashboard-range-control" aria-label="Навігація тижня">
-                <button type="button"
-                        class="dashboard-arrow"
-                        data-range-dir="prev"
-                        aria-label="Попередній тиждень">
-                    &#9664;
-                </button>
+            <div class="dashboard-range-shell" aria-label="Навігація тижня">
+                <fieldset class="dashboard-range-control dashboard-range-control--flat">
+                    <button type="button"
+                            class="dashboard-arrow"
+                            data-range-dir="prev"
+                            aria-label="Попередній тиждень">
+                        &#9664;
+                    </button>
 
-                <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
+                    <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
 
-                <button type="button"
-                        class="dashboard-arrow"
-                        data-range-dir="next"
-                        aria-label="Наступний тиждень">
-                    &#9654;
-                </button>
-            </fieldset>
+                    <button type="button"
+                            class="dashboard-arrow"
+                            data-range-dir="next"
+                            aria-label="Наступний тиждень">
+                        &#9654;
+                    </button>
+                </fieldset>
+            </div>
 
             <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
                 <div class="sidebar-card" data-mini-calendar>

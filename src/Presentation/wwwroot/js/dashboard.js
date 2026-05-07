@@ -75,12 +75,12 @@
     });
   };
 
-  const formatDate = (date) =>
-    date.toLocaleDateString(locale, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
 
   const renderRange = (dates) => {
     const start = dates[0];
@@ -296,7 +296,8 @@
       script.src = signalRCdnUrl;
       script.async = true;
       script.onload = () => resolve(true);
-      script.onerror = () => reject(new Error("Не вдалося завантажити SignalR client"));
+      script.onerror = () =>
+        reject(new Error("Не вдалося завантажити SignalR client"));
       document.head.appendChild(script);
     });
   };
