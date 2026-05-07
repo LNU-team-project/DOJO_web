@@ -334,10 +334,12 @@ fieldset.form-group {
 /* Layout for calendar + sidebar */
 .dashboard-content {
   display: grid;
-  grid-template-columns: minmax(0, 2.6fr) minmax(240px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  grid-template-areas: "main sidebar";
   gap: 16px;
   align-items: start;
   position: static;
+  width: 100%;
 }
 
 .dashboard-main {
@@ -345,6 +347,9 @@ fieldset.form-group {
   flex-direction: column;
   gap: 16px;
   position: static;
+  grid-area: main;
+  width: 100%;
+  min-width: 0;
 }
 
 .dashboard-sidebar .dashboard-range-label {
@@ -358,11 +363,12 @@ fieldset.form-group {
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  max-width: 280px;
-  min-width: 220px;
+  max-width: none;
+  min-width: 0;
   flex: 0 1 auto;
   position: static;
   z-index: auto;
+  grid-area: sidebar;
 }
 
 .sidebar-card {
@@ -819,6 +825,9 @@ fieldset.form-group {
 @media (max-width: 1180px) {
   .dashboard-content {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "sidebar";
   }
   .dashboard-sidebar-stack {
     grid-column: 1;
@@ -830,11 +839,7 @@ fieldset.form-group {
     max-width: 420px;
     align-self: center;
   }
-  .dashboard-main {
-    order: 1;
-  }
   .dashboard-sidebar {
-    order: 3;
     max-width: none;
     min-width: 0;
     width: 100%;

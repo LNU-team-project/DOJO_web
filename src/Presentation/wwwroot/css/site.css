@@ -444,8 +444,9 @@ body {
 }
 
 .dashboard-header {
-  margin: 0 auto 20px;
-  max-width: 1200px;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 20px;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -529,8 +530,9 @@ body {
   --dashboard-row-height: 56px;
   --dashboard-day-min: 120px;
 
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   border: 1px solid #efd8e3;
   border-radius: 20px;
   overflow: hidden;
