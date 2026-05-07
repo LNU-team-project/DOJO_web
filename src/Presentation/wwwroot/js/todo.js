@@ -45,7 +45,7 @@
       delete todoForm.dataset.editingTodoId;
       const submitBtn = todoForm.querySelector('button[type="submit"]');
       if (submitBtn) {
-        submitBtn.textContent = "Додати TODO";
+        submitBtn.textContent = "Додати завдання";
       }
       document.getElementById("todoModalTitle").textContent = "Додати ціль";
     }
@@ -461,7 +461,7 @@
       delete todoForm.dataset.editingTodoId;
       const submitBtn = todoForm.querySelector('button[type="submit"]');
       if (submitBtn) {
-        submitBtn.textContent = "Додати TODO";
+        submitBtn.textContent = "Додати завдання";
       }
       document.getElementById("todoModalTitle").textContent = "Додати ціль";
 
