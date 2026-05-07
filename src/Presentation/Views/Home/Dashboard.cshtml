@@ -11,26 +11,7 @@
      data-notifications-url="@Url.Content("~/api/notifications/dashboard")"
      data-notifications-hub-url="@Url.Content("~/hubs/notifications")">
     <header class="dashboard-header" aria-label="Dashboard navigation">
-        <h1 class="dashboard-title">Dashboard</h1>
-
-        <fieldset class="dashboard-range-control">
-            <legend class="visually-hidden">Date range selector</legend>
-            <button type="button"
-                    class="dashboard-arrow"
-                    data-range-dir="prev"
-                    aria-label="Попередній тиждень">
-                &#9664;
-            </button>
-
-            <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
-
-            <button type="button"
-                    class="dashboard-arrow"
-                    data-range-dir="next"
-                    aria-label="Наступний тиждень">
-                &#9654;
-            </button>
-        </fieldset>
+        <h1 class="dashboard-title">DOJO</h1>
 
         <div class="dashboard-actions">
             <button type="button"
@@ -108,22 +89,41 @@
             </div>
         </div>
 
-        <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
-            <div class="sidebar-card" data-mini-calendar>
-                <div class="sidebar-card-header">
-                    <span class="sidebar-card-icon" aria-hidden="true">📅</span>
-                    <span class="sidebar-card-title">Календарі</span>
-                </div>
+        <div class="dashboard-sidebar-stack" aria-label="Бічні віджети">
+            <fieldset class="dashboard-range-control" aria-label="Навігація тижня">
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="prev"
+                        aria-label="Попередній тиждень">
+                    &#9664;
+                </button>
 
-                <div class="mini-calendar-header">
-                    <button type="button" class="mini-cal-btn" data-cal-nav="prev" aria-label="Попередній місяць">&#9664;</button>
-                    <div class="mini-cal-title" data-cal-title>Місяць</div>
-                    <button type="button" class="mini-cal-btn" data-cal-nav="next" aria-label="Наступний місяць">&#9654;</button>
-                </div>
+                <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
 
-                <div class="mini-calendar-weekdays" aria-hidden="true"></div>
-                <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
-            </div>
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="next"
+                        aria-label="Наступний тиждень">
+                    &#9654;
+                </button>
+            </fieldset>
+
+            <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
+                <div class="sidebar-card" data-mini-calendar>
+                    <div class="sidebar-card-header">
+                        <span class="sidebar-card-icon" aria-hidden="true">📅</span>
+                        <span class="sidebar-card-title">Календарі</span>
+                    </div>
+
+                    <div class="mini-calendar-header">
+                        <button type="button" class="mini-cal-btn" data-cal-nav="prev" aria-label="Попередній місяць">&#9664;</button>
+                        <div class="mini-cal-title" data-cal-title>Місяць</div>
+                        <button type="button" class="mini-cal-btn" data-cal-nav="next" aria-label="Наступний місяць">&#9654;</button>
+                    </div>
+
+                    <div class="mini-calendar-weekdays" aria-hidden="true"></div>
+                    <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
+                </div>
 
             <div class="sidebar-card pomodoro-widget" data-pomodoro-root aria-label="Pomodoro таймер">
                 <div class="pomodoro-card">

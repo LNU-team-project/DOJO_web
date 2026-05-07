@@ -340,6 +340,21 @@ fieldset.form-group {
   position: static;
 }
 
+.dashboard-sidebar-stack {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 300px;
+  min-width: 240px;
+}
+
+.dashboard-sidebar-stack .dashboard-range-control {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .dashboard-main {
   display: flex;
   flex-direction: column;
@@ -813,6 +828,16 @@ fieldset.form-group {
 @media (max-width: 1180px) {
   .dashboard-content {
     grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar-stack {
+    grid-column: 1;
+    order: 2;
+    max-width: none;
+    min-width: 0;
+  }
+  .dashboard-sidebar-stack .dashboard-range-control {
+    max-width: 420px;
+    align-self: center;
   }
   .dashboard-main {
     order: 1;

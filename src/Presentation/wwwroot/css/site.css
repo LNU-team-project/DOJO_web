@@ -459,6 +459,9 @@ body {
   font-size: clamp(28px, 4vw, 36px);
   letter-spacing: 0.02em;
   flex-shrink: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .dashboard-range-control {
@@ -471,6 +474,19 @@ body {
   background: rgba(255, 255, 255, 0.85);
   box-shadow: 0 10px 20px rgba(230, 164, 189, 0.22);
   flex-shrink: 0;
+}
+
+.mini-calendar-range {
+  width: 100%;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.mini-calendar-range .dashboard-range-label {
+  min-width: 0;
+  flex: 1;
+  text-align: center;
 }
 
 .dashboard-arrow {
@@ -638,6 +654,7 @@ body {
   justify-content: flex-end;
   flex-shrink: 0;
   max-width: 100%;
+  margin-left: auto;
 }
 
 .dashboard-actions .dashboard-todo-btn {
