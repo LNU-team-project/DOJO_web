@@ -327,8 +327,41 @@ fieldset.form-group {
   max-width: none;
 }
 
+.dashboard-lists-row .todo-list-container,
+.dashboard-lists-row .statistics-widget {
+  min-height: 320px;
+}
+
 .todo-list-title {
   margin: 0 0 16px;
+}
+
+.dashboard-lists-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.todo-list-section,
+.dashboard-statistics-section {
+  display: flex;
+  min-width: 0;
+}
+
+.todo-list-container,
+.dashboard-statistics-section .statistics-widget {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.dashboard-statistics-section .statistics-widget {
+  padding: 0;
+  overflow: hidden;
 }
 
 /* Layout for calendar + sidebar */
@@ -823,6 +856,19 @@ fieldset.form-group {
 }
 
 @media (max-width: 1180px) {
+  .dashboard-lists-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-statistics-section {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-lists-row .todo-list-container,
+  .dashboard-lists-row .statistics-widget {
+    min-height: 280px;
+  }
+
   .dashboard-content {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -854,18 +900,21 @@ fieldset.form-group {
 }
 
 @media (max-width: 640px) {
+  .dashboard-lists-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-statistics-section {
+    grid-column: auto;
+  }
+
+  .dashboard-lists-row .todo-list-container,
+  .dashboard-lists-row .statistics-widget {
+    min-height: 0;
+  }
+
   .dashboard-content {
     gap: 8px;
-  }
-  .dashboard-sidebar {
-    display: flex;
-    flex-direction: column;
-  }
-  .mini-cal-day {
-    padding: 4px 0;
-  }
-  .mini-cal-day .day-number {
-    font-size: 0.8rem;
   }
 }
 
@@ -894,6 +943,8 @@ fieldset.form-group {
     0 8px 24px rgba(255, 122, 144, 0.15),
     0 2px 8px rgba(255, 122, 144, 0.1);
   transition: all 0.3s ease;
+  flex: 1;
+  min-height: 0;
 }
 
 .todo-items:hover {

@@ -3,9 +3,13 @@
 .statistics-widget {
   padding: 0;
   overflow: hidden;
+  height: 100%;
 }
 
 .statistics-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   border-radius: 18px;
   background:
     radial-gradient(
@@ -16,19 +20,19 @@
     linear-gradient(180deg, #ffffff 0%, #fff9f6 100%);
   border: 1.5px solid rgba(255, 122, 144, 0.25);
   box-shadow: 0 14px 34px rgba(223, 141, 172, 0.15);
-  padding: 18px;
+  padding: 16px;
 }
 
 .statistics-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .statistics-eyebrow {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #9e7486;
@@ -39,27 +43,29 @@
   margin: 4px 0 0;
   font-family: "Playfair Display", "Times New Roman", serif;
   color: #4e3541;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .statistics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex: 1;
+  align-content: start;
 }
 
 .statistics-item {
   background: rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid rgba(255, 122, 144, 0.15);
   text-align: center;
 }
 
 .statistics-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #9e7486;
@@ -69,7 +75,7 @@
 
 .statistics-value {
   display: block;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #36232c;
   line-height: 1;
@@ -81,13 +87,14 @@
 
 .statistics-button {
   width: 100%;
+  margin-top: auto;
   border: 1.5px solid rgba(255, 122, 144, 0.3);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   background: #fff;
   color: #5a3947;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition:
     transform 0.15s ease,

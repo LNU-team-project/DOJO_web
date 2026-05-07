@@ -88,6 +88,42 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="dashboard-statistics-section" aria-label="Статистика користувача">
+                    <div class="statistics-widget" data-statistics-root>
+                        <div class="statistics-card">
+                            <div class="statistics-header">
+                                <div>
+                                    <p class="statistics-eyebrow">Твій прогрес</p>
+                                    <h2 class="statistics-title">Статистика</h2>
+                                </div>
+                            </div>
+
+                            <div class="statistics-grid">
+                                <div class="statistics-item">
+                                    <span class="statistics-label">Завдань виконано</span>
+                                    <span class="statistics-value" data-stat-completed-todos>0</span>
+                                </div>
+                                <div class="statistics-item">
+                                    <span class="statistics-label">Планів виконано</span>
+                                    <span class="statistics-value" data-stat-completed-plans>0</span>
+                                </div>
+                                <div class="statistics-item">
+                                    <span class="statistics-label">Помодоро сесій</span>
+                                    <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
+                                </div>
+                                <div class="statistics-item">
+                                    <span class="statistics-label">Хвилин фокусу</span>
+                                    <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
+                                </div>
+                            </div>
+
+                            <button type="button" class="statistics-button" id="openStatisticsModal">
+                                Переглянути детальніше
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -209,40 +245,6 @@
                             <button type="submit" class="btn-primary">Зберегти пресет</button>
                         </div>
                     </form>
-                </div>
-            </div>
-
-            <div class="sidebar-card statistics-widget" data-statistics-root aria-label="Статистика користувача">
-                <div class="statistics-card">
-                    <div class="statistics-header">
-                        <div>
-                            <p class="statistics-eyebrow">Твій прогрес</p>
-                            <h2 class="statistics-title">Статистика</h2>
-                        </div>
-                    </div>
-
-                    <div class="statistics-grid">
-                        <div class="statistics-item">
-                            <span class="statistics-label">Завдань виконано</span>
-                            <span class="statistics-value" data-stat-completed-todos>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Планів виконано</span>
-                            <span class="statistics-value" data-stat-completed-plans>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Помодоро сесій</span>
-                            <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Хвилин фокусу</span>
-                            <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
-                        </div>
-                    </div>
-
-                    <button type="button" class="statistics-button" id="openStatisticsModal">
-                        Переглянути детальніше
-                    </button>
                 </div>
             </div>
 
