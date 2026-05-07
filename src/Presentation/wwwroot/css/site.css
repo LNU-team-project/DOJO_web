@@ -448,7 +448,7 @@ body {
   max-width: 1200px;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 14px;
 }
@@ -626,8 +626,9 @@ body {
 
 @media (max-width: 900px) {
   .dashboard-header {
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .dashboard-range-label {
@@ -654,6 +655,14 @@ body {
   justify-content: flex-end;
   flex-shrink: 0;
   max-width: 100%;
+}
+
+.dashboard-actions-primary {
+  justify-content: flex-start;
+}
+
+.dashboard-actions-secondary {
+  justify-content: flex-end;
   margin-left: auto;
 }
 
@@ -1261,7 +1270,8 @@ body {
 
 @media (max-width: 600px) {
   .profile-modal-content {
-    justify-content: space-between;
+    justify-content: flex-start;
+    align-items: flex-start;
     text-align: left;
     max-height: 90vh;
   }
@@ -1282,8 +1292,31 @@ body {
   }
 
   .dashboard-actions {
-    flex-direction: column-reverse;
+    width: 100%;
+    justify-content: flex-start;
     gap: 8px;
+  }
+
+  .dashboard-actions-primary,
+  .dashboard-actions-secondary {
+    margin-left: 0;
+  }
+
+  .dashboard-actions-primary {
+    order: 2;
+  }
+
+  .dashboard-actions-secondary {
+    order: 3;
+    justify-content: flex-start;
+  }
+
+  .dashboard-notification-btn,
+  .dashboard-leaderboard-btn,
+  .profile-avatar-btn,
+  .dashboard-todo-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .dashboard-header {
@@ -1292,13 +1325,6 @@ body {
 
   .dashboard-title {
     font-size: clamp(24px, 8vw, 30px);
-  }
-
-  .dashboard-notification-btn,
-  .profile-avatar-btn,
-  .dashboard-todo-btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .notifications-modal-content {

@@ -1274,36 +1274,37 @@ fieldset.form-group {
   }
 
   .dashboard-plan-btn,
-  .dashboard-schedule-btn {
+  .dashboard-schedule-btn,
+  .dashboard-friends-btn {
     margin-left: 0;
   }
 }
 
 .dashboard-plan-btn {
-  margin-left: 12px;
+  margin-left: 0;
 }
 
 .dashboard-schedule-btn {
-  margin-left: 12px;
-  background: linear-gradient(135deg, #3ec1c9 0%, #2a8f98 100%);
-  box-shadow: 0 14px 24px rgba(42, 143, 152, 0.3);
+  margin-left: 0;
+  background: linear-gradient(135deg, #ff8fa5 0%, #ff6f8e 100%);
+  box-shadow: 0 14px 24px rgba(255, 90, 120, 0.28);
 }
 
 .dashboard-friends-btn {
-  margin-left: 12px;
+  margin-left: 0;
   padding: 8px 16px;
   font-size: 0.92rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #8f6bd7 0%, #6e4bb8 100%);
-  box-shadow: 0 10px 18px rgba(111, 75, 184, 0.25);
+  background: linear-gradient(135deg, #ff97b0 0%, #ff7897 100%);
+  box-shadow: 0 10px 18px rgba(255, 90, 120, 0.24);
 }
 
 .dashboard-schedule-btn:hover {
-  box-shadow: 0 16px 28px rgba(42, 143, 152, 0.35);
+  box-shadow: 0 16px 28px rgba(255, 90, 120, 0.34);
 }
 
 .dashboard-friends-btn:hover {
-  box-shadow: 0 12px 22px rgba(111, 75, 184, 0.3);
+  box-shadow: 0 12px 22px rgba(255, 90, 120, 0.3);
 }
 
 .schedule-weekday-options {
