@@ -25,7 +25,7 @@
     "closePomodoroPresetModal",
   );
   const presetForm = document.getElementById("pomodoroPresetForm");
-  const presetSubmitButton = presetForm.querySelector("button[type='submit']");
+  const presetSubmitButton = presetForm?.querySelector("button[type='submit']");
   const presetNameInput = document.getElementById("pomodoroPresetName");
   const presetFocusInput = document.getElementById("pomodoroPresetFocus");
   const presetShortBreakInput = document.getElementById(
@@ -214,10 +214,9 @@
 
     presetSelect.appendChild(customGroup);
 
-    const nextValue = getPresetByKey(previousValue)
+    presetSelect.value = getPresetByKey(previousValue)
       ? previousValue
       : activePresetKey;
-    presetSelect.value = nextValue;
   };
 
   const renderCustomPresetList = () => {

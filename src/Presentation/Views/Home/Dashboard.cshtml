@@ -11,32 +11,13 @@
      data-notifications-url="@Url.Content("~/api/notifications/dashboard")"
      data-notifications-hub-url="@Url.Content("~/hubs/notifications")">
     <header class="dashboard-header" aria-label="Dashboard navigation">
-        <h1 class="dashboard-title">Dashboard</h1>
+        <h1 class="dashboard-title">DOJO</h1>
 
-        <fieldset class="dashboard-range-control">
-            <legend class="visually-hidden">Date range selector</legend>
-            <button type="button"
-                    class="dashboard-arrow"
-                    data-range-dir="prev"
-                    aria-label="Попередній тиждень">
-                &#9664;
-            </button>
-
-            <p class="dashboard-range-label" data-range-label aria-live="polite"></p>
-
-            <button type="button"
-                    class="dashboard-arrow"
-                    data-range-dir="next"
-                    aria-label="Наступний тиждень">
-                &#9654;
-            </button>
-        </fieldset>
-
-        <div class="dashboard-actions">
+        <div class="dashboard-actions dashboard-actions-primary" aria-label="Основні дії">
             <button type="button"
                     class="dashboard-todo-btn"
                     id="openTodoModal">
-                Додати ціль
+                Додати завдання
             </button>
             <button type="button"
                     class="dashboard-todo-btn dashboard-plan-btn"
@@ -55,7 +36,9 @@
                     aria-controls="friendsModal">
                 Друзі
             </button>
+        </div>
 
+        <div class="dashboard-actions dashboard-actions-secondary" aria-label="Службові елементи">
             <button type="button"
                     class="dashboard-notification-btn"
                     id="openNotificationsModal"
@@ -105,145 +88,91 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="dashboard-pomodoro-section" aria-label="Pomodoro таймер">
+                        <h2 class="pomodoro-title">Pomodoro</h2>
+                    <div class="sidebar-card pomodoro-widget" data-pomodoro-root>
+                        <div class="pomodoro-card">
+                                <div class="pomodoro-mode" data-pomodoro-mode aria-hidden="true"></div>
+                            <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
+
+                            <div class="pomodoro-controls">
+                                <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
+                                    Старт
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-pause>
+                                    Пауза
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-reset>
+                                    Скинути
+                                </button>
+                                <button type="button" class="pomodoro-btn" data-pomodoro-skip>
+                                    Пропустити
+                                </button>
+                            </div>
+
+                            <div class="pomodoro-presets-panel">
+                                <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
+                                <div class="pomodoro-presets-row">
+                                    <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
+                                    <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
+                                        Додати пресет
+                                    </button>
+                                </div>
+
+                                <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
+                            </div>
+
+                            <div class="pomodoro-meta">
+                                <p class="pomodoro-meta-row">
+                                    <span>Сесій сьогодні</span>
+                                    <strong data-pomodoro-count>0</strong>
+                                </p>
+                                <label class="pomodoro-auto">
+                                    <input type="checkbox" data-pomodoro-auto checked>
+                                    Автоматично запускати наступний раунд
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
 
-        <aside class="dashboard-sidebar" aria-label="Додаткові віджети">
+        <aside class="dashboard-sidebar" aria-label="Бічні віджети">
+            <div class="sidebar-card" aria-label="Навігація тижня" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="prev"
+                        aria-label="Попередній тиждень">
+                    &#9664;
+                </button>
+
+                <p class="dashboard-range-label" data-range-label aria-live="polite" style="margin: 0; font-weight: 700; flex: 1; text-align: center; color: var(--dojo-ink);"></p>
+
+                <button type="button"
+                        class="dashboard-arrow"
+                        data-range-dir="next"
+                        aria-label="Наступний тиждень">
+                    &#9654;
+                </button>
+            </div>
+
             <div class="sidebar-card" data-mini-calendar>
-                <div class="sidebar-card-header">
-                    <span class="sidebar-card-icon" aria-hidden="true">📅</span>
-                    <span class="sidebar-card-title">Календарі</span>
+                    <div class="sidebar-card-header">
+                        <span class="sidebar-card-icon" aria-hidden="true">📅</span>
+                        <span class="sidebar-card-title">Календарі</span>
+                    </div>
+
+                    <div class="mini-calendar-header">
+                        <button type="button" class="mini-cal-btn" data-cal-nav="prev" aria-label="Попередній місяць">&#9664;</button>
+                        <div class="mini-cal-title" data-cal-title>Місяць</div>
+                        <button type="button" class="mini-cal-btn" data-cal-nav="next" aria-label="Наступний місяць">&#9654;</button>
+                    </div>
+
+                    <div class="mini-calendar-weekdays" aria-hidden="true"></div>
+                    <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
                 </div>
-
-                <div class="mini-calendar-header">
-                    <button type="button" class="mini-cal-btn" data-cal-nav="prev" aria-label="Попередній місяць">&#9664;</button>
-                    <div class="mini-cal-title" data-cal-title>Місяць</div>
-                    <button type="button" class="mini-cal-btn" data-cal-nav="next" aria-label="Наступний місяць">&#9654;</button>
-                </div>
-
-                <div class="mini-calendar-weekdays" aria-hidden="true"></div>
-                <div class="mini-calendar-grid" role="grid" aria-label="Календар місяця" data-cal-grid></div>
-            </div>
-
-            <div class="sidebar-card pomodoro-widget" data-pomodoro-root aria-label="Pomodoro таймер">
-                <div class="pomodoro-card">
-                    <p class="pomodoro-eyebrow">Focus station</p>
-                    <h2 class="pomodoro-title">Pomodoro</h2>
-
-                    <div class="pomodoro-mode" data-pomodoro-mode>Фокус</div>
-                    <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
-
-                    <div class="pomodoro-controls">
-                        <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
-                            Старт
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-pause>
-                            Пауза
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-reset>
-                            Скинути
-                        </button>
-                        <button type="button" class="pomodoro-btn" data-pomodoro-skip>
-                            Пропустити
-                        </button>
-                    </div>
-
-                    <div class="pomodoro-presets-panel">
-                        <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
-                        <div class="pomodoro-presets-row">
-                            <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
-                            <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
-                                Додати пресет
-                            </button>
-                        </div>
-
-                        <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
-                    </div>
-
-                    <div class="pomodoro-meta">
-                        <p class="pomodoro-meta-row">
-                            <span>Сесій сьогодні</span>
-                            <strong data-pomodoro-count>0</strong>
-                        </p>
-                        <label class="pomodoro-auto">
-                            <input type="checkbox" data-pomodoro-auto checked>
-                            Автоматично запускати наступний раунд
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="todo-modal pomodoro-preset-modal" id="pomodoroPresetModal" aria-hidden="true" aria-labelledby="pomodoroPresetModalTitle">
-                <div class="todo-modal-content">
-                    <div class="todo-modal-header">
-                        <h2 id="pomodoroPresetModalTitle">Додати пресет</h2>
-                        <button type="button" class="todo-modal-close" id="closePomodoroPresetModal" aria-label="Закрити вікно">×</button>
-                    </div>
-
-                    <form id="pomodoroPresetForm" class="todo-form" novalidate>
-                        <div class="form-group">
-                            <label for="pomodoroPresetName">Назва пресету</label>
-                            <input type="text" id="pomodoroPresetName" class="form-control" maxlength="100" placeholder="Для навчання" />
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="pomodoroPresetFocus">Робота, хв</label>
-                                <input type="number" id="pomodoroPresetFocus" class="form-control" min="1" max="180" value="25" />
-                            </div>
-                            <div class="form-group">
-                                <label for="pomodoroPresetShortBreak">Короткий відпочинок, хв</label>
-                                <input type="number" id="pomodoroPresetShortBreak" class="form-control" min="1" max="60" value="5" />
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pomodoroPresetLongBreak">Довгий відпочинок, хв</label>
-                            <input type="number" id="pomodoroPresetLongBreak" class="form-control" min="1" max="120" value="15" />
-                        </div>
-
-                        <p class="pomodoro-preset-error" data-pomodoro-preset-error aria-live="polite"></p>
-
-                        <div class="todo-modal-footer" style="padding:0; justify-content:flex-end;">
-                            <button type="submit" class="btn-primary">Зберегти пресет</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="sidebar-card statistics-widget" data-statistics-root aria-label="Статистика користувача">
-                <div class="statistics-card">
-                    <div class="statistics-header">
-                        <div>
-                            <p class="statistics-eyebrow">Твій прогрес</p>
-                            <h2 class="statistics-title">Статистика</h2>
-                        </div>
-                    </div>
-
-                    <div class="statistics-grid">
-                        <div class="statistics-item">
-                            <span class="statistics-label">Завдань виконано</span>
-                            <span class="statistics-value" data-stat-completed-todos>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Планів виконано</span>
-                            <span class="statistics-value" data-stat-completed-plans>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Помодоро сесій</span>
-                            <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
-                        </div>
-                        <div class="statistics-item">
-                            <span class="statistics-label">Хвилин фокусу</span>
-                            <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
-                        </div>
-                    </div>
-
-                    <button type="button" class="statistics-button" id="openStatisticsModal">
-                        Переглянути детальніше
-                    </button>
-                </div>
-            </div>
 
             <div class="sidebar-card sidebar-placeholder">
                 <section class="hero-widget" aria-label="Твій герой">
@@ -268,7 +197,106 @@
                     </div>
                 </section>
             </div>
+
+            <section class="dashboard-statistics-section" aria-label="Статистика користувача">
+                <div class="statistics-widget" data-statistics-root>
+                    <div class="statistics-card">
+                        <div class="statistics-header">
+                            <div>
+                                <p class="statistics-eyebrow">Твій прогрес</p>
+                                <h2 class="statistics-title">Статистика</h2>
+                            </div>
+                        </div>
+
+                        <div class="statistics-grid">
+                            <div class="statistics-item">
+                                <span class="statistics-label">Завдань виконано</span>
+                                <span class="statistics-value" data-stat-completed-todos>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Планів виконано</span>
+                                <span class="statistics-value" data-stat-completed-plans>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Помодоро сесій</span>
+                                <span class="statistics-value accent" data-stat-pomodoro-sessions>0</span>
+                            </div>
+                            <div class="statistics-item">
+                                <span class="statistics-label">Хвилин фокусу</span>
+                                <span class="statistics-value" data-stat-pomodoro-minutes>0</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="statistics-button" id="openStatisticsModal">
+                            Переглянути детальніше
+                        </button>
+                    </div>
+                </div>
+            </section>
         </aside>
+    </div>
+</div>
+
+<div class="todo-modal pomodoro-preset-modal" id="pomodoroPresetModal" aria-hidden="true" aria-labelledby="pomodoroPresetModalTitle">
+    <div class="todo-modal-content pomodoro-preset-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="pomodoroPresetModalTitle">Додати пресет</h2>
+            <button type="button" class="todo-modal-close" id="closePomodoroPresetModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <form id="pomodoroPresetForm" class="todo-form">
+            <div class="form-group">
+                <label for="pomodoroPresetName">Назва пресету *</label>
+                <input type="text"
+                       id="pomodoroPresetName"
+                       class="form-control"
+                       maxlength="255"
+                       placeholder="Введіть назву пресету"
+                       required />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="pomodoroPresetFocus">Фокус (хв) *</label>
+                    <input type="number"
+                           id="pomodoroPresetFocus"
+                           class="form-control"
+                           min="1"
+                           max="180"
+                           value="25"
+                           required />
+                </div>
+                <div class="form-group">
+                    <label for="pomodoroPresetShortBreak">Коротка перерва (хв) *</label>
+                    <input type="number"
+                           id="pomodoroPresetShortBreak"
+                           class="form-control"
+                           min="1"
+                           max="60"
+                           value="5"
+                           required />
+                </div>
+                <div class="form-group">
+                    <label for="pomodoroPresetLongBreak">Довга перерва (хв) *</label>
+                    <input type="number"
+                           id="pomodoroPresetLongBreak"
+                           class="form-control"
+                           min="1"
+                           max="120"
+                           value="15"
+                           required />
+                </div>
+            </div>
+
+            <p class="pomodoro-preset-error" data-pomodoro-preset-error aria-live="polite"></p>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelPomodoroPresetBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Зберегти пресет</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -333,7 +361,108 @@
 
             <div class="todo-modal-footer">
                 <button type="button" class="btn-secondary" id="cancelTodoBtn">Скасувати</button>
-                <button type="submit" class="btn-primary">Додати TODO</button>
+                <button type="submit" class="btn-primary">Додати завдання</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="todo-modal" id="todoDetailsModal" aria-hidden="true" aria-labelledby="todoDetailsModalTitle">
+    <div class="todo-modal-content">
+        <div class="todo-modal-header">
+            <h2 id="todoDetailsModalTitle">Перегляд завдання</h2>
+            <button type="button" class="todo-modal-close" id="closeTodoDetailsModal" aria-label="Закрити вікно">
+                ×
+            </button>
+        </div>
+
+        <div id="todoDetailsView" class="plan-details">
+            <div class="plan-details-header">
+                <div>
+                    <h3 id="todoDetailTitle" class="plan-details-title">-</h3>
+                    <div class="plan-details-meta">
+                        <span id="todoDetailStatus" class="plan-status" style="color:var(--dojo-muted); font-weight:600;">-</span>
+                    </div>
+                </div>
+                <div class="plan-details-meta">
+                    <div id="todoDetailPriorityBadge" class="plan-priority-badge plan-priority-2">Середня</div>
+                </div>
+            </div>
+
+            <div class="plan-details-card">
+                <p id="todoDetailDescription" class="plan-details-desc">-</p>
+                <div class="plan-details-meta-row" style="margin-top:12px;">
+                    <span><strong>Дедлайн:</strong>&nbsp;<span id="todoDetailDueDate">Без дедлайну</span></span>
+                </div>
+                <div class="plan-details-meta-row" style="margin-top:8px;">
+                    <span><strong>Створено:</strong>&nbsp;<span id="todoDetailCreatedAt">-</span></span>
+                </div>
+            </div>
+
+            <div class="plan-details-actions">
+                <button type="button" class="btn-secondary" id="closeTodoDetailsBtn">Закрити</button>
+                <button type="button" class="btn-primary" id="editTodoBtn">Редагувати</button>
+            </div>
+        </div>
+
+        <form id="todoEditForm" class="todo-form" style="display:none;">
+            <div class="form-group">
+                <label for="editTodoTitle">Назва завдання *</label>
+                <input type="text"
+                       id="editTodoTitle"
+                       name="title"
+                       class="form-control"
+                       placeholder="Введіть назву завдання"
+                       required
+                       maxlength="255" />
+            </div>
+
+            <div class="form-group">
+                <label for="editTodoDescription">Опис</label>
+                <textarea id="editTodoDescription"
+                          name="description"
+                          class="form-control"
+                          placeholder="Введіть опис завдання (необов'язково)"
+                          rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editTodoDueDate">Дедлайн</label>
+                    <input type="date" id="editTodoDueDate" name="dueDate" class="form-control" />
+                </div>
+
+                <fieldset class="form-group">
+                    <legend>Складність *</legend>
+                    <div class="priority-options">
+                        <label class="priority-radio">
+                            <input type="radio" name="editTodoPriority" value="1" class="priority-input">
+                            <span class="priority-label priority-low">
+                                <span class="priority-dot"></span>
+                                Низька
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="editTodoPriority" value="2" class="priority-input" checked>
+                            <span class="priority-label priority-medium">
+                                <span class="priority-dot"></span>
+                                Середня
+                            </span>
+                        </label>
+                        <label class="priority-radio">
+                            <input type="radio" name="editTodoPriority" value="3" class="priority-input">
+                            <span class="priority-label priority-high">
+                                <span class="priority-dot"></span>
+                                Висока
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="todo-modal-footer">
+                <button type="button" class="btn-secondary" id="cancelEditTodoBtn">Скасувати</button>
+                <button type="submit" class="btn-primary">Зберегти зміни</button>
             </div>
         </form>
     </div>
@@ -849,20 +978,20 @@
                 </div>
             </div>
 
-            <div class="profile-section" style="gap: 10px;">
+            <div class="profile-section profile-settings-username-section">
+                <div class="profile-settings-actions">
+                    <button type="button" class="profile-btn profile-btn-settings" id="editUserNameBtn">
+                        Редагувати
+                    </button>
+                    <button type="button" class="profile-btn profile-btn-settings" id="saveUserNameBtn" style="display:none;">
+                        Зберегти
+                    </button>
+                </div>
                 <div class="profile-info" style="flex: 1;">
                     <div class="profile-info-item">
                         <label for="settingsUserName">Ім'я користувача</label>
                         <input type="text" id="settingsUserName" class="form-control" maxlength="256" placeholder="Введіть нове ім'я" readonly>
                     </div>
-                </div>
-                <div style="display:flex; flex-direction:row; gap:8px; align-items:flex-start;">
-                    <button type="button" class="profile-btn profile-btn-settings" id="editUserNameBtn">
-                        Змінити ім'я
-                    </button>
-                    <button type="button" class="profile-btn profile-btn-settings" id="saveUserNameBtn" style="display:none;">
-                        Зберегти
-                    </button>
                 </div>
             </div>
 
@@ -903,7 +1032,7 @@
             </div>
         </div>
 
-        <div class="profile-modal-footer" style="flex-direction: column; gap: 10px; align-items: stretch;">
+        <div class="profile-modal-footer profile-modal-footer-left">
             <button type="button" class="profile-btn profile-btn-logout" id="closeProfileSettingsModalFooter">
                 Закрити
             </button>

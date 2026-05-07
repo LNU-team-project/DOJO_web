@@ -10,7 +10,7 @@ namespace DOJO2.Infrastructure.BackgroundServices;
 
 public sealed class NotificationBackgroundService : BackgroundService
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IClock _clock;

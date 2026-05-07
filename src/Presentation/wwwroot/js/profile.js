@@ -135,19 +135,19 @@
     if (settingsUserNameInput && profileDisplayUsername?.textContent) {
       settingsUserNameInput.value = profileDisplayUsername.textContent;
       settingsUserNameInput.readOnly = true;
+      usernameEditState.originalValue = profileDisplayUsername.textContent;
     }
     if (settingsAvatarImg && profileModalAvatar?.src) {
       settingsAvatarImg.src = profileModalAvatar.src;
     }
-    if (settingsSaveUserNameBtn) {
-      settingsSaveUserNameBtn.style.display = "none";
-    }
+    setUsernameEditMode(false);
   };
 
   /**
    * Закриває модальне вікно налаштувань профіля
    */
   const closeSettingsModal = () => {
+    setUsernameEditMode(false);
     settingsModal.classList.remove("show");
     settingsModal.setAttribute("aria-hidden", "true");
   };
@@ -224,6 +224,39 @@
     element.addEventListener(eventName, handler);
     if (logMessage) {
       console.log(logMessage);
+    }
+  };
+
+  const usernameEditState = {
+    isEditing: false,
+    originalValue: "",
+  };
+
+  const setUsernameEditMode = (isEditing) => {
+    usernameEditState.isEditing = isEditing;
+
+    if (settingsUserNameInput) {
+      settingsUserNameInput.readOnly = !isEditing;
+      if (isEditing) {
+        settingsUserNameInput.focus();
+        settingsUserNameInput.select();
+      }
+    }
+
+    if (settingsEditUserNameBtn) {
+      settingsEditUserNameBtn.textContent = isEditing ? "Закрити" : "Редагувати";
+      settingsEditUserNameBtn.setAttribute(
+        "aria-label",
+        isEditing ? "Закрити редагування імені" : "Редагувати ім'я користувача",
+      );
+    }
+
+    if (settingsSaveUserNameBtn) {
+      settingsSaveUserNameBtn.style.display = isEditing ? "inline-block" : "none";
+    }
+
+    if (!isEditing && settingsUserNameInput) {
+      settingsUserNameInput.value = usernameEditState.originalValue;
     }
   };
 
@@ -447,10 +480,8 @@
 
       showSuccess("Ім'я користувача оновлено");
       await loadUserProfile();
-      settingsUserNameInput.readOnly = true;
-      if (settingsSaveUserNameBtn) {
-        settingsSaveUserNameBtn.style.display = "none";
-      }
+      usernameEditState.originalValue = newName;
+      setUsernameEditMode(false);
       closeSettingsModal();
     } catch (error) {
       showError(error.message);
@@ -832,14 +863,17 @@
     settingsEditUserNameBtn,
     "click",
     () => {
-      if (settingsUserNameInput) {
-        settingsUserNameInput.readOnly = false;
-        settingsUserNameInput.focus();
-        settingsUserNameInput.select();
+      if (!settingsUserNameInput) {
+        return;
       }
-      if (settingsSaveUserNameBtn) {
-        settingsSaveUserNameBtn.style.display = "inline-block";
+
+      if (usernameEditState.isEditing) {
+        setUsernameEditMode(false);
+        return;
       }
+
+      usernameEditState.originalValue = settingsUserNameInput.value;
+      setUsernameEditMode(true);
     },
     "✅ Event listener на editUserNameBtn додано",
   );

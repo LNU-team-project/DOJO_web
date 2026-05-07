@@ -37,17 +37,9 @@
   let currentRange = { from: null, to: null };
 
   const formatTitle = (date) => {
-    const raw = date.toLocaleDateString(locale, {
-      month: "long",
-      year: "numeric",
-    });
-    const titleTokens = raw.trim().split(" ");
-    const lastToken = titleTokens.at(-1)?.toLowerCase();
-    if (lastToken === "р." || lastToken === "р") {
-      titleTokens.pop();
-    }
-    const cleaned = titleTokens.join(" ").trim();
-    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}.${year}`;
   };
 
   const getMonthMatrix = (date) => {
