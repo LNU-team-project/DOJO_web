@@ -427,6 +427,10 @@
     });
   };
 
+  globalThis.addEventListener("dashboard:plan-created", () => {
+    void loadNotifications();
+  });
+
   const render = () => {
     const dates = getWeekDates();
     renderRange(dates);

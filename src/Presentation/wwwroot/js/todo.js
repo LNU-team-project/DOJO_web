@@ -204,15 +204,14 @@
     descriptionBtn.setAttribute("aria-label", "Показати опис");
     descriptionBtn.innerHTML = "👁️";
 
-    // Якщо опису немає - робимо кнопку неактивною та приховуємо опис за замовчуванням
-    if (!todo.description || todo.description.trim() === "") {
-      descriptionBtn.disabled = true;
-      descriptionBtn.style.opacity = "0.5";
-      descriptionSpan.style.display = "none";
-    } else {
-      // Якщо опис є - приховуємо його за замовчуванням
-      descriptionSpan.style.display = "none";
+    const hasDescription = Boolean(todo.description && todo.description.trim() !== "");
+    if (!hasDescription) {
+      descriptionSpan.textContent = "Опис відсутній";
+      descriptionBtn.classList.add("is-empty");
+      descriptionBtn.title = "Опис відсутній";
     }
+
+    descriptionSpan.style.display = "none";
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
@@ -231,15 +230,9 @@
       handleTodoStatusChange(todo.id, checkbox.checked),
     );
     descriptionBtn.addEventListener("click", () => {
-      if (
-        descriptionSpan &&
-        todo.description &&
-        todo.description.trim() !== ""
-      ) {
-        const isHidden = descriptionSpan.style.display === "none";
-        descriptionSpan.style.display = isHidden ? "block" : "none";
-        descriptionBtn.classList.toggle("active", isHidden);
-      }
+      const isHidden = descriptionSpan.style.display === "none";
+      descriptionSpan.style.display = isHidden ? "block" : "none";
+      descriptionBtn.classList.toggle("active", isHidden);
     });
     editBtn.addEventListener("click", () => handleTodoEdit(todo));
     deleteBtn.addEventListener("click", () => handleTodoDelete(todo.id));
@@ -376,7 +369,7 @@
         priorityInput.checked = true;
       }
 
-      submitBtn.textContent = "Оновити TODO";
+      submitBtn.textContent = "Оновити завдання";
       todoForm.dataset.editingTodoId = todo.id;
 
       document.getElementById("todoModalTitle").textContent =
