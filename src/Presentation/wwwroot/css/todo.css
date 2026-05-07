@@ -858,24 +858,6 @@ fieldset.form-group {
   min-height: 1.1em;
 }
 
-.todo-item-description-btn:not(:disabled) {
-  color: var(--dojo-accent-strong);
-}
-
-.todo-item-description-btn.is-empty {
-  background: rgba(255, 122, 144, 0.08);
-  border-color: rgba(255, 122, 144, 0.18);
-}
-
-.todo-item-description-btn:disabled {
-  opacity: 1;
-  cursor: pointer;
-}
-
-.todo-item-description-btn:disabled:hover {
-  transform: none;
-}
-
 .schedule-priority-2 {
   background: linear-gradient(135deg, #ff8fa5 0%, #ff6f8e 100%);
 }
@@ -1145,65 +1127,6 @@ fieldset.form-group {
 }
 
 .todo-item-delete:active {
-  transform: scale(0.95);
-}
-
-.todo-item-edit {
-  padding: 8px 10px;
-  background: rgba(255, 122, 144, 0.1);
-  color: var(--dojo-accent);
-  border: 1px solid rgba(255, 122, 144, 0.2);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.todo-item-edit:hover {
-  background: rgba(255, 122, 144, 0.15);
-  border-color: rgba(255, 122, 144, 0.4);
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.12);
-}
-
-.todo-item-edit:active {
-  transform: scale(0.95);
-}
-
-.todo-item-description-btn {
-  padding: 8px 10px;
-  background: rgba(255, 122, 144, 0.1);
-  color: var(--dojo-accent);
-  border: 1px solid rgba(255, 122, 144, 0.2);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.todo-item-description-btn:hover {
-  background: rgba(255, 122, 144, 0.15);
-  border-color: rgba(255, 122, 144, 0.4);
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.12);
-}
-
-.todo-item-description-btn.active {
-  background: rgba(255, 122, 144, 0.2);
-  border-color: rgba(255, 122, 144, 0.5);
-  color: var(--dojo-accent-strong);
-  box-shadow: 0 2px 8px rgba(255, 122, 144, 0.15);
-}
-
-.todo-item-description-btn:active {
   transform: scale(0.95);
 }
 
@@ -1583,6 +1506,23 @@ fieldset.form-group {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+#todoDetailsModal .todo-modal-content {
+  max-width: 720px;
+}
+
+#todoDetailsModal .plan-details-title {
+  word-break: break-word;
+}
+
+#todoDetailsModal .plan-priority-badge {
+  min-width: 96px;
+  text-align: center;
+}
+
+#todoDetailsModal .todo-form {
+  padding-top: 20px;
 }
 
 .plan-attachments-header {

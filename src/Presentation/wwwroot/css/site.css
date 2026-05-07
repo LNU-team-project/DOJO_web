@@ -1147,6 +1147,26 @@ body {
   border-top: 1px solid rgba(255, 122, 144, 0.2);
 }
 
+.profile-modal-footer-left {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.profile-settings-username-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.profile-settings-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
 .profile-btn {
   padding: 12px 20px;
   border: none;
