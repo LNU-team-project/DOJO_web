@@ -36,4 +36,10 @@
       <Compile Remove="Migrations\20260429213827_AddRoomsFeature.Designer.cs" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="Presentation\wwwroot\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
 </Project>
