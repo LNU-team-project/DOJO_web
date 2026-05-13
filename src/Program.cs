@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using DOJO2.Application.Services;
 using DOJO2.Presentation.Hubs;
 using DOJO2.Presentation.Configuration;
+using Azure.Identity;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using WebOptimizer;
 
 // Bootstrap logger — щоб логи були навіть під час старту
@@ -37,6 +39,13 @@ try
     if (builder.Environment.IsDevelopment())
     {
         builder.Configuration.AddUserSecrets<Program>();
+    }
+    
+    if (builder.Environment.IsProduction())
+    {
+        builder.Configuration.AddAzureKeyVault(
+            new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
+            new DefaultAzureCredential(new DefaultAzureCredentialOptions()));
     }
 
     // Налаштування Serilog з appsettings.json
