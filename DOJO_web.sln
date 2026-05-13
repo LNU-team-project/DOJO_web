@@ -45,6 +45,5 @@ Global
 	GlobalSection(RiderSharedRunConfigurations) = postSolution
 		File = DOJO.run.xml
 		File = Publish src to Azure.run.xml
-		File = Publish src to Azure (1).run.xml
 	EndGlobalSection
 EndGlobal

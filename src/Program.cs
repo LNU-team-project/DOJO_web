@@ -195,10 +195,9 @@ try
 
     app.UseAuthorization();
 
-    app.UseWebOptimizer();
-
     app.UseStaticFiles();
-
+    app.UseWebOptimizer();
+    
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Account}/{action=Register}/{id?}");
