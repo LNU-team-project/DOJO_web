@@ -49,13 +49,13 @@ jobs:
           dotnet-sonarscanner begin /k:"LNU-team-project_DOJO_web" /o:"lnu-team-project" \
           /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.host.url="https://sonarcloud.io" \
-          /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+          /d:sonar.cs.cobertura.reportsPaths=TestResults/**/coverage.cobertura.xml
 
       - name: Build
         run: dotnet build DOJO_web.sln --configuration Release
 
       - name: Run unit tests
-        run: dotnet test DOJO_web.Tests/DOJO_web.Tests.csproj --configuration Release --no-build
+        run: dotnet test DOJO_web.Tests/DOJO_web.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: End Sonar scan
         env:
