@@ -14,6 +14,7 @@ using Xunit;
 
 namespace DOJO_web.Tests;
 
+
 public class AccountControllerTests
 {
     private readonly Mock<IAuthService> _mockAuthService;
