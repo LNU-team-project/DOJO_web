@@ -198,6 +198,7 @@ try
     app.UseStaticFiles();
     app.UseWebOptimizer();
     
+    // test
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Account}/{action=Register}/{id?}");
