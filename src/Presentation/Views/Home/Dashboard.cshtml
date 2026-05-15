@@ -90,48 +90,50 @@
                 </section>
 
                 <section class="dashboard-pomodoro-section" aria-label="Pomodoro таймер">
+                    <div class="dashboard-pomodoro-content">
                         <h2 class="pomodoro-title">Pomodoro</h2>
-                    <div class="sidebar-card pomodoro-widget" data-pomodoro-root>
-                        <div class="pomodoro-card">
+                        <div class="sidebar-card pomodoro-widget" data-pomodoro-root>
+                            <div class="pomodoro-card">
                                 <div class="pomodoro-mode" data-pomodoro-mode aria-hidden="true"></div>
-                            <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
+                                <p class="pomodoro-time" data-pomodoro-time aria-live="polite">25:00</p>
 
-                            <div class="pomodoro-controls">
-                                <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
-                                    Старт
-                                </button>
-                                <button type="button" class="pomodoro-btn" data-pomodoro-pause>
-                                    Пауза
-                                </button>
-                                <button type="button" class="pomodoro-btn" data-pomodoro-reset>
-                                    Скинути
-                                </button>
-                                <button type="button" class="pomodoro-btn" data-pomodoro-skip>
-                                    Пропустити
-                                </button>
-                            </div>
-
-                            <div class="pomodoro-presets-panel">
-                                <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
-                                <div class="pomodoro-presets-row">
-                                    <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
-                                    <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
-                                        Додати пресет
+                                <div class="pomodoro-controls">
+                                    <button type="button" class="pomodoro-btn pomodoro-btn-primary" data-pomodoro-start>
+                                        Старт
+                                    </button>
+                                    <button type="button" class="pomodoro-btn" data-pomodoro-pause>
+                                        Пауза
+                                    </button>
+                                    <button type="button" class="pomodoro-btn" data-pomodoro-reset>
+                                        Скинути
+                                    </button>
+                                    <button type="button" class="pomodoro-btn" data-pomodoro-skip>
+                                        Пропустити
                                     </button>
                                 </div>
 
-                                <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
-                            </div>
+                                <div class="pomodoro-presets-panel">
+                                    <label class="pomodoro-presets-label" for="pomodoroPresetSelect">Пресет</label>
+                                    <div class="pomodoro-presets-row">
+                                        <select id="pomodoroPresetSelect" class="pomodoro-preset-select" data-pomodoro-preset-select aria-label="Вибрати пресет Pomodoro"></select>
+                                        <button type="button" class="pomodoro-btn pomodoro-preset-add-btn" id="openPomodoroPresetModal">
+                                            Додати пресет
+                                        </button>
+                                    </div>
 
-                            <div class="pomodoro-meta">
-                                <p class="pomodoro-meta-row">
-                                    <span>Сесій сьогодні</span>
-                                    <strong data-pomodoro-count>0</strong>
-                                </p>
-                                <label class="pomodoro-auto">
-                                    <input type="checkbox" data-pomodoro-auto checked>
-                                    Автоматично запускати наступний раунд
-                                </label>
+                                    <div class="pomodoro-custom-presets" data-pomodoro-custom-presets></div>
+                                </div>
+
+                                <div class="pomodoro-meta">
+                                    <p class="pomodoro-meta-row">
+                                        <span>Сесій сьогодні</span>
+                                        <strong data-pomodoro-count>0</strong>
+                                    </p>
+                                    <label class="pomodoro-auto">
+                                        <input type="checkbox" data-pomodoro-auto checked>
+                                        Автоматично запускати наступний раунд
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
